@@ -1,2 +1,4 @@
 # containment
-Libraries to help you use containers in Java
+
+Practical libraries that help you use Docker containers in Java.
+
