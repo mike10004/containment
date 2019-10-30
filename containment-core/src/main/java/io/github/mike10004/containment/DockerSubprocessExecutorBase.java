@@ -1,41 +1,34 @@
 package io.github.mike10004.containment;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableMap;
 import io.github.mike10004.subprocess.ProcessMonitor;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.ScopedProcessTracker;
 import io.github.mike10004.subprocess.Subprocess;
 
 import java.nio.charset.Charset;
-import java.util.Map;
+import java.util.function.BiFunction;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Implementation of an executor that launches an external {@code docker exec} process.
- */
-class DockerSubprocessExecutor implements DockerExecutor {
+class DockerSubprocessExecutorBase {
 
-    private final String containerId;
-    private final Map<String, String> executionEnvironmentVariables;
-    private final Charset execOutputCharset;
+    private final SubprocessConfig subprocessConfig;
 
-    public DockerSubprocessExecutor(String containerId, Map<String, String> executionEnvironmentVariables, Charset execOutputCharset) {
-        this.containerId = requireNonNull(containerId, "containerId");
-        this.executionEnvironmentVariables = ImmutableMap.copyOf(executionEnvironmentVariables);
-        this.execOutputCharset = requireNonNull(execOutputCharset);
+    public DockerSubprocessExecutorBase(SubprocessConfig subprocessConfig) {
+        this.subprocessConfig = requireNonNull(subprocessConfig);
     }
 
-    @Override
-    public DockerExecResult<String> execute(String executable, String... args) throws ContainmentException {
-        Subprocess.Builder b = Subprocess.running("docker");
-        b.arg("exec");
-        executionEnvironmentVariables.forEach((name, value) -> {
-            b.arg("--env").arg(String.format("%s=%s", name, value));
-        });
-        Subprocess subprocess = b.arg(containerId)
-                                 .args(executable, args).build();
+    protected final Subprocess.Builder buildSubprocessRunningDocker() {
+        String dockerExecutable = subprocessConfig.apply("docker.subprocess.executable", "docker");
+        return Subprocess.running(dockerExecutable);
+    }
+
+    protected static SubprocessConfig emptySubprocessConfig() {
+        return (x, y) -> y;
+    }
+
+    protected DockerSubprocessResult<String> executeDockerSubprocess(Subprocess subprocess, Charset execOutputCharset) throws ContainmentException {
         try (ScopedProcessTracker processTracker = new ScopedProcessTracker()) {
             ProcessMonitor<String, String> monitor = subprocess.launcher(processTracker)
                     .outputStrings(execOutputCharset).launch();
@@ -46,7 +39,23 @@ class DockerSubprocessExecutor implements DockerExecutor {
         }
     }
 
-    private static class SubprocessExecResult<T> implements DockerExecResult<T> {
+    /**
+     * Interface of a service that provides subprocess configuration settings.
+     */
+    protected interface SubprocessConfig extends BiFunction<String, String, String> {
+
+        /**
+         * Gets the value of a setting.
+         * @param key
+         * @param defaultValue
+         * @return setting value, or default if not defined
+         */
+        @Override
+        String apply(String key, String defaultValue);
+
+    }
+
+    private static class SubprocessExecResult<T> implements DockerSubprocessResult<T> {
 
         private final ProcessResult<T, T> result;
 

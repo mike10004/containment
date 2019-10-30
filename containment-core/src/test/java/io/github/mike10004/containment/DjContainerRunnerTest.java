@@ -8,46 +8,71 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class DjContainerRunnerTest {
 
     @Test
-    public void execute_environmentVariable() throws Exception {
+    public void execute_execEnvironmentVariable() throws Exception {
         ContainerParametry parametry = ContainerParametry.builder("busybox")
-//                .command(Arrays.asList("tail", "-f", "/dev/null"))
-                .command(Arrays.asList("echo", "$FOO"))
+                .commandToWaitIndefinitely()
                 .build();
 
-        DockerExecResult<String> result;
+        DockerSubprocessResult<String> result;
         try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
             try (RunningContainer container = runner.run(parametry)) {
-//                DockerExecutor executor = new DockerSubprocessExecutor(container.id(), new HashMap<>(), UTF_8);
-//                result = executor.execute("echo", "$FOO");
+                Map<String, String> processEnvironment = new HashMap<>();
+                processEnvironment.put("FOO", "bar");
+                DockerExecutor executor = new DockerExecExecutor(container.id(), processEnvironment, UTF_8);
+                result = executor.execute("echo", "$FOO");
             }
         }
-//        System.out.println(result);
-//        assertEquals("result content", "bar", result.stdout().trim());
-//        assertEquals("process exit code", 0, result.exitCode());
+        System.out.println(result);
+        assertEquals("result content", "bar", result.stdout().trim());
+        assertEquals("process exit code", 0, result.exitCode());
+    }
+
+    @Test
+    public void execute_containerEnvironmentVariable() throws Exception {
+        ContainerParametry parametry = ContainerParametry.builder("busybox")
+                .env("FOO", "bar")
+                .commandToWaitIndefinitely()
+                .build();
+
+        DockerSubprocessResult<String> result;
+        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
+            try (RunningContainer container = runner.run(parametry)) {
+                DockerExecutor executor = new DockerExecExecutor(container.id(), Collections.emptyMap(), UTF_8);
+                result = executor.execute("echo", "$FOO");
+            }
+        }
+        System.out.println(result);
+        assertEquals("result content", "bar", result.stdout().trim());
+        assertEquals("process exit code", 0, result.exitCode());
     }
 
     @Test
     public void execute_exposePorts() throws Exception {
+        int httpdPort = 80;
         ContainerParametry parametry = ContainerParametry.builder("httpd:2.4")
-                .expose(80)
+                .expose(httpdPort)
                 .build();
         String result;
         try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
             try (RunningContainer container = runner.run(parametry)) {
                 List<PortMapping> ports = container.fetchPorts();
-                PortMapping httpPort = ports.stream().filter(p -> p.containerPort == 80).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
-                assertTrue("exposed", httpPort.isExposed());
-                assertNotNull(httpPort.host);
-                URL url = new URL("http", "localhost", httpPort.host.getPort(), "/");
+                PortMapping httpdExposedPortMapping = ports.stream().filter(p -> p.containerPort == httpdPort).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
+                assertTrue("exposed", httpdExposedPortMapping.isExposed());
+                assertNotNull(httpdExposedPortMapping.host);
+                URL url = new URL("http", "localhost", httpdExposedPortMapping.host.getPort(), "/");
                 byte[] content = new JreClient().fetchPageContent(url);
                 result = new String(content, UTF_8);
             }

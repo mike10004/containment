@@ -1,6 +1,7 @@
 package io.github.mike10004.containment;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,6 +47,10 @@ public class ContainerParametry {
             }
             exposedPorts.add(port);
             return this;
+        }
+
+        public Builder commandToWaitIndefinitely() {
+            return command(Arrays.asList("tail", "-f", "/dev/null"));
         }
 
         public Builder command(List<String> val) {

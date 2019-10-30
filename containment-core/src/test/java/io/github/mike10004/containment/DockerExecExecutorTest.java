@@ -8,17 +8,17 @@ import java.util.HashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
-public class DockerSubprocessExecutorTest {
+public class DockerExecExecutorTest {
 
     @Test
     public void execute_echo() throws Exception {
         ContainerParametry parametry = ContainerParametry.builder("busybox")
                 .command(Arrays.asList("tail", "-f", "/dev/null"))
                 .build();
-        DockerExecResult<String> result;
+        DockerSubprocessResult<String> result;
         try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
             try (RunningContainer container = runner.run(parametry)) {
-                DockerExecutor executor = new DockerSubprocessExecutor(container.id(), new HashMap<>(), UTF_8);
+                DockerExecutor executor = new DockerExecExecutor(container.id(), new HashMap<>(), UTF_8);
                 result = executor.execute("echo", "hello, world");
             }
         }

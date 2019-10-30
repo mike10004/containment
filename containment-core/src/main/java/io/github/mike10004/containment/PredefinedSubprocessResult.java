@@ -3,12 +3,12 @@ package io.github.mike10004.containment;
 import com.google.common.base.MoreObjects;
 import org.apache.commons.lang3.StringUtils;
 
-class PredefinedExecResult<T> implements DockerExecResult<T> {
+class PredefinedSubprocessResult<T> implements DockerSubprocessResult<T> {
 
     private final int exitCode;
     private final T stdout, stderr;
 
-    public PredefinedExecResult(int exitCode, T stdout, T stderr) {
+    public PredefinedSubprocessResult(int exitCode, T stdout, T stderr) {
         this.exitCode = exitCode;
         this.stdout = stdout;
         this.stderr = stderr;
@@ -46,9 +46,9 @@ class PredefinedExecResult<T> implements DockerExecResult<T> {
         return StringUtils.abbreviate(thing.toString(), maxLength);
     }
 
-    public static class ContentlessExecResult<T> extends PredefinedExecResult<T> {
+    public static class ContentlessSubprocessResult<T> extends PredefinedSubprocessResult<T> {
 
-        public ContentlessExecResult(int exitCode) {
+        public ContentlessSubprocessResult(int exitCode) {
             super(exitCode, null, null);
         }
 
