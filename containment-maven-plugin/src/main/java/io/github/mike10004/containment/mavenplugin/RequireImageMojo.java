@@ -10,8 +10,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import javax.annotation.Nullable;
-
-import java.util.Properties;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -56,21 +56,14 @@ public class RequireImageMojo extends AbstractMojo {
     /**
      * Build args. Use markup like the following:
      * <pre>
-     * <pre>
      *     &lt;buildArgs&t;
-     *       &lt;buildArg&gt;
-     *         &lt;name&gt;name1&lt;/name&gt;
-     *         &lt;value&gt;value1&lt;/value&gt;
-     *       &lt;/buildArg&gt;
-     *       &lt;buildArg&gt;
-     *         &lt;name&gt;name2&lt;/name&gt;
-     *         &lt;value&gt;value2&lt;/value&gt;
-     *       &lt;/buildArg&gt;
+     *       &lt;name1&gt;value1&lt;/name1&gt;
+     *       &lt;name2&gt;value2&lt;/name2&gt;
      *     &lt;/buildArgs&t;
      * </pre>
      */
     @Parameter
-    private Properties buildArgs;
+    private Map<String, String> buildArgs;
 
     /**
      * Labels to apply to a freshly-built image.
@@ -78,19 +71,13 @@ public class RequireImageMojo extends AbstractMojo {
      * Use markup like the following:
      * <pre>
      *     &lt;imageLabels&t;
-     *       &lt;label&gt;
-     *         &lt;name&gt;name1&lt;/name&gt;
-     *         &lt;value&gt;value1&lt;/value&gt;
-     *       &lt;/label&gt;
-     *       &lt;label&gt;
-     *         &lt;name&gt;name2&lt;/name&gt;
-     *         &lt;value&gt;value2&lt;/value&gt;
-     *       &lt;/label&gt;
+     *       &lt;name1&gt;value1&lt;/name1&gt;
+     *       &lt;name2&gt;value2&lt;/name2&gt;
      *     &lt;/imageLabels&t;
      * </pre>
      */
     @Parameter
-    private Properties imageLabels;
+    private Map<String, String> buildLabels;
 
     /**
      * Timeout for an image build operation, if one is necessary.
@@ -159,8 +146,8 @@ public class RequireImageMojo extends AbstractMojo {
         return RequireImageParametry.newBuilder(name)
                 .buildTimeout(Durations.parseDuration(buildTimeout, RequireImageParametry.DEFAULT_BUILD_TIMEOUT))
                 .pullTimeout(Durations.parseDuration(pullTimeout, RequireImageParametry.DEFAULT_PULL_TIMEOUT))
-                .buildArgs(supplyIfNull(buildArgs, Properties::new))
-                .labels(supplyIfNull(imageLabels, Properties::new))
+                .buildArgs(supplyIfNull(buildArgs, Collections::emptyMap))
+                .labels(supplyIfNull(buildLabels, Collections::emptyMap))
                 .build();
     }
 

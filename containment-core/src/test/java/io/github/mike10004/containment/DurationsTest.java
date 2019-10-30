@@ -8,7 +8,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -20,13 +22,16 @@ public class DurationsTest {
     public void parseDuration() {
         TestCase[] testCases = {
                 TestCase.millis("123ms", 123),
+                TestCase.millis("1 millisecond", 1),
                 TestCase.millis("123 ms", 123),
                 TestCase.millis("123 milliseconds", 123),
                 new TestCase("1min", Duration.ofMinutes(1)),
                 new TestCase("1 min", Duration.ofMinutes(1)),
                 new TestCase("1m", Duration.ofMinutes(1)),
+                new TestCase("1 minute", Duration.ofMinutes(1)),
                 TestCase.seconds("456sec", 456),
                 TestCase.seconds("456s", 456),
+                TestCase.seconds("1 second", 1),
                 TestCase.seconds("456seconds", 456),
                 TestCase.seconds("456 sec", 456),
                 TestCase.seconds("456 s", 456),
@@ -44,6 +49,29 @@ public class DurationsTest {
         for (TestCase testCase : testCases) {
             assertEquals(testCase.toString(), testCase.expected, Durations.parseDuration(testCase.input));
         }
+    }
+
+    @Test
+    public void parseDuration_shouldCauseError() {
+        String[] errorCausers = {
+                "P",      //
+                "P6M3H",  // hours, minutes in wrong order
+                "t15M",   // bad case
+                "1 hour",
+                "1 h",
+                "1h",
+                "3d",
+                "minute",
+                "sec",
+        };
+        Map<String, Duration> unexpected = new LinkedHashMap<>();
+        for (String testCase : errorCausers) {
+            try {
+                unexpected.put(testCase, Durations.parseDuration(testCase));
+            } catch (RuntimeException ignore) {
+            }
+        }
+        assertEquals("expect zero parseable values", Collections.<String, Duration>emptyMap(), unexpected);
     }
 
     private static class TestCase {

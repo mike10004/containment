@@ -24,17 +24,12 @@
           <buildTimeout>5min</buildTimeout>
           <pullTimeout>30 seconds</pullTimeout>
           <buildArgs>
-            <buildArg>
-              <key>FOO</key>
-              <value>BAR</value>
-            </buildArg>
+            <FOO>BAR</FOO>
           </buildArgs>
-          <imageLabels>
-            <label>
-              <key>foo</key>
-              <value>bar</value>
-            </label>
-          </imageLabels>
+          <buildLabels>
+            <foo>bar</foo>
+            <baz>gaw</baz>
+          </buildLabels>
         </configuration>
       </plugin>
     </plugins>

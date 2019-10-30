@@ -2,6 +2,7 @@ package io.github.mike10004.containment;
 
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
@@ -16,8 +17,10 @@ public class Durations {
     /**
      * Parses a duration specified in standard or human-friendly syntax.
      * @param definition the definition
-     * @return a duration instance
+     * @return a duration instance, or null if definition is null or empty
+     * @see #parseDuration(String, Duration)
      */
+    @Nullable
     public static Duration parseDuration(String definition) {
         return parseDuration(definition, null);
     }

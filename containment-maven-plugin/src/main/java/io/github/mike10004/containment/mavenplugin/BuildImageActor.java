@@ -4,7 +4,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.BuildResponseItem;
-import com.google.common.collect.Maps;
 import io.github.mike10004.containment.DockerManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -33,7 +32,7 @@ class BuildImageActor extends ClientAbsentImageActor {
         BuildImageCmd buildCmd = client.buildImageCmd(dockerfileDir);
         buildCmd.withTags(Collections.singleton(parametry.name));
         buildCmd.withLabels(parametry.labels);
-        Maps.fromProperties(parametry.buildArgs).forEach(buildCmd::withBuildArg);
+        parametry.buildArgs.forEach(buildCmd::withBuildArg);
         return buildCmd;
     }
 

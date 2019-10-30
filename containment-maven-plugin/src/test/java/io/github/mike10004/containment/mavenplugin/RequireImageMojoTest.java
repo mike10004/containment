@@ -1,15 +1,14 @@
 package io.github.mike10004.containment.mavenplugin;
 
 
-import com.google.common.collect.Maps;
 import org.apache.maven.plugin.testing.MojoRule;
-import org.apache.maven.plugin.testing.WithoutMojo;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.Properties;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -57,16 +56,16 @@ public class RequireImageMojoTest
         assertEquals("name", "oogabooga/not-a-real-docker-image:latest", p.name);
         assertEquals("buildTimeout", Duration.ofMinutes(5), p.buildTimeout);
         assertEquals("pullTimeout", Duration.ofSeconds(30), p.pullTimeout);
-        assertEquals("buildArgs", toProperties("FOO", "BAR"), p.buildArgs);
-        assertEquals("labels", toProperties("foo", "bar"), p.labels);
+        assertEquals("buildArgs", toMap("FOO", "BAR"), p.buildArgs);
+        assertEquals("labels", toMap("foo", "bar", "baz", "gaw"), p.labels);
     }
 
-    private static Properties toProperties(String...namesAndValues) {
-        Properties p = new Properties();
+    private static Map<String, String> toMap(String...namesAndValues) {
+        Map<String, String> m = new LinkedHashMap<>();
         for (int i = 0; i < namesAndValues.length; i+=2) {
-            p.setProperty(namesAndValues[i], namesAndValues[i + 1]);
+            m.put(namesAndValues[i], namesAndValues[i + 1]);
         }
-        return p;
+        return m;
     }
 
 

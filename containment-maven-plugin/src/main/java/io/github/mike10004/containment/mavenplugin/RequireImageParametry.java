@@ -1,16 +1,14 @@
 package io.github.mike10004.containment.mavenplugin;
 
-import com.google.common.collect.Maps;
-
 import java.time.Duration;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import static java.util.Objects.requireNonNull;
 
 /**
- * Value class that represents options the mojo is configured with.
+ * Immutable value class that represents options the mojo is configured with.
  * Fields of this class exclude parameters that would be specified
  * by a parameter to a {@link AbsentImageDirective directive}.
  */
@@ -21,20 +19,32 @@ public class RequireImageParametry {
      */
     public final String name;
 
-    public final Duration pullTimeout;
-
-    public final Properties buildArgs;
-
+    /**
+     * Timeout for build execution.
+     */
     public final Duration buildTimeout;
 
+    /**
+     * Timeout for {@code docker pull} execution.
+     */
+    public final Duration pullTimeout;
+
+    /**
+     * Immutable map of args for build execution.
+     */
+    public final Map<String, String> buildArgs;
+
+    /**
+     * Immutable map of labels to apply to built image.
+     */
     public final Map<String, String> labels;
 
     private RequireImageParametry(Builder builder) {
         name = requireNonNull(builder.name);
         pullTimeout = requireNonNull(builder.pullTimeout);
         buildTimeout = requireNonNull(builder.buildTimeout);
-        buildArgs = requireNonNull(builder.buildArgs);
-        labels = new LinkedHashMap<>(requireNonNull(builder.labels));
+        buildArgs = Collections.unmodifiableMap(new LinkedHashMap<>(requireNonNull(builder.buildArgs)));
+        labels = Collections.unmodifiableMap(new LinkedHashMap<>(requireNonNull(builder.labels)));
     }
 
     public static Builder newBuilder(String name) {
@@ -48,9 +58,9 @@ public class RequireImageParametry {
 
         private String name;
         private Duration pullTimeout = DEFAULT_PULL_TIMEOUT;
-        private final Properties buildArgs = new Properties();
+        private final Map<String, String> buildArgs = new LinkedHashMap<>();
         private Duration buildTimeout = DEFAULT_BUILD_TIMEOUT;
-        private Map<String, String> labels = new LinkedHashMap<>();
+        private final Map<String, String> labels = new LinkedHashMap<>();
 
         private Builder() {
         }
@@ -69,14 +79,14 @@ public class RequireImageParametry {
             return new RequireImageParametry(this);
         }
 
-        public Builder buildArgs(Properties additive) {
-            additive.stringPropertyNames().forEach(n -> buildArg(n, additive.getProperty(n)));
+        public Builder buildArgs(Map<String, String> additive) {
+            buildArgs.putAll(additive);
             return this;
         }
 
         @SuppressWarnings("UnusedReturnValue")
         public Builder buildArg(String name, String value) {
-            buildArgs.setProperty(name, value);
+            buildArgs.put(name, value);
             return this;
         }
 
@@ -90,8 +100,8 @@ public class RequireImageParametry {
             return this;
         }
 
-        public Builder labels(Properties additive) {
-            labels.putAll(Maps.fromProperties(additive));
+        public Builder labels(Map<String, String> additive) {
+            labels.putAll(additive);
             return this;
         }
     }
