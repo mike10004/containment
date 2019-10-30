@@ -14,34 +14,17 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
-        <containment.tests.skip>false</containment.tests.skip>
+        <docker-java.version>3.2.0-rc1</docker-java.version>
+        <docker-java.transport.artifactId>docker-java-transport-jersey</docker-java.transport.artifactId>
+        <surefire.configuration.skipTests>false</surefire.configuration.skipTests>
+        <failsafe.configuration.skipTests>false</failsafe.configuration.skipTests>
     </properties>
     <profiles>
         <profile>
             <id>skip-tests</id>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <artifactId>maven-surefire-plugin</artifactId>
-                            <configuration>
-                                <skipTests>true</skipTests>
-                            </configuration>
-                        </plugin>
-                        <plugin>
-                            <artifactId>maven-failsafe-plugin</artifactId>
-                            <configuration>
-                                <skipTests>true</skipTests>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
-        </profile>
-        <profile>
-            <id>skip-containment-tests</id>
             <properties>
-                <containment.tests.skip>true</containment.tests.skip>
+                <surefire.configuration.skipTests>true</surefire.configuration.skipTests>
+                <failsafe.configuration.skipTests>true</failsafe.configuration.skipTests>
             </properties>
         </profile>
     </profiles>
@@ -97,6 +80,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.0.0-M3</version>
                     <configuration>
+                        <skipTests>${surefire.configuration.skipTests}</skipTests>
                         <systemPropertyVariables>
                             <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
                         </systemPropertyVariables>
@@ -106,6 +90,7 @@
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>3.0.0-M3</version>
                     <configuration>
+                        <skipTests>${failsafe.configuration.skipTests}</skipTests>
                         <systemPropertyVariables>
                             <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
                         </systemPropertyVariables>
@@ -229,10 +214,23 @@
                 <version>3.0.1</version>
                 <scope>runtime</scope>
             </dependency>
+            <!-- using the artifactId=docker-java (type=bundle) confused JetBrains IntelliJ IDEA
+                 into thinking it should look for sources in docker-java-x.y-sources.jar; this way
+                 we resolve that and explicitly specify the transport to use -->
             <dependency>
                 <groupId>com.github.docker-java</groupId>
-                <artifactId>docker-java</artifactId>
-                <version>3.2.0-rc1</version>
+                <artifactId>docker-java-api</artifactId>
+                <version>${docker-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-core</artifactId>
+                <version>${docker-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>${docker-java.transport.artifactId}</artifactId>
+                <version>${docker-java.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -253,6 +251,16 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-text</artifactId>
                 <version>1.4</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.6</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
