@@ -264,6 +264,11 @@
                 <artifactId>commons-logging</artifactId>
                 <version>1.2</version>
             </dependency>
+            <dependency>
+                <groupId>com.github.mike10004</groupId>
+                <artifactId>nitsick-core</artifactId>
+                <version>0.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>

@@ -1,7 +1,6 @@
 package io.github.mike10004.containment;
 
 import com.google.common.io.ByteSource;
-import com.google.common.io.CharSource;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -10,9 +9,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -22,27 +19,8 @@ import static org.junit.Assert.assertTrue;
 public class DjContainerRunnerTest {
 
     @Test
-    public void execute_processEnvironmentVariable() throws Exception {
-        ContainerParametry parametry = ContainerParametry.builder("alpine:3")
-                .commandToWaitIndefinitely()
-                .build();
-
-        DockerSubprocessResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
-            try (RunningContainer container = runner.run(parametry)) {
-                Map<String, String> processEnvironment = new HashMap<>();
-                processEnvironment.put("FOO", "bar");
-                DockerExecutor executor = new DockerExecExecutor(container.id(), processEnvironment, UTF_8);
-                result = executor.execute("printenv");
-            }
-        }
-        assertEquals("process exit code", 0, result.exitCode());
-        assertStdoutHasLine(result, "FOO=bar");
-    }
-
-    @Test
-    public void execute_containerEnvironmentVariable() throws Exception {
-        ContainerParametry parametry = ContainerParametry.builder("alpine:3")
+    public void execute_setContainerEnvironmentVariables() throws Exception {
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
                 .env("FOO", "bar")
                 .commandToWaitIndefinitely()
                 .build();
@@ -55,21 +33,13 @@ public class DjContainerRunnerTest {
             }
         }
         assertEquals("process exit code", 0, result.exitCode());
-        assertStdoutHasLine(result, "FOO=bar");
-    }
-
-    private void assertStdoutHasLine(DockerSubprocessResult<String> result, String requiredLine) throws IOException {
-        boolean varWasSet = CharSource.wrap(result.stdout()).readLines().stream().anyMatch(requiredLine::equals);
-        if (!varWasSet) {
-            System.out.println(result.stdout());
-        }
-        assertTrue("result content", varWasSet);
+        Tests.assertStdoutHasLine(result, "FOO=bar");
     }
 
     @Test
-    public void execute_exposePorts() throws Exception {
+    public void run_exposePorts() throws Exception {
         int httpdPort = 80;
-        ContainerParametry parametry = ContainerParametry.builder("httpd:2.4")
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForHttpdTest())
                 .expose(httpdPort)
                 .build();
         String result;

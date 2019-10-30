@@ -11,6 +11,7 @@ import org.junit.Assume;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 public class Tests {
 
@@ -20,6 +21,18 @@ public class Tests {
 
     public static boolean isRealDockerManagerAnyClientsCreated() {
         return anyClientsCreated.get();
+    }
+
+    public static String getSetting(String identifier, String defaultValue) {
+        return getSetting(identifier, Function.identity(), defaultValue);
+    }
+
+    public static <T> T getSetting(String identifier, Function<? super String, ? extends T> transform, T defaultValue) {
+        String value = Settings.get(identifier);
+        if (value == null) {
+            return defaultValue;
+        }
+        return transform.apply(value);
     }
 
     public static DockerManager realDockerManager() {

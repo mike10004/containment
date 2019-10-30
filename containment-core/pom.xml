@@ -58,5 +58,10 @@
             <artifactId>commons-logging</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.mike10004</groupId>
+            <artifactId>nitsick-core</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

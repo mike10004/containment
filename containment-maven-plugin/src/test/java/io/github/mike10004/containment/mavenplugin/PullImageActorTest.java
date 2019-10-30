@@ -38,7 +38,8 @@ public class PullImageActorTest {
 
     private void test_perform_pullHelloWorld(String name, String tag) throws Exception {
         Tests.assumeDestructiveModeEnabled();
-        ImageSpecifier remoteImageSpec = new ImageSpecifier("hello-world", tag);
+        String bareImageName = Tests.getSetting("helloWorldImageName", "hello-world");
+        ImageSpecifier remoteImageSpec = new ImageSpecifier(bareImageName, tag);
         String remoteImageName = remoteImageSpec.toString();
         DockerManager dockerManager = Tests.realDockerManager();
         Tests.enforceImageDoesNotExistLocally(dockerManager, remoteImageSpec.withDefaultTag("latest").toString());

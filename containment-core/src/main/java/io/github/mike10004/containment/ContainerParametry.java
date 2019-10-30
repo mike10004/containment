@@ -27,6 +27,10 @@ public interface ContainerParametry {
         return new Builder(image);
     }
 
+    static Builder builder(ImageSpecifier image) {
+        return new Builder(image);
+    }
+
     final class Builder {
 
         private ImageSpecifier image;
@@ -38,7 +42,11 @@ public interface ContainerParametry {
         private Map<String, String> env = new LinkedHashMap<>();
 
         private Builder(String image) {
-            this.image = ImageSpecifier.parseSpecifier(requireNonNull(image));
+            this(ImageSpecifier.parseSpecifier(requireNonNull(image, "image")));
+        }
+
+        private Builder(ImageSpecifier image) {
+            this.image = requireNonNull(image);
         }
 
         public  Builder expose(int port) {
