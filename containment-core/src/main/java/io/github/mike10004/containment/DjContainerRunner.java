@@ -50,14 +50,15 @@ public class DjContainerRunner implements ContainerRunner {
     }
 
     @Override
-    public RunningContainer run(ContainerParametry parametry) {
+    public RunningContainer run(ContainerParametry parametry, CreationObserver creationObserver) {
         CreateContainerCmd createCmd = applyParametry(parametry);
         CreateContainerResponse create = createCmd.exec();
-        String containerId = create.getId();
         String[] warnings = ArrayUtil.nullToEmpty(create.getWarnings());
         for (String warning : warnings) {
-            System.err.println(warning);
+            creationObserver.warn(warning);
         }
+        String containerId = create.getId();
+        creationObserver.prepare(containerId);
         client.startContainerCmd(containerId)
                 .exec();
         return new DjRunningContainer(client, containerId);

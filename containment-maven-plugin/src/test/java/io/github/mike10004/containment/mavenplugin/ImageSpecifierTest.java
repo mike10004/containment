@@ -11,7 +11,6 @@ public class ImageSpecifierTest {
 
     @Test
     public void parseSpecifier() {
-
         Map<String, ImageSpecifier> testCases = new LinkedHashMap<>();
         testCases.put("x", new ImageSpecifier("x"));
         testCases.put("x:y", new ImageSpecifier("x", "y"));
