@@ -43,8 +43,9 @@ public class DjContainerRunner implements ContainerRunner {
                 .withPortBindings(bindings);
         createCmd.withHostConfig(hostConfig);
         createCmd.withCmd(parametry.command);
-        createCmd.withEnv(parametry.env.entrySet().stream().map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue())).collect(Collectors.toList()));
-        createCmd.withAttachStdout(true);
+        List<String> envDefinitions = parametry.env.entrySet().stream()
+                .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue())).collect(Collectors.toList());
+        createCmd.withEnv(envDefinitions);
         return createCmd;
     }
 

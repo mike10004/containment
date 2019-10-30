@@ -1,6 +1,7 @@
 package io.github.mike10004.containment;
 
 import com.google.common.io.ByteSource;
+import com.google.common.io.CharSource;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -21,8 +22,8 @@ import static org.junit.Assert.assertTrue;
 public class DjContainerRunnerTest {
 
     @Test
-    public void execute_execEnvironmentVariable() throws Exception {
-        ContainerParametry parametry = ContainerParametry.builder("busybox")
+    public void execute_processEnvironmentVariable() throws Exception {
+        ContainerParametry parametry = ContainerParametry.builder("alpine:3")
                 .commandToWaitIndefinitely()
                 .build();
 
@@ -32,17 +33,16 @@ public class DjContainerRunnerTest {
                 Map<String, String> processEnvironment = new HashMap<>();
                 processEnvironment.put("FOO", "bar");
                 DockerExecutor executor = new DockerExecExecutor(container.id(), processEnvironment, UTF_8);
-                result = executor.execute("echo", "$FOO");
+                result = executor.execute("printenv");
             }
         }
-        System.out.println(result);
-        assertEquals("result content", "bar", result.stdout().trim());
         assertEquals("process exit code", 0, result.exitCode());
+        assertStdoutHasLine(result, "FOO=bar");
     }
 
     @Test
     public void execute_containerEnvironmentVariable() throws Exception {
-        ContainerParametry parametry = ContainerParametry.builder("busybox")
+        ContainerParametry parametry = ContainerParametry.builder("alpine:3")
                 .env("FOO", "bar")
                 .commandToWaitIndefinitely()
                 .build();
@@ -51,12 +51,19 @@ public class DjContainerRunnerTest {
         try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
             try (RunningContainer container = runner.run(parametry)) {
                 DockerExecutor executor = new DockerExecExecutor(container.id(), Collections.emptyMap(), UTF_8);
-                result = executor.execute("echo", "$FOO");
+                result = executor.execute("printenv");
             }
         }
-        System.out.println(result);
-        assertEquals("result content", "bar", result.stdout().trim());
         assertEquals("process exit code", 0, result.exitCode());
+        assertStdoutHasLine(result, "FOO=bar");
+    }
+
+    private void assertStdoutHasLine(DockerSubprocessResult<String> result, String requiredLine) throws IOException {
+        boolean varWasSet = CharSource.wrap(result.stdout()).readLines().stream().anyMatch(requiredLine::equals);
+        if (!varWasSet) {
+            System.out.println(result.stdout());
+        }
+        assertTrue("result content", varWasSet);
     }
 
     @Test
