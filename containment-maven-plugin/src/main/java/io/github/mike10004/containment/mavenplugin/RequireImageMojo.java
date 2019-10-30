@@ -1,5 +1,6 @@
 package io.github.mike10004.containment.mavenplugin;
 
+import io.github.mike10004.containment.DockerManager;
 import io.github.mike10004.nitsick.Durations;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -12,15 +13,17 @@ import javax.annotation.Nullable;
 
 import java.util.Properties;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
 /**
  * Goal which enforces the local existence of a container image.
  */
-@Mojo( name = "require-image", defaultPhase = LifecyclePhase.GENERATE_TEST_RESOURCES )
-public class RequireImageMojo extends AbstractMojo
-{
+@Mojo( name = RequireImageMojo.GOAL, defaultPhase = LifecyclePhase.GENERATE_TEST_RESOURCES )
+public class RequireImageMojo extends AbstractMojo {
+
+    static final String GOAL = "require-image";
 
     /**
      * Name and optionally a tag in the 'name[:tag]' format.
@@ -41,7 +44,7 @@ public class RequireImageMojo extends AbstractMojo
      *     then the image specified by the {@code name} parameter is used</li>
      * </ul>
      */
-    @Parameter
+    @Parameter(defaultValue = "fail")
     private String absentImageAction;
 
     /**
@@ -53,18 +56,41 @@ public class RequireImageMojo extends AbstractMojo
     /**
      * Build args. Use markup like the following:
      * <pre>
-     *       &lt;arg&gt;
+     * <pre>
+     *     &lt;buildArgs&t;
+     *       &lt;buildArg&gt;
      *         &lt;name&gt;name1&lt;/name&gt;
      *         &lt;value&gt;value1&lt;/value&gt;
-     *       &lt;/arg&gt;
-     *       &lt;arg&gt;
+     *       &lt;/buildArg&gt;
+     *       &lt;buildArg&gt;
      *         &lt;name&gt;name2&lt;/name&gt;
      *         &lt;value&gt;value2&lt;/value&gt;
-     *       &lt;/arg&gt;
+     *       &lt;/buildArg&gt;
+     *     &lt;/buildArgs&t;
      * </pre>
      */
     @Parameter
     private Properties buildArgs;
+
+    /**
+     * Labels to apply to a freshly-built image.
+     *
+     * Use markup like the following:
+     * <pre>
+     *     &lt;imageLabels&t;
+     *       &lt;label&gt;
+     *         &lt;name&gt;name1&lt;/name&gt;
+     *         &lt;value&gt;value1&lt;/value&gt;
+     *       &lt;/label&gt;
+     *       &lt;label&gt;
+     *         &lt;name&gt;name2&lt;/name&gt;
+     *         &lt;value&gt;value2&lt;/value&gt;
+     *       &lt;/label&gt;
+     *     &lt;/imageLabels&t;
+     * </pre>
+     */
+    @Parameter
+    private Properties imageLabels;
 
     /**
      * Timeout for an image build operation, if one is necessary.
@@ -81,6 +107,10 @@ public class RequireImageMojo extends AbstractMojo
      */
     @Parameter
     private String pullTimeout;
+
+    public RequireImageMojo() {
+
+    }
 
     public String getName() {
         return name;
@@ -117,7 +147,7 @@ public class RequireImageMojo extends AbstractMojo
         requireNonNull(absentImageAction, "absentImageAction");
         AbsentImageDirective directive = AbsentImageDirective.parse(absentImageAction);
         RequireImageParametry parametry = buildParametry();
-        DockerManager dockerManager = MojoDockerManager.fromParametry(parametry);
+        DockerManager dockerManager = MojoDockerManager.fromParametry(project, parametry);
         boolean existsLocally = dockerManager.queryImageExistsLocally(parametry.name);
         if (!existsLocally) {
             AbsentImageActor actor = determineActor(dockerManager, directive);
@@ -129,7 +159,8 @@ public class RequireImageMojo extends AbstractMojo
         return RequireImageParametry.newBuilder(name)
                 .buildTimeout(Durations.parseDuration(buildTimeout, RequireImageParametry.DEFAULT_BUILD_TIMEOUT))
                 .pullTimeout(Durations.parseDuration(pullTimeout, RequireImageParametry.DEFAULT_PULL_TIMEOUT))
-                .buildArgs(buildArgs)
+                .buildArgs(supplyIfNull(buildArgs, Properties::new))
+                .labels(supplyIfNull(imageLabels, Properties::new))
                 .build();
     }
 
@@ -146,5 +177,13 @@ public class RequireImageMojo extends AbstractMojo
             default:
                 throw new IllegalArgumentException(String.format("BUG: unhandled enum constant %s.%s", AbsentImageAction.class.getName(), directive.action));
         }
+    }
+
+    MavenProject getProject() {
+        return project;
+    }
+
+    private static <T> T supplyIfNull(@Nullable T item, Supplier<? extends T> constructor) {
+        return item == null ? constructor.get() : item;
     }
 }

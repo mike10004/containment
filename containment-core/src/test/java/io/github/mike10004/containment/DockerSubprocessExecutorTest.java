@@ -16,7 +16,7 @@ public class DockerSubprocessExecutorTest {
                 .command(Arrays.asList("tail", "-f", "/dev/null"))
                 .build();
         DockerExecResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner()) {
+        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
             try (RunningContainer container = runner.run(parametry)) {
                 DockerExecutor executor = new DockerSubprocessExecutor(container.id(), new HashMap<>(), UTF_8);
                 result = executor.execute("echo", "hello, world");

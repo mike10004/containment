@@ -5,6 +5,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.google.common.base.Verify;
+import io.github.mike10004.containment.DockerManager;
 import io.github.mike10004.nitsick.SettingSet;
 import org.junit.Assume;
 

@@ -9,9 +9,6 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,10 +19,6 @@ import static java.util.Objects.requireNonNull;
 public class DjContainerRunner implements ContainerRunner {
 
     private final DockerClient client;
-
-    public DjContainerRunner() {
-        this(buildDockerClient());
-    }
 
     public DjContainerRunner(DockerClient client) {
         this.client = requireNonNull(client);
@@ -67,16 +60,6 @@ public class DjContainerRunner implements ContainerRunner {
         client.startContainerCmd(containerId)
                 .exec();
         return new DjRunningContainer(client, containerId);
-    }
-
-    private static DockerClient buildDockerClient() {
-        return DockerClientBuilder.getInstance(buildClientConfig()).build();
-    }
-
-    private static DockerClientConfig buildClientConfig() {
-        DefaultDockerClientConfig c = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .build();
-        return c;
     }
 
 }

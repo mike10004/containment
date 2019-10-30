@@ -1,4 +1,4 @@
-package io.github.mike10004.containment.mavenplugin;
+package io.github.mike10004.containment;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;

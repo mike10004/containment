@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>all-parameters-assigned</artifactId>
+  <version>0.0-SNAPSHOT</version> <!-- this can always stay the same -->
+  <packaging>jar</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>${project.artifactId}</artifactId>
+        <version>${project.version}</version>
+        <goals>
+          <goal>require-image</goal>
+        </goals>
+        <configuration>
+          <name>oogabooga/not-a-real-docker-image:latest</name>
+          <absentImageAction>build:\${project.basedir}/src/test/containers/my-test-image</absentImageAction>
+          <buildTimeout>5min</buildTimeout>
+          <pullTimeout>30 seconds</pullTimeout>
+          <buildArgs>
+            <buildArg>
+              <key>FOO</key>
+              <value>BAR</value>
+            </buildArg>
+          </buildArgs>
+          <imageLabels>
+            <label>
+              <key>foo</key>
+              <value>bar</value>
+            </label>
+          </imageLabels>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -135,14 +135,7 @@ class DjRunningContainer implements RunningContainer {
             } catch (NotFoundException e) {
                 // probably means container was terminated through other means
             }
-            try {
-                client.removeContainerCmd(id())
-                        .withForce(true)
-                        .exec();
-            } catch (NotFoundException e) {
-            // probably means container was terminated through other means
-            }
-    } catch (com.github.dockerjava.api.exception.DockerException e) {
+        } catch (com.github.dockerjava.api.exception.DockerException e) {
             throw new ContainmentException(e);
         }
     }
