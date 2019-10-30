@@ -41,7 +41,14 @@ class PullImageActor extends ClientAbsentImageActor {
         }
         if (!remoteImageName.equals(parametry.name)) {
             ImageSpecifier localImageSpec = ImageSpecifier.parseSpecifier(parametry.name);
-            TagImageCmd tagCmd = client.tagImageCmd(remoteImageName, localImageSpec.toString(), localImageSpec.withDefaultTag("").tag);
+            //noinspection UnnecessaryLocalVariable
+            String imageId = remoteImageName;
+            String tag = localImageSpec.withDefaultTag("").tag;
+            String imageNameWithRepository = localImageSpec.toString();
+            TagImageCmd tagCmd = client.tagImageCmd(
+                    imageId,
+                    imageNameWithRepository, // imageNameWithRepository
+                    tag);
             tagCmd.exec();
         }
     }

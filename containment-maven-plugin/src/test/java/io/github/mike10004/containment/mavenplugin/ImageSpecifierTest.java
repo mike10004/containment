@@ -28,4 +28,11 @@ public class ImageSpecifierTest {
         assertEquals("add tag", "x:y", new ImageSpecifier("x", null).withDefaultTag("y").toString());
         assertEquals("do not add", "x:z", new ImageSpecifier("x", "z").withDefaultTag("y").toString());
     }
+
+    @Test
+    public void test_toString() {
+        String token = "fedora/httpd:2.4";
+        ImageSpecifier localImageSpec = ImageSpecifier.parseSpecifier(token);
+        assertEquals("toString", token, localImageSpec.toString());
+    }
 }

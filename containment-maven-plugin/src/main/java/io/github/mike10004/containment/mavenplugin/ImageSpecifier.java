@@ -1,15 +1,18 @@
 package io.github.mike10004.containment.mavenplugin;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Immutable value class that specifies a container image.
+ */
 public class ImageSpecifier {
 
     public final String name;
@@ -23,7 +26,7 @@ public class ImageSpecifier {
     @Nullable
     public final String registry;
 
-    private final String stringification;
+    private transient final String stringification;
 
     public ImageSpecifier(String name) {
         this(name, null);
@@ -34,9 +37,11 @@ public class ImageSpecifier {
     }
 
     public ImageSpecifier(String name, @Nullable String tag, @Nullable String repository, @Nullable String registry) {
-        this.name = name;
+        this.name = checkNotNull(name, "name");
+        checkArgument(!name.trim().isEmpty(), "name must be nonempty/nonwhitespace");
         this.tag = tag;
         this.repository = repository;
+        checkArgument(repository == null || (repository.equals(repository.toLowerCase())), "repository name must be lowercase: %s", StringUtils.abbreviate(repository, 128));
         this.registry = registry;
         stringification = stringify(name, tag, repository, registry);
     }
@@ -66,8 +71,40 @@ public class ImageSpecifier {
         return sb.toString();
     }
 
+    /**
+     * Returns an instance that has the given tag if and only if this instance's tag is not defined.
+     * @param defaultTag the default tag to apply
+     * @return a specifier instance
+     */
     public ImageSpecifier withDefaultTag(String defaultTag) {
-        return new ImageSpecifier(name, tag == null ? defaultTag : tag, repository, registry);
+        return withTag(tag == null ? defaultTag : tag);
+    }
+
+    /**
+     * Returns an instance that has the given tag and all other fields equal to this instance's fields.
+     * @param tag the tag
+     * @return a specifier instance
+     */
+    public ImageSpecifier withTag(String tag) {
+        return Objects.equals(this.tag, tag) ? this : new ImageSpecifier(name, tag, repository, registry);
+    }
+
+    /**
+     * Returns an instance that has the given repository and all other fields equal to this instance's fields.
+     * @param repository the repository
+     * @return a specifier instance
+     */
+    public ImageSpecifier withRepository(String repository) {
+        return Objects.equals(this.repository, repository) ? this : new ImageSpecifier(name, tag, repository, registry);
+    }
+
+    /**
+     * Returns an instance that has the given registry and all other fields equal to this instance's fields.
+     * @param registry the registry
+     * @return a specifier instance
+     */
+    public ImageSpecifier withRegistry(String registry) {
+        return Objects.equals(this.registry, registry) ? this : new ImageSpecifier(name, tag, repository, registry);
     }
 
     @Override
@@ -115,4 +152,5 @@ public class ImageSpecifier {
         String name = nameAndTagParts.get(0);
         return new ImageSpecifier(name, tag, repository, registry);
     }
+
 }

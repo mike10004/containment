@@ -20,14 +20,18 @@ public class PullImageActorTest {
     @Test
     public void perform_pullHelloWorld_untagged() throws Exception {
         Random random = new Random("PullImageActorTest_perform_pullHelloWorld_untagged".hashCode());
-        String name = String.format("%s%s", TestCleanupRule.INCLUDE_TAG_PREFIX, Uuids.randomUuidString(random));
+        String name = new ImageSpecifier(Uuids.randomUuidString(random))
+                .withRepository(TestCleanupRule.INCLUDE_REPOSITORY_VALUE)
+                .toString();
         test_perform_pullHelloWorld(name, null);
     }
 
     @Test
     public void perform_pullHelloWorld_tag_linux() throws Exception {
         Random random = new Random("PullImageActorTest_perform_pullHelloWorld_tag_linux".hashCode());
-        String name = String.format("%s%s", TestCleanupRule.INCLUDE_TAG_PREFIX, Uuids.randomUuidString(random));
+        String name = new ImageSpecifier(Uuids.randomUuidString(random))
+                .withRepository(TestCleanupRule.INCLUDE_REPOSITORY_VALUE)
+                .toString();
         test_perform_pullHelloWorld(name, "linux");
     }
 

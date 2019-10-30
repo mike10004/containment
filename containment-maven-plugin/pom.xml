@@ -30,7 +30,6 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
-                        <skipTests>${containment.tests.skip}</skipTests>
                         <systemPropertyVariables>
                             <containment-maven-plugin.tests.destructiveMode.enabled>${tests.destructiveMode}</containment-maven-plugin.tests.destructiveMode.enabled>
                         </systemPropertyVariables>

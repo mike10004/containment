@@ -18,6 +18,7 @@
         <docker-java.transport.artifactId>docker-java-transport-jersey</docker-java.transport.artifactId>
         <surefire.configuration.skipTests>false</surefire.configuration.skipTests>
         <failsafe.configuration.skipTests>false</failsafe.configuration.skipTests>
+        <maven.compiler.forceJavacCompilerUse>false</maven.compiler.forceJavacCompilerUse> <!-- helpful flag to set if weird compile errors arise -->
     </properties>
     <profiles>
         <profile>
@@ -74,6 +75,7 @@
                     <configuration>
                         <source>1.8</source>
                         <target>1.8</target>
+                        <forceJavacCompilerUse>${maven.compiler.forceJavacCompilerUse}</forceJavacCompilerUse>
                     </configuration>
                 </plugin>
                 <plugin>

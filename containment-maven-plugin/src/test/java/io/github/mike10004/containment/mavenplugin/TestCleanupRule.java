@@ -16,7 +16,7 @@ public class TestCleanupRule extends ExternalResource {
 
     public static final String INCLUDE_LABEL_NAME = "containment-maven-plugin-tests-include";
     public static final String INCLUDE_LABEL_VALUE = "true";
-    public static final String INCLUDE_TAG_PREFIX = "containment-tests-";
+    public static final String INCLUDE_REPOSITORY_VALUE = "containment-tests";
 
     @Override
     protected void after() {
@@ -30,7 +30,7 @@ public class TestCleanupRule extends ExternalResource {
 
     private void removeImagesByTag(DockerClient client) {
         List<Image> images = client.listImagesCmd()
-                .withImageNameFilter(INCLUDE_TAG_PREFIX + "*")
+                .withImageNameFilter(INCLUDE_REPOSITORY_VALUE + "/*")
                 .exec();
         removeImages(client, images);
     }
