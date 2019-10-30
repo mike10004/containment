@@ -85,6 +85,7 @@ public class Durations {
             case "ms":
             case "milli":
             case "millis":
+            case "millisecond":
             case "milliseconds":
             case "millisecs":
             case "millisec":
@@ -92,11 +93,13 @@ public class Durations {
             case "s":
             case "sec":
             case "secs":
+            case "second":
             case "seconds":
                 return TimeUnit.SECONDS;
             case "m":
             case "min":
             case "mins":
+            case "minute":
             case "minutes":
                 return TimeUnit.MINUTES;
         }
