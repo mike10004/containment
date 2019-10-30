@@ -24,7 +24,7 @@ public class Tests {
     }
 
     public static ImageSpecifier getImageForPrintenvTest() {
-        return getImageForTest("printenvTest.image", "alpine:3");
+        return getImageForTest("printenvTest.image", "alpine:3.10.3");
     }
 
     private static ImageSpecifier getImageForTest(String identifier, String defaultValue) {
