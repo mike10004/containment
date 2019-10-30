@@ -7,6 +7,7 @@ import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.google.common.base.Preconditions;
 import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.ImageSpecifier;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 

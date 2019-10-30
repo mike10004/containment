@@ -1,5 +1,6 @@
-package io.github.mike10004.containment.mavenplugin;
+package io.github.mike10004.containment;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,7 +42,7 @@ public class ImageSpecifier {
         checkArgument(!name.trim().isEmpty(), "name must be nonempty/nonwhitespace");
         this.tag = tag;
         this.repository = repository;
-        checkArgument(repository == null || (repository.equals(repository.toLowerCase())), "repository name must be lowercase: %s", StringUtils.abbreviate(repository, 128));
+        Preconditions.checkArgument(repository == null || (repository.equals(repository.toLowerCase())), "repository name must be lowercase: %s", StringUtils.abbreviate(repository, 128));
         this.registry = registry;
         stringification = stringify(name, tag, repository, registry);
     }

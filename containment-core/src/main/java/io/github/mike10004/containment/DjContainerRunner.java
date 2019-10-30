@@ -34,16 +34,16 @@ public class DjContainerRunner implements ContainerRunner {
     }
 
     protected CreateContainerCmd applyParametry(ContainerParametry parametry) {
-        CreateContainerCmd createCmd = client.createContainerCmd(parametry.image);
-        List<PortBinding> bindings = parametry.exposedPorts.stream().map(portNumber -> {
+        CreateContainerCmd createCmd = client.createContainerCmd(parametry.image().toString());
+        List<PortBinding> bindings = parametry.exposedPorts().stream().map(portNumber -> {
             return new PortBinding(Ports.Binding.empty(), new ExposedPort(portNumber));
         }).collect(Collectors.toList());
         HostConfig hostConfig = HostConfig.newHostConfig()
-                .withAutoRemove(true)
+                .withAutoRemove(!parametry.disableAutoRemove())
                 .withPortBindings(bindings);
         createCmd.withHostConfig(hostConfig);
-        createCmd.withCmd(parametry.command);
-        List<String> envDefinitions = parametry.env.entrySet().stream()
+        createCmd.withCmd(parametry.command());
+        List<String> envDefinitions = parametry.environment().entrySet().stream()
                 .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue())).collect(Collectors.toList());
         createCmd.withEnv(envDefinitions);
         return createCmd;

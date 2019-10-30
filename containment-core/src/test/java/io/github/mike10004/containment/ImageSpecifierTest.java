@@ -1,5 +1,6 @@
-package io.github.mike10004.containment.mavenplugin;
+package io.github.mike10004.containment;
 
+import io.github.mike10004.containment.ImageSpecifier;
 import org.junit.Test;
 
 import java.util.LinkedHashMap;

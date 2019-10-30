@@ -9,27 +9,27 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
-public class ContainerParametry {
+public interface ContainerParametry {
 
-    public final String image;
-    public final List<String> command;
-    public final List<Integer> exposedPorts;
-    public final Map<String, String> env;
+    ImageSpecifier image();
 
-    private ContainerParametry(Builder builder) {
-        image = builder.image;
-        command = builder.command;
-        exposedPorts = new ArrayList<>(builder.exposedPorts);
-        env = new LinkedHashMap<>(builder.env);
+    List<String> command();
+
+    List<Integer> exposedPorts();
+
+    Map<String, String> environment();
+
+    default boolean disableAutoRemove() {
+        return false;
     }
 
-    public static Builder builder(String image) {
+    static Builder builder(String image) {
         return new Builder(image);
     }
 
-    public static final class Builder {
+    final class Builder {
 
-        private String image;
+        private ImageSpecifier image;
 
         private List<String> command = Collections.emptyList();
 
@@ -38,7 +38,7 @@ public class ContainerParametry {
         private Map<String, String> env = new LinkedHashMap<>();
 
         private Builder(String image) {
-            this.image = requireNonNull(image);
+            this.image = ImageSpecifier.parseSpecifier(requireNonNull(image));
         }
 
         public  Builder expose(int port) {
@@ -59,7 +59,7 @@ public class ContainerParametry {
         }
 
         public ContainerParametry build() {
-            return new ContainerParametry(this);
+            return new FrozenContainerParametry(this);
         }
 
         public Builder env(String name, String value) {
@@ -69,5 +69,38 @@ public class ContainerParametry {
             return this;
         }
 
+        private static class FrozenContainerParametry implements ContainerParametry {
+
+            private final ImageSpecifier image;
+            private final List<String> command;
+            private final List<Integer> exposedPorts;
+            private final Map<String, String> env;
+
+            private FrozenContainerParametry(Builder builder) {
+                image = builder.image;
+                command = builder.command;
+                exposedPorts = new ArrayList<>(builder.exposedPorts);
+                env = new LinkedHashMap<>(builder.env);
+            }
+
+            public ImageSpecifier image() {
+                return image;
+            }
+
+            public List<String> command() {
+                return command;
+            }
+
+            public List<Integer> exposedPorts() {
+                return exposedPorts;
+            }
+
+            public Map<String, String> environment() {
+                return env;
+            }
+
+        }
+
     }
 }
+
