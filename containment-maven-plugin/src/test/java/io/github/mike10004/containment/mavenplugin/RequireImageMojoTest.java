@@ -15,11 +15,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class RequireImageMojoTest
-{
+public class RequireImageMojoTest {
+
     @Rule
-    public MojoRule rule = new MojoRule()
-    {
+    public MojoRule rule = new MojoRule() {
         @Override
         protected void before() throws Throwable 
         {
@@ -33,15 +32,18 @@ public class RequireImageMojoTest
 
     @Test
     public void test_minimal_DefaultValuesOk() throws Exception {
-        File pom = new File( getClass().getResource("/test-projects/project-to-test/pom.xml" ).toURI()).getParentFile();
+        File pom = new File( getClass().getResource("/test-projects/minimal/pom.xml" ).toURI()).getParentFile();
         assertTrue(pom.isDirectory());
         RequireImageMojo mojo = (RequireImageMojo) rule.lookupConfiguredMojo(pom, RequireImageMojo.GOAL);
         assertNotNull(mojo);
         assertNotNull("project", mojo.getProject());
+        String imageName = (String) rule.getVariableValueFromObject(mojo, "imageName");
+        assertNotNull("imageName", imageName);
         String absentImageActionValue = ( String ) rule.getVariableValueFromObject( mojo, "absentImageAction");
         assertNotNull("absentImageAction value", absentImageActionValue );
         AbsentImageAction action = AbsentImageAction.valueOf(absentImageActionValue);
-        assertNotNull(AbsentImageDirective.parse(absentImageActionValue));
+        AbsentImageDirective directive = AbsentImageDirective.parse(absentImageActionValue);
+        assertEquals(action, directive.action);
         System.out.format("getAbsentImageAction: %s%n", mojo.getAbsentImageAction());
         assertEquals(absentImageActionValue, mojo.getAbsentImageAction());
     }

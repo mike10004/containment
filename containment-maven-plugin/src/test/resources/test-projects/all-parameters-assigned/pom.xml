@@ -19,7 +19,7 @@
           <goal>require-image</goal>
         </goals>
         <configuration>
-          <name>oogabooga/not-a-real-docker-image:latest</name>
+          <imageName>oogabooga/not-a-real-docker-image:latest</imageName>
           <absentImageAction>build:\${project.basedir}/src/test/containers/my-test-image</absentImageAction>
           <buildTimeout>5min</buildTimeout>
           <pullTimeout>30 seconds</pullTimeout>

@@ -29,7 +29,7 @@ public class RequireImageMojo extends AbstractMojo {
      * Name and optionally a tag in the 'name[:tag]' format.
      */
     @Parameter( required = true )
-    private String name;
+    private String imageName;
 
     /**
      * Action to perform if the image is not present locally. Valid values are
@@ -99,12 +99,12 @@ public class RequireImageMojo extends AbstractMojo {
 
     }
 
-    public String getName() {
-        return name;
+    public String getImageName() {
+        return imageName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
     }
 
     public String getAbsentImageAction() {
@@ -143,7 +143,7 @@ public class RequireImageMojo extends AbstractMojo {
     }
 
     protected RequireImageParametry buildParametry() {
-        return RequireImageParametry.newBuilder(name)
+        return RequireImageParametry.newBuilder(imageName)
                 .buildTimeout(Durations.parseDuration(buildTimeout, RequireImageParametry.DEFAULT_BUILD_TIMEOUT))
                 .pullTimeout(Durations.parseDuration(pullTimeout, RequireImageParametry.DEFAULT_PULL_TIMEOUT))
                 .buildArgs(supplyIfNull(buildArgs, Collections::emptyMap))

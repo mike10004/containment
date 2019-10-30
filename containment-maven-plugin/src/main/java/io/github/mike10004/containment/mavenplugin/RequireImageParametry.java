@@ -48,7 +48,7 @@ public class RequireImageParametry {
     }
 
     public static Builder newBuilder(String name) {
-        return new Builder().name(name);
+        return new Builder(name);
     }
 
     static final Duration DEFAULT_BUILD_TIMEOUT = Duration.ofMinutes(30);
@@ -56,18 +56,14 @@ public class RequireImageParametry {
 
     public static final class Builder {
 
-        private String name;
+        private final String name;
         private Duration pullTimeout = DEFAULT_PULL_TIMEOUT;
         private final Map<String, String> buildArgs = new LinkedHashMap<>();
         private Duration buildTimeout = DEFAULT_BUILD_TIMEOUT;
         private final Map<String, String> labels = new LinkedHashMap<>();
 
-        private Builder() {
-        }
-
-        private Builder name(String val) {
-            name = val;
-            return this;
+        private Builder(String name) {
+            this.name = requireNonNull(name, "name");
         }
 
         public Builder pullTimeout(Duration val) {
