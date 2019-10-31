@@ -12,8 +12,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -100,7 +106,7 @@ public class DjContainerRunnerTest {
             try (RunningContainer container = runner.run(parametry)) {
                 List<PortMapping> ports = container.fetchPorts();
                 PortMapping httpdExposedPortMapping = ports.stream().filter(p -> p.containerPort == httpdPort).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
-                assertTrue("exposed", httpdExposedPortMapping.isExposed());
+                assertTrue("exposed", httpdExposedPortMapping.isBound());
                 assertNotNull(httpdExposedPortMapping.host);
                 URL url = new URL("http", "localhost", httpdExposedPortMapping.host.getPort(), "/");
                 byte[] content = new JreClient().fetchPageContent(url);
@@ -109,6 +115,59 @@ public class DjContainerRunnerTest {
         }
         System.out.println(result);
         assertEquals("page text", "<html><body><h1>It works!</h1></body></html>", result.trim());
+    }
+
+    @SuppressWarnings("SqlDialectInspection")
+    @Test
+    public void run_mysql() throws Exception {
+        Class.forName("org.mariadb.jdbc.Driver");
+        int mysqlPort = 3306;
+        String password = "sUpers3cret";
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForMysqlTest())
+                .expose(mysqlPort)
+                .env("MYSQL_ROOT_PASSWORD", password)
+                // entrypoint script supports just adding options as the command
+                .command(Arrays.asList("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--bind-address=0.0.0.0"))
+                .build();
+        List<String> colors = new ArrayList<>();
+        try (DjContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
+            try (RunningContainer container = runner.run(parametry)) {
+                int hostPort = container.fetchPorts().stream()
+                        .filter(PortMapping::isBound)
+                        .map(pm -> pm.host)
+                        .filter(Objects::nonNull)
+                        .mapToInt(FullSocketAddress::getPort)
+                        .findFirst().orElseThrow(() -> new AssertionError("port not bound"));
+                String jdbcUrl = "jdbc:mysql://127.0.0.1:" + hostPort + "/";
+                System.out.println("connecting on " + jdbcUrl);
+                String dbName = "widget_factory";
+                try (Connection conn = java.sql.DriverManager.getConnection(jdbcUrl, "root", password)) {
+                    System.out.format("connected to %s%n", jdbcUrl);
+                    try (Statement stmt = conn.createStatement()) {
+                        stmt.execute("CREATE SCHEMA " + dbName);
+                    }
+                }
+                jdbcUrl += dbName;
+                try (Connection conn = java.sql.DriverManager.getConnection(jdbcUrl, "root", password)) {
+                    System.out.format("connected to %s%n", jdbcUrl);
+                    try (Statement stmt = conn.createStatement()) {
+                        stmt.execute("CREATE TABLE `widget` (\n" +
+                                "  `widget_id` int(11) NOT NULL AUTO_INCREMENT,\n" +
+                                "  `color` varchar(31) NOT NULL DEFAULT '',\n" +
+                                "  PRIMARY KEY (`widget_id`)\n" +
+                                ") ENGINE=InnoDB;\n");
+                        stmt.execute("INSERT INTO widget (color) VALUES ('red'), ('blue'), ('green')");
+                        try (ResultSet rs = stmt.executeQuery("SELECT * FROM widget WHERE 1")) {
+                            while (rs.next()) {
+                                colors.add(rs.getString(2));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        System.out.format("fetched widgets: %s%n", colors);
+        assertEquals(Arrays.asList("red", "blue", "green"), colors);
     }
 
     private static class JreClient {

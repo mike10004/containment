@@ -12,7 +12,7 @@ public class PortMapping {
     @Nullable
     public final FullSocketAddress host;
 
-    public boolean isExposed() {
+    public boolean isBound() {
         return host != null;
     }
 

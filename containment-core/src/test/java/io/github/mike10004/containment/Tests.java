@@ -44,4 +44,7 @@ public class Tests {
     }
 
 
+    public static ImageSpecifier getImageForMysqlTest() {
+        return getImageForTest("mysqlTest.image", "mariadb:10.1");
+    }
 }
