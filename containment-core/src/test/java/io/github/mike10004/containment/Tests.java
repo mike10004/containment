@@ -27,7 +27,7 @@ public class Tests {
         return getImageForTest("printenvTest.image", "alpine:3.10.3");
     }
 
-    private static ImageSpecifier getImageForTest(String identifier, String defaultValue) {
+    public static ImageSpecifier getImageForTest(String identifier, String defaultValue) {
         String value = Settings.get(identifier);
         if (value == null) {
             value = defaultValue;
@@ -43,8 +43,4 @@ public class Tests {
         assertTrue("result content", varWasSet);
     }
 
-
-    public static ImageSpecifier getImageForMysqlTest() {
-        return getImageForTest("mysqlTest.image", "mariadb:10.1");
-    }
 }

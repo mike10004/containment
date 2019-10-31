@@ -2,10 +2,12 @@ package io.github.mike10004.containment;
 
 import com.google.common.primitives.Ints;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -18,15 +20,24 @@ import static java.util.Objects.requireNonNull;
 public class BlockableLogFollower implements Consumer<byte[]> {
 
     private final Predicate<? super byte[]> examiner;
+
     private final CountDownLatch latch;
 
+    @Nullable
+    private final PrintStream echo;
+
     public BlockableLogFollower(Predicate<? super byte[]> examiner) {
-        this(examiner, 1);
+        this(examiner, null);
     }
 
-    public BlockableLogFollower(Predicate<? super byte[]> examiner, int numSuccessesForSignal) {
+    public BlockableLogFollower(Predicate<? super byte[]> examiner, @Nullable PrintStream echo) {
+        this(examiner, 1, echo);
+    }
+
+    public BlockableLogFollower(Predicate<? super byte[]> examiner, int numSuccessesForSignal, @Nullable PrintStream echo) {
         this.examiner = requireNonNull(examiner);
         latch = new CountDownLatch(numSuccessesForSignal);
+        this.echo = echo;
     }
 
     public int remaining() {
@@ -35,6 +46,13 @@ public class BlockableLogFollower implements Consumer<byte[]> {
 
     @Override
     public void accept(byte[] bytes) {
+        if (echo != null) {
+            try {
+                echo.write(bytes);
+                echo.flush();
+            } catch (IOException ignore) {
+            }
+        }
         if (examiner.test(bytes)) {
             latch.countDown();
         }
@@ -46,7 +64,11 @@ public class BlockableLogFollower implements Consumer<byte[]> {
     }
 
     public static BlockableLogFollower untilLine(Predicate<? super String> singleLinePredicate, Charset charset) {
-        return new BlockableLogFollower(singleLinePredicate(charset, singleLinePredicate));
+        return untilLine(singleLinePredicate, charset, null);
+    }
+
+    public static BlockableLogFollower untilLine(Predicate<? super String> singleLinePredicate, Charset charset, @Nullable PrintStream echo) {
+        return new BlockableLogFollower(singleLinePredicate(charset, singleLinePredicate), echo);
     }
 
     /**

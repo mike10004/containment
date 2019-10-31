@@ -1,5 +1,7 @@
 package io.github.mike10004.containment;
 
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +61,10 @@ public interface ContainerParametry {
 
         public Builder commandToWaitIndefinitely() {
             return command(Arrays.asList("tail", "-f", "/dev/null"));
+        }
+
+        public Builder command(String first, String...others) {
+            return command(Lists.asList(first, others));
         }
 
         public Builder command(List<String> val) {

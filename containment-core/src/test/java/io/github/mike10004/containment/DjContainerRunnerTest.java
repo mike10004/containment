@@ -16,12 +16,16 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -120,17 +124,31 @@ public class DjContainerRunnerTest {
         assertEquals("page text", "<html><body><h1>It works!</h1></body></html>", result.trim());
     }
 
+    private static ImageSpecifier getImageForMysqlTest() {
+        return Tests.getImageForTest("run_mysql.image", "mariadb:10.4");
+    }
+
     @SuppressWarnings("SqlDialectInspection")
     @Test
     public void run_mysql() throws Exception {
-        Class.forName("org.mariadb.jdbc.Driver");
+        boolean verboseWait = Tests.Settings.get("run_mysql.verboseWait", false);
         int mysqlPort = 3306;
         String password = "sUpers3cret";
-        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForMysqlTest())
+        // The default bind address here was obtained by observation; future updates to the
+        // container image or to the docker engine may affect this value. It can be ascertained
+        // by `docker inspect` (NetworkSettings.Networks.bridge.IPAddress), but that must be
+        // executed on a running container, and we need this value at time of container creation.
+        // If this test starts failing, try it with bind address 0.0.0.0, and if that works,
+        // it probably means this value needs to be changed.
+        String defaultBindAddress = "172.17.0.2";
+        String bindAddress = Tests.Settings.getOpt("run_mysql.bindAddress").orElse(defaultBindAddress);
+        ContainerParametry parametry = ContainerParametry.builder(getImageForMysqlTest())
                 .expose(mysqlPort)
                 .env("MYSQL_ROOT_PASSWORD", password)
                 // entrypoint script supports just adding options as the command
-                .command(Arrays.asList("--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--bind-address=0.0.0.0"))
+                .command("--character-set-server=utf8mb4",
+                        "--collation-server=utf8mb4_unicode_ci",
+                        "--bind-address=" + bindAddress)
                 .build();
         List<String> colors = new ArrayList<>();
         try (DjContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
@@ -144,12 +162,17 @@ public class DjContainerRunnerTest {
                 String jdbcUrl = "jdbc:mysql://127.0.0.1:" + hostPort + "/";
                 System.out.println("connecting on " + jdbcUrl);
                 String dbName = "widget_factory";
-                String requiredLineSuffix = "Server socket created on IP: '0.0.0.0'.";
-                System.out.format("awaiting line ending in %s%n", requiredLineSuffix);
-                Duration mysqlStartupTimeout = Tests.Settings.timeouts().get("mysqlStartup", Duration.ofMinutes(5));
-                boolean logMessageAppeared = container.followStderr(BlockableLogFollower.untilLine(line -> line.endsWith(requiredLineSuffix), UTF_8))
+                String requiredLineRegex = "^.*Server socket created on IP: '\\d+\\.\\d+\\.\\d+\\.\\d+'\\.$";
+                System.out.format("awaiting line matching in %s%n", requiredLineRegex);
+                Duration mysqlStartupTimeout = Tests.Settings.timeouts().get("run_mysql.startup", Duration.ofMinutes(5));
+                AtomicBoolean doneWaiting = new AtomicBoolean(false);
+                if (verboseWait) {
+                    timer(Duration.ofSeconds(1), elapsed -> System.out.format("waited %s seconds for mysql up-ness%n", elapsed.getSeconds()), doneWaiting::get);
+                }
+                boolean logMessageAppeared = container.followStderr(BlockableLogFollower.untilLine(line -> line.matches(requiredLineRegex), UTF_8, System.err))
                         .await(mysqlStartupTimeout);
-                System.out.format("saw line ending in %s: %s%n", requiredLineSuffix, logMessageAppeared);
+                doneWaiting.set(true);
+                System.out.format("saw line matching %s: %s%n", requiredLineRegex, logMessageAppeared);
                 try (Connection conn = java.sql.DriverManager.getConnection(jdbcUrl, "root", password)) {
                     System.out.format("connected to %s%n", jdbcUrl);
                     try (Statement stmt = conn.createStatement()) {
@@ -157,6 +180,7 @@ public class DjContainerRunnerTest {
                     }
                 }
                 jdbcUrl += dbName;
+                Class.forName("org.mariadb.jdbc.Driver");
                 try (Connection conn = java.sql.DriverManager.getConnection(jdbcUrl, "root", password)) {
                     System.out.format("connected to %s%n", jdbcUrl);
                     try (Statement stmt = conn.createStatement()) {
@@ -177,6 +201,26 @@ public class DjContainerRunnerTest {
         }
         System.out.format("fetched widgets: %s%n", colors);
         assertEquals(Arrays.asList("red", "blue", "green"), colors);
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private static Thread timer(Duration interval, Consumer<? super Duration> action, BooleanSupplier until) {
+        Instant start = Instant.now();
+        Thread thread = new Thread(() -> {
+            while (!until.getAsBoolean()) {
+                Duration elapsed = Duration.ofMillis(Instant.now().toEpochMilli() - start.toEpochMilli());
+                action.accept(elapsed);
+                try {
+                    Thread.sleep(Durations.saturatedMilliseconds(interval));
+                } catch (InterruptedException e) {
+                    System.err.println("timer: " + e.toString());
+                    return;
+                }
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+        return thread;
     }
 
     private static class JreClient {
@@ -209,4 +253,5 @@ public class DjContainerRunnerTest {
         }
 
     }
+
 }
