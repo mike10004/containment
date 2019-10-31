@@ -7,12 +7,12 @@ public interface CreatedContainer {
     static CreatedContainer define(String containerId, String[] warnings) {
         return new CreatedContainer() {
             @Override
-            public String getId() {
+            public String id() {
                 return containerId;
             }
 
             @Override
-            public List<String> getWarnings() {
+            public List<String> warnings() {
                 return Arrays.asList(warnings);
             }
 
@@ -23,6 +23,7 @@ public interface CreatedContainer {
         };
     }
 
-    String getId();
-    List<String> getWarnings();
+    String id();
+
+    List<String> warnings();
 }

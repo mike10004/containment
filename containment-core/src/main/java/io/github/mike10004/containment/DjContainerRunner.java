@@ -65,7 +65,7 @@ public class DjContainerRunner implements ContainerRunner {
 
         @Override
         public void perform(CreatedContainer unstartedContainer) throws ContainmentException {
-            copyFileToContainer(unstartedContainer.getId(), srcFile, destinationPathname);
+            copyFileToContainer(unstartedContainer.id(), srcFile, destinationPathname);
         }
     }
 
@@ -102,7 +102,7 @@ public class DjContainerRunner implements ContainerRunner {
             try {
                 tempFile = File.createTempFile("pre-start-action", ".tmp", tmpDir);
                 java.nio.file.Files.write(tempFile.toPath(), sourceBytes, StandardOpenOption.WRITE);
-                copyFileToContainer(unstartedContainer.getId(), tempFile, destinationPathname);
+                copyFileToContainer(unstartedContainer.id(), tempFile, destinationPathname);
             } catch (DockerException | IOException e) {
                 throw new ContainmentException(e);
             } finally {
@@ -150,7 +150,7 @@ public class DjContainerRunner implements ContainerRunner {
                  */
                 return;
             }
-            String containerId = info.getId();
+            String containerId = info.id();
             try {
                 client.removeContainerCmd(containerId).withForce(true).exec();
             } catch (DockerException e) {
@@ -175,12 +175,12 @@ public class DjContainerRunner implements ContainerRunner {
         public synchronized RunningContainer start() throws ContainmentException {
             CreatedContainer info = info();
             try {
-                client.startContainerCmd(info.getId()).exec();
+                client.startContainerCmd(info.id()).exec();
                 started.getAndSet(true);
             } catch (DockerException e) {
                 throw new ContainmentException(e);
             }
-            return new DjRunningContainer(client, info.getId());
+            return new DjRunningContainer(client, info.id());
         }
 
     }

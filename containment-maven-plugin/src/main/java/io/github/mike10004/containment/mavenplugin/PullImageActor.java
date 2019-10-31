@@ -6,6 +6,7 @@ import com.github.dockerjava.api.command.TagImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.google.common.base.Preconditions;
+import io.github.mike10004.containment.BlockableCallback;
 import io.github.mike10004.containment.DockerManager;
 import io.github.mike10004.containment.ImageSpecifier;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -27,7 +28,7 @@ class PullImageActor extends ClientAbsentImageActor {
         DockerClient client = dockerManager.buildClient();
         ImageSpecifier remoteImageSpec = ImageSpecifier.parseSpecifier(remoteImageName).withDefaultTag("latest");
         PullImageCmd cmd = client.pullImageCmd(remoteImageSpec.toString());
-        BlockableCallback<PullResponseItem> callback = new BlockableCallback<>();
+        BlockableCallback<PullResponseItem> callback = BlockableCallback.createSuccessCheckingCallback(PullResponseItem::isPullSuccessIndicated);
         cmd.exec(callback);
         try {
             callback.completeOrThrowException(parametry.pullTimeout, () -> new MojoExecutionException("pull timeout exceeded"));
@@ -35,7 +36,7 @@ class PullImageActor extends ClientAbsentImageActor {
             throw new MojoExecutionException("interrupted while waiting for pull to complete", e);
         }
         logger().info(String.format("pull %s completed", remoteImageName));
-        boolean successful = callback.checkSucceeded(PullResponseItem::isPullSuccessIndicated);
+        boolean successful = callback.checkSucceeded();
         logger().info("image build complete; success: " + successful);
         if (!successful) {
             throw new MojoExecutionException("build completed unsuccessfully: " + callback.summarize());

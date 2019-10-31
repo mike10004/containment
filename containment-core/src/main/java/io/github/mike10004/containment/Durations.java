@@ -110,4 +110,11 @@ public class Durations {
         }
     }
 
+    public static long saturatedMilliseconds(Duration duration) {
+        try {
+            return duration.toMillis();
+        } catch (ArithmeticException ignore) {
+            return Long.MAX_VALUE;
+        }
+    }
 }

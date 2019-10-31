@@ -1,13 +1,21 @@
 package io.github.mike10004.containment;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.async.ResultCallbackTemplate;
+import com.github.dockerjava.api.command.LogContainerCmd;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Frame;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 class DjRunningContainer implements RunningContainer {
 
@@ -80,6 +88,44 @@ class DjRunningContainer implements RunningContainer {
             }
         } catch (com.github.dockerjava.api.exception.DockerException e) {
             throw new ContainmentException(e);
+        }
+    }
+
+    @Override
+    public <C extends Consumer<? super byte[]>> C followStdout(C consumer) throws ContainmentException {
+        return followStream(ProcessOutputStreamType.stdout, consumer);
+    }
+
+    @Override
+    public <C extends Consumer<? super byte[]>> C followStderr(C consumer) throws ContainmentException {
+        return followStream(ProcessOutputStreamType.stderr, consumer);
+    }
+
+    private <C extends Consumer<? super byte[]>> C followStream(ProcessOutputStreamType stream, C consumer) throws ContainmentException {
+        LogContainerCmd logStdoutCmd = client.logContainerCmd(id())
+                .withFollowStream(true)
+                .withStdOut(stream.isStdout())
+                .withStdErr(stream.isStderr())
+                .withTailAll();
+        try {
+            logStdoutCmd.exec(new LogCallback(consumer));
+            return consumer;
+        } catch (DockerException e) {
+            throw new ContainmentException(e);
+        }
+    }
+
+    private static class LogCallback extends ResultCallbackTemplate<ResultCallback<Frame>, Frame> {
+
+        private final Consumer<? super byte[]> consumer;
+
+        private LogCallback(Consumer<? super byte[]> consumer) {
+            this.consumer = requireNonNull(consumer, "byte consumer");
+        }
+
+        @Override
+        public void onNext(Frame object) {
+            consumer.accept(object.getPayload());
         }
     }
 }

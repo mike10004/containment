@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.BuildResponseItem;
+import io.github.mike10004.containment.BlockableCallback;
 import io.github.mike10004.containment.DockerManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -45,7 +46,7 @@ class BuildImageActor extends ClientAbsentImageActor {
             dockerfileDir = new File(directiveParameter);
         }
         BuildImageCmd buildCmd = createCommand(parametry, dockerfileDir);
-        BlockableCallback<BuildResponseItem> callback = new BlockableCallback<>();
+        BlockableCallback<BuildResponseItem> callback = BlockableCallback.createSuccessCheckingCallback(BuildResponseItem::isBuildSuccessIndicated);
         logger().info(String.format("starting build of %s using path %s", parametry.name, dockerfileDir));
         buildCmd.exec(callback);
         try {
@@ -53,7 +54,7 @@ class BuildImageActor extends ClientAbsentImageActor {
         } catch (InterruptedException e) {
             throw new MojoExecutionException("interrupted while waiting for build to complete", e);
         }
-        boolean successful = callback.checkSucceeded(BuildResponseItem::isBuildSuccessIndicated);
+        boolean successful = callback.checkSucceeded();
         logger().info("image build complete; success: " + successful);
         if (!successful) {
             throw new MojoExecutionException("build completed unsuccessfully: " + callback.summarize());

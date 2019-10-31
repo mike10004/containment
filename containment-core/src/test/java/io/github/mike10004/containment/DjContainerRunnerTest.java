@@ -15,6 +15,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,7 +65,7 @@ public class DjContainerRunnerTest {
 
         @Override
         public void perform(CreatedContainer unstartedContainer) {
-            client.copyArchiveToContainerCmd(unstartedContainer.getId())
+            client.copyArchiveToContainerCmd(unstartedContainer.id())
                     .withHostResource(srcFile.getAbsolutePath())
                     .withRemotePath(destination)
                     .exec();
@@ -143,6 +144,12 @@ public class DjContainerRunnerTest {
                 String jdbcUrl = "jdbc:mysql://127.0.0.1:" + hostPort + "/";
                 System.out.println("connecting on " + jdbcUrl);
                 String dbName = "widget_factory";
+                String requiredLineSuffix = "Server socket created on IP: '0.0.0.0'.";
+                System.out.format("awaiting line ending in %s%n", requiredLineSuffix);
+                Duration mysqlStartupTimeout = Tests.Settings.timeouts().get("mysqlStartup", Duration.ofMinutes(5));
+                boolean logMessageAppeared = container.followStderr(BlockableLogFollower.untilLine(line -> line.endsWith(requiredLineSuffix), UTF_8))
+                        .await(mysqlStartupTimeout);
+                System.out.format("saw line ending in %s: %s%n", requiredLineSuffix, logMessageAppeared);
                 try (Connection conn = java.sql.DriverManager.getConnection(jdbcUrl, "root", password)) {
                     System.out.format("connected to %s%n", jdbcUrl);
                     try (Statement stmt = conn.createStatement()) {
