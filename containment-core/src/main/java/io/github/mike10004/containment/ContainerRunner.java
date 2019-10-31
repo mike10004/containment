@@ -5,7 +5,9 @@ public interface ContainerRunner extends AutoCloseable {
     RunnableContainer create(ContainerParametry parametry) throws ContainmentException;
 
     default RunningContainer run(ContainerParametry parametry) throws ContainmentException {
-        return create(parametry).start();
+        try (RunnableContainer createdContainer = create(parametry)) {
+            return createdContainer.start();
+        }
     }
 
 

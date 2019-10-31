@@ -84,8 +84,10 @@ public class DjContainerRunnerTest {
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
         PreCopier copier = new PreCopier(client, file, copiedFileDestDir);
-        try (ContainerRunner runner = new DjContainerRunner(client)) {
-            try (RunningContainer container = runner.create(parametry).prepare(copier).start()) {
+        try (ContainerRunner runner = new DjContainerRunner(client);
+            RunnableContainer runnableContainer = runner.create(parametry)) {
+            runnableContainer.execute(copier);
+            try (RunningContainer container = runnableContainer.start()) {
                 DockerExecutor executor = new DockerExecExecutor(container.id(), Collections.emptyMap(), UTF_8);
                 result = executor.execute("cat", pathnameOfFileInContainer);
             }

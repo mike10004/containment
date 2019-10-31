@@ -14,9 +14,8 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -65,17 +64,20 @@ public class DjContainerRunner implements ContainerRunner {
         }
 
         @Override
-        public void perform(CreatedContainer unstartedContainer) {
+        public void perform(CreatedContainer unstartedContainer) throws ContainmentException {
             copyFileToContainer(unstartedContainer.getId(), srcFile, destinationPathname);
         }
     }
 
-    private void copyFileToContainer(String containerId, File srcFile, String destinationPathname) {
-        client.copyArchiveToContainerCmd(containerId)
-                .withHostResource(srcFile.getAbsolutePath())
-                .withRemotePath(destinationPathname)
-                .exec();
-
+    private void copyFileToContainer(String containerId, File srcFile, String destinationPathname) throws ContainmentException {
+        try {
+            client.copyArchiveToContainerCmd(containerId)
+                    .withHostResource(srcFile.getAbsolutePath())
+                    .withRemotePath(destinationPathname)
+                    .exec();
+        } catch (DockerException e) {
+            throw new ContainmentException(e);
+        }
     }
 
     protected File getTemporaryDirectory() {
@@ -114,86 +116,71 @@ public class DjContainerRunner implements ContainerRunner {
 
     public class DjRunnableContainer implements RunnableContainer {
 
-        private final List<PreStartAction> preStartActions;
+        private final CreatedContainer info;
+        private final AtomicBoolean started;
+        private final boolean autoRemove;
 
-        private String containerId;
-        private String[] warnings;
-
-        private DjRunnableContainer(String containerId, String[] warnings) {
-            this.containerId = containerId;
-            this.warnings = warnings;
-            preStartActions = new ArrayList<>();
+        private DjRunnableContainer(String containerId, String[] warnings, boolean autoRemove) {
+            this.info = CreatedContainer.define(containerId, warnings);
+            started = new AtomicBoolean(false);
+            this.autoRemove = autoRemove;
         }
 
         @Override
         public CreatedContainer info() {
-            return new CreatedContainer() {
-                @Override
-                public String getId() {
-                    return containerId;
-                }
-
-                @Override
-                public List<String> getWarnings() {
-                    return Arrays.asList(warnings);
-                }
-            };
+            return info;
         }
 
         @Override
-        public synchronized DjRunnableContainer prepare(PreStartAction preStartAction) {
-            preStartActions.add(preStartAction);
-            return this;
+        public void execute(PreStartAction preStartAction) throws ContainmentException {
+            preStartAction.perform(info);
         }
 
-        private void tryRemoval() {
-            client.removeContainerCmd(containerId).withForce(true);
+        @Override
+        public synchronized void close() throws ContainmentException {
+            maybeRemove();
+        }
+
+        private void maybeRemove() throws ContainmentException {
+            boolean hasBeenStarted = started.get();
+            if (hasBeenStarted && autoRemove) {
+                /*
+                 * Then the container will be removed when it stops, so we don't
+                 * have to do remove it explicitly.
+                 */
+                return;
+            }
+            String containerId = info.getId();
+            try {
+                client.removeContainerCmd(containerId).withForce(true).exec();
+            } catch (DockerException e) {
+                throw new ContainmentException(e);
+            }
         }
 
         /**
          * Adds a pre-start action that copies a file to the container.
          * @param sourceFile
          * @param destinationPathname
-         * @return
          */
-        public DjRunnableContainer copyToContainer(File sourceFile, String destinationPathname) {
-            return prepare(new CopyFileAction(sourceFile, destinationPathname));
+        public void copyToContainer(File sourceFile, String destinationPathname) throws ContainmentException {
+            execute(new CopyFileAction(sourceFile, destinationPathname));
         }
 
-        public DjRunnableContainer copyToContainer(byte[] sourceBytes, String destinationPathname) {
-            return prepare(new CopyBytesAction(getTemporaryDirectory(), sourceBytes, destinationPathname));
+        public void copyToContainer(byte[] sourceBytes, String destinationPathname) throws ContainmentException {
+            execute(new CopyBytesAction(getTemporaryDirectory(), sourceBytes, destinationPathname));
         }
 
         @Override
         public synchronized RunningContainer start() throws ContainmentException {
             CreatedContainer info = info();
             try {
-                for (PreStartAction action : preStartActions) {
-                    action.perform(info);
-                }
-            } catch (Exception e) {
-                ContainmentException percolator = null;
-                try {
-                    tryRemoval();
-                } catch (Exception removalError) {
-                    percolator = new ContainmentException("pre-start action failed and removal of unstarted container failed due to " + removalError, e);
-                }
-                if (percolator == null) {
-                    if (e instanceof ContainmentException) {
-                        throw (ContainmentException) e;
-                    } else {
-                        throw new ContainmentException("pre-start action failed", e);
-                    }
-                } else {
-                    throw percolator;
-                }
-            }
-            try {
-                client.startContainerCmd(containerId).exec();
+                client.startContainerCmd(info.getId()).exec();
+                started.getAndSet(true);
             } catch (DockerException e) {
                 throw new ContainmentException(e);
             }
-            return new DjRunningContainer(client, containerId);
+            return new DjRunningContainer(client, info.getId());
         }
 
     }
@@ -205,7 +192,8 @@ public class DjContainerRunner implements ContainerRunner {
             CreateContainerResponse create = createCmd.exec();
             String[] warnings = ArrayUtil.nullToEmpty(create.getWarnings());
             String containerId = create.getId();
-            return new DjRunnableContainer(containerId, warnings);
+            boolean autoRemoveEnabled = !parametry.disableAutoRemove();
+            return new DjRunnableContainer(containerId, warnings, autoRemoveEnabled);
         } catch (DockerException e) {
             throw new ContainmentException(e);
         }
