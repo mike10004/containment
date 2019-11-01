@@ -51,7 +51,7 @@ public class Tests {
     public static DockerManager mockDockerManager() {
         return new DockerManager() {
             @Override
-            public DockerClient buildClient() {
+            public DockerClient getClient() {
                 throw new UnsupportedOperationException("not supported by mock");
             }
 
@@ -68,7 +68,7 @@ public class Tests {
     }
 
     public static void enforceImageDoesNotExistLocally(DockerManager dockerManager, String remoteImageName) {
-        DockerClient client = dockerManager.buildClient();
+        DockerClient client = dockerManager.getClient();
         List<Image> locals = client.listImagesCmd().withImageNameFilter(remoteImageName).exec();
         if (!locals.isEmpty()) {
             Verify.verify(locals.size() == 1, "expect exactly one image matching %s, but got %s", remoteImageName, locals);

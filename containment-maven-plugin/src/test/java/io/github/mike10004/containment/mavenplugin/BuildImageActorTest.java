@@ -61,7 +61,7 @@ public class BuildImageActorTest {
     }
 
     private void confirmBasicImageBuilt(DockerManager dockerManager, String imageName) throws IOException {
-        DockerClient client = dockerManager.buildClient();
+        DockerClient client = dockerManager.getClient();
         File tarFile = new File(tempdir.newFolder(), imageName + ".tar");
 
         try (InputStream in = client.saveImageCmd(imageName).exec();

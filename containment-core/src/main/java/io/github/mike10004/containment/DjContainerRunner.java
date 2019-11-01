@@ -27,7 +27,7 @@ public class DjContainerRunner implements ContainerRunner {
     private final ContainerMonitor containerMonitor;
 
     public DjContainerRunner(DockerManager dockerManager) {
-        this(dockerManager.buildClient(), dockerManager.getContainerMonitor());
+        this(dockerManager.getClient(), dockerManager.getContainerMonitor());
     }
 
     public DjContainerRunner(DockerClient client, ContainerMonitor containerMonitor) {

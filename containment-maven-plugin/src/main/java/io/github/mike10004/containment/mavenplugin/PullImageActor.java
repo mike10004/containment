@@ -25,7 +25,7 @@ class PullImageActor extends ClientAbsentImageActor {
     @Override
     public void perform(RequireImageParametry parametry, @Nullable String directiveParameter) throws MojoExecutionException, DockerException {
         String remoteImageName = resolveRemoteName(parametry, directiveParameter);
-        DockerClient client = dockerManager.buildClient();
+        DockerClient client = dockerManager.getClient();
         ImageSpecifier remoteImageSpec = ImageSpecifier.parseSpecifier(remoteImageName).withDefaultTag("latest");
         PullImageCmd cmd = client.pullImageCmd(remoteImageSpec.toString());
         BlockableCallback<PullResponseItem> callback = BlockableCallback.createSuccessCheckingCallback(PullResponseItem::isPullSuccessIndicated);

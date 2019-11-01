@@ -7,14 +7,14 @@ import java.util.List;
 
 public interface DockerManager {
 
-    DockerClient buildClient();
+    DockerClient getClient();
 
     default boolean queryImageExistsLocally(DockerClient client, String imageName) {
         return !queryImagesByName(client, imageName).isEmpty();
     }
 
     default boolean queryImageExistsLocally(String imageName) {
-        return queryImageExistsLocally(buildClient(), imageName);
+        return queryImageExistsLocally(getClient(), imageName);
     }
 
     List<Image> queryImagesByName(DockerClient client, String imageName);

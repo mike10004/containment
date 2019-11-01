@@ -10,25 +10,21 @@ import static java.util.Objects.requireNonNull;
 
 public class DefaultDockerManager implements DockerManager {
 
-    private final DockerClientConfig clientConfig;
+    private final DockerClient dockerClient;
     private final ContainerMonitor containerMonitor;
 
-    public DefaultDockerManager(DockerClientConfig clientConfig) {
-        this(clientConfig, new ShutdownHookContainerMonitor(buildClient(clientConfig)));
-    }
-
-    public DefaultDockerManager(DockerClientConfig clientConfig, ContainerMonitor containerMonitor) {
-        this.clientConfig = requireNonNull(clientConfig);
+    public DefaultDockerManager(DockerClient dockerClient, ContainerMonitor containerMonitor) {
+        this.dockerClient = requireNonNull(dockerClient);
         this.containerMonitor = requireNonNull(containerMonitor);
     }
 
-    private static DockerClient buildClient(DockerClientConfig clientConfig) {
+    protected static DockerClient buildClient(DockerClientConfig clientConfig) {
         return DockerClientBuilder.getInstance(clientConfig).build();
     }
 
     @Override
-    public final DockerClient buildClient() {
-        return buildClient(clientConfig);
+    public final DockerClient getClient() {
+        return dockerClient;
     }
 
     @Override

@@ -16,7 +16,8 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of a container monitor that adds a JVM shutdown hook
- * to stop and remove containers.
+ * to stop and remove containers. Instantiation of this class should
+ * be kept to a minimum
  */
 public class ShutdownHookContainerMonitor extends ManualContainerMonitor {
 
