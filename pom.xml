@@ -85,6 +85,7 @@
                         <skipTests>${surefire.configuration.skipTests}</skipTests>
                         <systemPropertyVariables>
                             <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+                            <containment-core.shutdownHook.verbose>true</containment-core.shutdownHook.verbose>
                         </systemPropertyVariables>
                     </configuration>
                 </plugin>

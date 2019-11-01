@@ -17,7 +17,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class ShutdownHookContainerMonitor extends ManualContainerMonitor {
 
-    public static final String SYSPROP_VERBOSE = "containment-core.globalContainerMonitor.verbose";
+    public static final String SYSPROP_VERBOSE = "containment-core.shutdownHook.verbose";
 
     private static final Logger log = Logger.getLogger(ShutdownHookContainerMonitor.class.getName());
 
