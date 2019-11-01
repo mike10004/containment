@@ -45,9 +45,10 @@ public class DjContainerRunnerTest {
                 .build();
 
         DockerSubprocessResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
-            try (RunningContainer container = runner.run(parametry)) {
-                DockerExecutor executor = new DockerExecExecutor(container.id(), Collections.emptyMap(), UTF_8);
+        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+             RunnableContainer runnable = runner.create(parametry)) {
+            try (RunningContainer container = runnable.start()) {
+                DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
                 result = executor.execute("printenv");
             }
         }
@@ -68,7 +69,7 @@ public class DjContainerRunnerTest {
         }
 
         @Override
-        public void perform(CreatedContainer unstartedContainer) {
+        public void perform(ContainerInfo unstartedContainer) {
             client.copyArchiveToContainerCmd(unstartedContainer.id())
                     .withHostResource(srcFile.getAbsolutePath())
                     .withRemotePath(destination)
@@ -89,11 +90,11 @@ public class DjContainerRunnerTest {
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
         PreCopier copier = new PreCopier(client, file, copiedFileDestDir);
-        try (ContainerRunner runner = new DjContainerRunner(client);
+        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
             RunnableContainer runnableContainer = runner.create(parametry)) {
             runnableContainer.execute(copier);
             try (RunningContainer container = runnableContainer.start()) {
-                DockerExecutor executor = new DockerExecExecutor(container.id(), Collections.emptyMap(), UTF_8);
+                DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
                 result = executor.execute("cat", pathnameOfFileInContainer);
             }
         }
@@ -109,8 +110,9 @@ public class DjContainerRunnerTest {
                 .expose(httpdPort)
                 .build();
         String result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
-            try (RunningContainer container = runner.run(parametry)) {
+        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+             RunnableContainer runnable = runner.create(parametry)) {
+            try (RunningContainer container = runnable.start()) {
                 List<PortMapping> ports = container.fetchPorts();
                 PortMapping httpdExposedPortMapping = ports.stream().filter(p -> p.containerPort == httpdPort).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
                 assertTrue("exposed", httpdExposedPortMapping.isBound());
@@ -151,8 +153,9 @@ public class DjContainerRunnerTest {
                         "--bind-address=" + bindAddress)
                 .build();
         List<String> colors = new ArrayList<>();
-        try (DjContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
-            try (RunningContainer container = runner.run(parametry)) {
+        try (DjContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+             RunnableContainer runnable = runner.create(parametry)) {
+            try (RunningContainer container = runnable.start()) {
                 int hostPort = container.fetchPorts().stream()
                         .filter(PortMapping::isBound)
                         .map(pm -> pm.host)

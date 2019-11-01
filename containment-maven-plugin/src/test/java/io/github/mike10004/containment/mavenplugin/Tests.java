@@ -5,6 +5,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.google.common.base.Verify;
+import io.github.mike10004.containment.ContainerMonitor;
 import io.github.mike10004.containment.DockerManager;
 import io.github.mike10004.nitsick.SettingSet;
 import org.junit.Assume;
@@ -16,7 +17,7 @@ import java.util.function.Function;
 public class Tests {
 
     private static final String SYSPROP_PREFIX = "containment-maven-plugin.tests";
-    public static final SettingSet Settings = SettingSet.global(SYSPROP_PREFIX);
+    public static final SettingSet Settings = SettingSet.system(SYSPROP_PREFIX);
     private static final AtomicBoolean anyClientsCreated = new AtomicBoolean();
 
     public static boolean isRealDockerManagerAnyClientsCreated() {
@@ -35,15 +36,11 @@ public class Tests {
         return transform.apply(value);
     }
 
+    private static final DockerClientConfig DOCKER_CLIENT_CONFIG = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+    private static final DockerManager DOCKER_MANAGER = new MojoDockerManager(DOCKER_CLIENT_CONFIG);
+
     public static DockerManager realDockerManager() {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        return new MojoDockerManager(config) {
-            @Override
-            public DockerClient buildClient() {
-                anyClientsCreated.set(true);
-                return super.buildClient();
-            }
-        };
+        return DOCKER_MANAGER;
     }
 
     public static void assumeDestructiveModeEnabled() {
@@ -55,12 +52,17 @@ public class Tests {
         return new DockerManager() {
             @Override
             public DockerClient buildClient() {
-                throw new UnsupportedOperationException("not supported in mock");
+                throw new UnsupportedOperationException("not supported by mock");
             }
 
             @Override
             public List<Image> queryImagesByName(DockerClient client, String imageName) {
-                throw new UnsupportedOperationException("not supported in mock");
+                throw new UnsupportedOperationException("not supported by mock");
+            }
+
+            @Override
+            public ContainerMonitor getContainerMonitor() {
+                throw new UnsupportedOperationException("not supported by mock");
             }
         };
     }

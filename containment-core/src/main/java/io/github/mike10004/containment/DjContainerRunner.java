@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -23,9 +24,15 @@ import static java.util.Objects.requireNonNull;
 public class DjContainerRunner implements ContainerRunner {
 
     private final DockerClient client;
+    private final ContainerMonitor containerMonitor;
 
-    public DjContainerRunner(DockerClient client) {
-        this.client = requireNonNull(client);
+    public DjContainerRunner(DockerManager dockerManager) {
+        this(dockerManager.buildClient(), dockerManager.getContainerMonitor());
+    }
+
+    public DjContainerRunner(DockerClient client, ContainerMonitor containerMonitor) {
+        this.client = requireNonNull(client, "client");
+        this.containerMonitor = requireNonNull(containerMonitor, "containerMonitor");
     }
 
     @Override
@@ -64,7 +71,7 @@ public class DjContainerRunner implements ContainerRunner {
         }
 
         @Override
-        public void perform(CreatedContainer unstartedContainer) throws ContainmentException {
+        public void perform(ContainerInfo unstartedContainer) throws ContainmentException {
             copyFileToContainer(unstartedContainer.id(), srcFile, destinationPathname);
         }
     }
@@ -97,7 +104,7 @@ public class DjContainerRunner implements ContainerRunner {
         }
 
         @Override
-        public void perform(CreatedContainer unstartedContainer) throws ContainmentException {
+        public void perform(ContainerInfo unstartedContainer) throws ContainmentException {
             File tempFile = null;
             try {
                 tempFile = File.createTempFile("pre-start-action", ".tmp", tmpDir);
@@ -116,18 +123,18 @@ public class DjContainerRunner implements ContainerRunner {
 
     public class DjRunnableContainer implements RunnableContainer {
 
-        private final CreatedContainer info;
+        private final ContainerInfo info;
         private final AtomicBoolean started;
         private final boolean autoRemove;
 
-        private DjRunnableContainer(String containerId, String[] warnings, boolean autoRemove) {
-            this.info = CreatedContainer.define(containerId, warnings);
+        private DjRunnableContainer(ContainerInfo info, boolean autoRemove) {
+            this.info = requireNonNull(info, "info");
             started = new AtomicBoolean(false);
             this.autoRemove = autoRemove;
         }
 
         @Override
-        public CreatedContainer info() {
+        public ContainerInfo info() {
             return info;
         }
 
@@ -139,6 +146,7 @@ public class DjContainerRunner implements ContainerRunner {
         @Override
         public synchronized void close() throws ContainmentException {
             maybeRemove();
+            containerMonitor.removed(info.id());
         }
 
         private void maybeRemove() throws ContainmentException {
@@ -173,27 +181,32 @@ public class DjContainerRunner implements ContainerRunner {
 
         @Override
         public synchronized RunningContainer start() throws ContainmentException {
-            CreatedContainer info = info();
+            ContainerInfo info = info();
             try {
                 client.startContainerCmd(info.id()).exec();
                 started.getAndSet(true);
+                containerMonitor.started(info.id());
             } catch (DockerException e) {
                 throw new ContainmentException(e);
             }
-            return new DjRunningContainer(client, info.id());
+            return new DjRunningContainer(client, info, containerMonitor);
         }
 
     }
 
     @Override
-    public DjRunnableContainer create(ContainerParametry parametry) throws ContainmentException {
+    public DjRunnableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException {
         try {
             CreateContainerCmd createCmd = applyParametry(parametry);
             CreateContainerResponse create = createCmd.exec();
             String[] warnings = ArrayUtil.nullToEmpty(create.getWarnings());
+            for (String warning : warnings) {
+                warningListener.accept(warning);
+            }
             String containerId = create.getId();
+            containerMonitor.created(containerId);
             boolean autoRemoveEnabled = !parametry.disableAutoRemove();
-            return new DjRunnableContainer(containerId, warnings, autoRemoveEnabled);
+            return new DjRunnableContainer(ContainerInfo.define(containerId), autoRemoveEnabled);
         } catch (DockerException e) {
             throw new ContainmentException(e);
         }

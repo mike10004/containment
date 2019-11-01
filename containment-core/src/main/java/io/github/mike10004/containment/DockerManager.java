@@ -19,4 +19,5 @@ public interface DockerManager {
 
     List<Image> queryImagesByName(DockerClient client, String imageName);
 
+    ContainerMonitor getContainerMonitor();
 }

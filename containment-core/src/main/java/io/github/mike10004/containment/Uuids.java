@@ -1,4 +1,4 @@
-package io.github.mike10004.containment.mavenplugin;
+package io.github.mike10004.containment;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;

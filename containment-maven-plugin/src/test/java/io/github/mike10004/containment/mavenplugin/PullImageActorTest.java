@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
 import io.github.mike10004.containment.DockerManager;
 import io.github.mike10004.containment.ImageSpecifier;
+import io.github.mike10004.containment.Uuids;
 import org.junit.ClassRule;
 import org.junit.Test;
 

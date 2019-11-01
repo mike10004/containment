@@ -13,7 +13,7 @@ public class Tests {
 
     public static final String SETTINGS_DOMAIN = "containment-core.tests";
 
-    public static final SettingSet Settings = SettingSet.global(SETTINGS_DOMAIN);
+    public static final SettingSet Settings = SettingSet.system(SETTINGS_DOMAIN);
 
     public static ImageSpecifier getImageForEchoTest() {
         return getImageForTest("echoTest.image", "busybox:latest");

@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 public interface RunningContainer extends AutoCloseable {
 
-    String id();
+    ContainerInfo info();
 
     @Override
     void close() throws ContainmentException;

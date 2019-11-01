@@ -2,7 +2,6 @@ package io.github.mike10004.containment;
 
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +16,10 @@ public class DockerExecExecutorTest {
                 .commandToWaitIndefinitely()
                 .build();
         DockerSubprocessResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
-            try (RunningContainer container = runner.run(parametry)) {
-                DockerExecutor executor = new DockerExecExecutor(container.id(), new HashMap<>(), UTF_8);
+        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+             RunnableContainer runnable = runner.create(parametry)) {
+            try (RunningContainer container = runnable.start()) {
+                DockerExecutor executor = new DockerExecExecutor(container.info().id(), new HashMap<>(), UTF_8);
                 result = executor.execute("echo", "hello, world");
             }
         }
@@ -35,11 +35,12 @@ public class DockerExecExecutorTest {
                 .build();
 
         DockerSubprocessResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance().buildClient())) {
-            try (RunningContainer container = runner.run(parametry)) {
+        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+             RunnableContainer runnable = runner.create(parametry)) {
+            try (RunningContainer container = runnable.start()) {
                 Map<String, String> processEnvironment = new HashMap<>();
                 processEnvironment.put("FOO", "bar");
-                DockerExecutor executor = new DockerExecExecutor(container.id(), processEnvironment, UTF_8);
+                DockerExecutor executor = new DockerExecExecutor(container.info().id(), processEnvironment, UTF_8);
                 result = executor.execute("printenv");
             }
         }

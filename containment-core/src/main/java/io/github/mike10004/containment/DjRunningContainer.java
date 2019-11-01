@@ -20,12 +20,14 @@ import static java.util.Objects.requireNonNull;
 class DjRunningContainer implements RunningContainer {
 
     private final DockerClient client;
-    private final String containerId;
+    private final ContainerInfo info;
     private final LoadingCache<Datum, String> cache;
+    private final ContainerMonitor containerManager;
 
-    public DjRunningContainer(DockerClient client, String containerId) {
+    public DjRunningContainer(DockerClient client, ContainerInfo info, ContainerMonitor containerManager) {
         this.client = client;
-        this.containerId = containerId;
+        this.info = info;
+        this.containerManager = requireNonNull(containerManager);
         cache = CacheBuilder.newBuilder().build(new CacheLoader<Datum, String>() {
             @Override
             public String load(@SuppressWarnings("NullableProblems") Datum key) throws ContainmentException {
@@ -40,8 +42,8 @@ class DjRunningContainer implements RunningContainer {
     }
 
     @Override
-    public String id() {
-        return containerId;
+    public ContainerInfo info() {
+        return info;
     }
 
     @Override
@@ -60,7 +62,7 @@ class DjRunningContainer implements RunningContainer {
     private String execute(Datum d) throws ContainmentException {
         switch (d) {
             case PS:
-                return executePs_(id());
+                return executePs_(info().id());
             case INSPECT:
                 throw new UnsupportedOperationException("inspect is not yet implemented");
             default:
@@ -79,12 +81,15 @@ class DjRunningContainer implements RunningContainer {
     @Override
     public void close() throws ContainmentException {
         try {
+            String id = info().id();
             try {
-                client.stopContainerCmd(id())
+                client.stopContainerCmd(id)
                         .withTimeout(1)
                         .exec();
+                containerManager.stopped(id);
             } catch (NotFoundException e) {
                 // probably means container was terminated through other means
+                containerManager.stopped(id);
             }
         } catch (com.github.dockerjava.api.exception.DockerException e) {
             throw new ContainmentException(e);
@@ -102,7 +107,7 @@ class DjRunningContainer implements RunningContainer {
     }
 
     private <C extends Consumer<? super byte[]>> C followStream(ProcessOutputStreamType stream, C consumer) throws ContainmentException {
-        LogContainerCmd logStdoutCmd = client.logContainerCmd(id())
+        LogContainerCmd logStdoutCmd = client.logContainerCmd(info().id())
                 .withFollowStream(true)
                 .withStdOut(stream.isStdout())
                 .withStdErr(stream.isStderr())
