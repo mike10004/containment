@@ -52,7 +52,7 @@ public class PullImageActorTest {
     }
 
     private void confirmTaggedImageExists(DockerManager dockerManager, String name) {
-        DockerClient client = dockerManager.getClient();
+        DockerClient client = dockerManager.openClient();
         List<Image> images = dockerManager.queryImagesByName(client, name);
         if (images.isEmpty()) {
             images = client.listImagesCmd().withShowAll(true).exec();

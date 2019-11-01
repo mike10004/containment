@@ -1,6 +1,12 @@
 package io.github.mike10004.containment.mavenplugin;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientConfig;
+import io.github.mike10004.containment.ContainerMonitor;
+import io.github.mike10004.containment.DockerClientBuilder;
 import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.ShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.Durations;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -130,16 +136,28 @@ public class RequireImageMojo extends AbstractMojo {
         };
     }
 
+    private static DockerClientConfig createConfig(MavenProject project, RequireImageParametry parametry) {
+        // TODO parameterize config builder from maven project and require-image goal configuration
+        return DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+    }
+
     public void execute() throws MojoExecutionException {
         requireNonNull(absentImageAction, "absentImageAction");
         AbsentImageDirective directive = AbsentImageDirective.parse(absentImageAction);
         RequireImageParametry parametry = buildParametry();
-        DockerManager dockerManager = MojoDockerManager.fromParametry(project, parametry);
+        DockerClientConfig clientConfig = createConfig(getProject(), parametry);
+        ContainerMonitor containerMonitor = createContainerMonitor(clientConfig);
+        DockerManager dockerManager = new MojoDockerManager(clientConfig, containerMonitor);
         boolean existsLocally = dockerManager.queryImageExistsLocally(parametry.name);
         if (!existsLocally) {
             AbsentImageActor actor = determineActor(dockerManager, directive);
             actor.perform(parametry, directive.parameter);
         }
+    }
+
+    protected ContainerMonitor createContainerMonitor(DockerClientConfig config) {
+        Supplier<DockerClient> clientConstructor = () -> DockerClientBuilder.getInstance(config).build();
+        return new ShutdownHookContainerMonitor(clientConstructor);
     }
 
     protected RequireImageParametry buildParametry() {

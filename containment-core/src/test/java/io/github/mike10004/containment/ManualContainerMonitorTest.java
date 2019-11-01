@@ -18,11 +18,11 @@ public class ManualContainerMonitorTest {
     @Test
     public void removeAll() throws ContainmentException {
         DockerClient client = EasyMock.createMock(DockerClient.class);
-        UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor(client);
+        UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor();
         Random random = new Random("ManualContainerMonitorTest.removeAll_hanging".hashCode());
         ContainerParametry p = ContainerParametry.builder("oogabooga:latest").build();
-        RunnableContainer c = new UnitTestContainerRunner(random).create(p);
-        monitor.removeAll((id, e) -> {
+        RunnableContainer c = new UnitTestContainerRunner(monitor, random).create(p);
+        monitor.removeAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });
         assertEquals(1, monitor.commandsExecuted.size());
@@ -31,20 +31,20 @@ public class ManualContainerMonitorTest {
     @Test
     public void stopAll() throws ContainmentException {
         DockerClient client = EasyMock.createMock(DockerClient.class);
-        UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor(client);
+        UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor();
         Random random = new Random("ManualContainerMonitorTest.removeAll_hanging".hashCode());
         ContainerParametry p = ContainerParametry.builder("oogabooga:latest").build();
-        RunnableContainer c = new UnitTestContainerRunner(random).create(p);
-        monitor.stopAll((id, e) -> {
+        RunnableContainer c = new UnitTestContainerRunner(monitor, random).create(p);
+        monitor.stopAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });
         assertEquals(0, monitor.commandsExecuted.size());
         RunningContainer running = c.start();
-        monitor.stopAll((id, e) -> {
+        monitor.stopAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });
         assertEquals(1, monitor.commandsExecuted.size());
-        monitor.removeAll((id, e) -> {
+        monitor.removeAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });
         assertEquals(2, monitor.commandsExecuted.size());
@@ -54,13 +54,14 @@ public class ManualContainerMonitorTest {
 
         public List<Object> commandsExecuted = new ArrayList<>();
 
-        public UnitTestManualContainerMonitor(DockerClient client) {
-            super(client);
+        public UnitTestManualContainerMonitor() {
+            super();
         }
 
         @Override
-        protected <T> T execSyncCommand(Function<DockerClient, SyncDockerCmd<T>> command) {
-            return super.execSyncCommand(command);
+        protected <T> T execSyncCommand(DockerClient client, Function<DockerClient, SyncDockerCmd<T>> command) {
+            commandsExecuted.add(command);
+            return null;
         }
     }
 

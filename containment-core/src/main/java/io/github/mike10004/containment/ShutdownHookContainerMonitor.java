@@ -2,16 +2,12 @@ package io.github.mike10004.containment;
 
 import com.github.dockerjava.api.DockerClient;
 
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -25,21 +21,32 @@ public class ShutdownHookContainerMonitor extends ManualContainerMonitor {
 
     private static final Logger log = Logger.getLogger(ShutdownHookContainerMonitor.class.getName());
 
+    private final Supplier<DockerClient> clientConstructor;
     private final ShutdownHook shutdownHook;
     private volatile boolean shutdownHookAdded;
     private static final Object shutdownHookAddLock = new Object();
     private final ContainerActionErrorListener errorListener;
 
-    public ShutdownHookContainerMonitor(DockerClient client) {
-        super(client);
+    public ShutdownHookContainerMonitor(Supplier<DockerClient> clientConstructor) {
+        super();
+        this.clientConstructor = requireNonNull(clientConstructor);
         this.shutdownHook = new ShutdownHook();
         errorListener = (containerId, e) -> {
-            log.log(Level.SEVERE, e, () -> String.format("failed on action involving container %s", containerId));
-            if (isVerbose()) {
-                System.err.format("failed on action involving container %s%n", containerId);
+            String message = String.format("failed on action involving container %s", containerId);
+            log.log(Level.SEVERE, message, e);
+            report(message, e);
+        };
+    }
+
+    private static void report(@Nullable String message, @Nullable Throwable e) {
+        if (isVerbose()) {
+            if (message != null) {
+                System.err.println(message);
+            }
+            if (e != null) {
                 e.printStackTrace(System.err);
             }
-        };
+        }
     }
 
     private static boolean isVerbose() {
@@ -66,8 +73,12 @@ public class ShutdownHookContainerMonitor extends ManualContainerMonitor {
 
         @Override
         public void run() {
-            stopAll(errorListener);
-            removeAll(errorListener);
+            try (DockerClient client = clientConstructor.get()) {
+                stopAll(client, errorListener);
+                removeAll(client, errorListener);
+            } catch (IOException e) {
+                report(this + " failed to close DockerClient", e);
+            }
         }
     }
 

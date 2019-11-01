@@ -86,7 +86,7 @@ public class DjContainerRunnerTest {
                 .commandToWaitIndefinitely()
                 .build();
         DockerSubprocessResult<String> result;
-        DockerClient client = TestDockerManager.getInstance().getClient();
+        DockerClient client = TestDockerManager.getInstance().openClient();
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
         PreCopier copier = new PreCopier(client, file, copiedFileDestDir);

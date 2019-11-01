@@ -23,7 +23,7 @@ public class TestCleanupRule extends ExternalResource {
         if (!Tests.isRealDockerManagerAnyClientsCreated()) {
             return;
         }
-        DockerClient client = Tests.realDockerManager().getClient();
+        DockerClient client = Tests.realDockerManager().openClient();
         doWithCatch(() -> removeImagesBylabel(client));
         doWithCatch(() -> removeImagesByTag(client));
     }

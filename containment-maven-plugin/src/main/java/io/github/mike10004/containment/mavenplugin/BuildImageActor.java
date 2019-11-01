@@ -29,7 +29,7 @@ class BuildImageActor extends ClientAbsentImageActor {
     }
 
     protected BuildImageCmd createCommand(RequireImageParametry parametry, File dockerfileDir) {
-        DockerClient client = dockerManager.getClient();
+        DockerClient client = dockerManager.openClient();
         BuildImageCmd buildCmd = client.buildImageCmd(dockerfileDir);
         buildCmd.withTags(Collections.singleton(parametry.name));
         buildCmd.withLabels(parametry.labels);

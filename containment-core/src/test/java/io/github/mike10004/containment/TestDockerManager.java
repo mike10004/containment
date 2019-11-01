@@ -2,7 +2,10 @@ package io.github.mike10004.containment;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientConfig;
 import org.easymock.EasyMock;
+
+import java.util.function.Supplier;
 
 public class TestDockerManager extends DefaultDockerManager {
 
@@ -10,16 +13,20 @@ public class TestDockerManager extends DefaultDockerManager {
         super(EasyMock.createMock(DockerClient.class), EasyMock.createMock(ContainerMonitor.class));
     }
 
-    private static DockerClient createClient() {
-        return DockerClientBuilder.getInstance(DefaultDockerClientConfig.createDefaultConfigBuilder().build()).build();
+    private static DockerClientConfig createClientConfig() {
+        return DefaultDockerClientConfig.createDefaultConfigBuilder().build();
     }
 
-    private static DockerManager createManager(DockerClient client) {
-        ShutdownHookContainerMonitor monitor = new ShutdownHookContainerMonitor(client);
-        return new DefaultDockerManager(client, monitor);
+    private static Supplier<DockerClient> configToSupplier(DockerClientConfig config) {
+        return () -> DockerClientBuilder.getInstance(config).build();
     }
 
-    private static final DockerManager INSTANCE = createManager(createClient());
+    private static DockerManager createManager(DockerClientConfig clientConfig) {
+        ShutdownHookContainerMonitor monitor = new ShutdownHookContainerMonitor(configToSupplier(clientConfig));
+        return new DefaultDockerManager(clientConfig, monitor);
+    }
+
+    private static final DockerManager INSTANCE = createManager(createClientConfig());
 
     /**
      * Returns a manager instance that uses a real client.

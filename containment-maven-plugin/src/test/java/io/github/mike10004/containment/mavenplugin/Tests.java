@@ -6,7 +6,9 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.google.common.base.Verify;
 import io.github.mike10004.containment.ContainerMonitor;
+import io.github.mike10004.containment.DockerClientBuilder;
 import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.ShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.SettingSet;
 import org.junit.Assume;
 
@@ -37,10 +39,11 @@ public class Tests {
     }
 
     private static final DockerClientConfig DOCKER_CLIENT_CONFIG = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-    private static final DockerManager DOCKER_MANAGER = new MojoDockerManager(DOCKER_CLIENT_CONFIG);
+    private static final ContainerMonitor SINGLETON_CONTAINER_MONITOR = new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(DOCKER_CLIENT_CONFIG).build());
+    private static final DockerManager SINGLETON_MANAGER = new MojoDockerManager(DOCKER_CLIENT_CONFIG, SINGLETON_CONTAINER_MONITOR);
 
     public static DockerManager realDockerManager() {
-        return DOCKER_MANAGER;
+        return SINGLETON_MANAGER;
     }
 
     public static void assumeDestructiveModeEnabled() {
@@ -51,7 +54,7 @@ public class Tests {
     public static DockerManager mockDockerManager() {
         return new DockerManager() {
             @Override
-            public DockerClient getClient() {
+            public DockerClient openClient() {
                 throw new UnsupportedOperationException("not supported by mock");
             }
 
@@ -68,7 +71,7 @@ public class Tests {
     }
 
     public static void enforceImageDoesNotExistLocally(DockerManager dockerManager, String remoteImageName) {
-        DockerClient client = dockerManager.getClient();
+        DockerClient client = dockerManager.openClient();
         List<Image> locals = client.listImagesCmd().withImageNameFilter(remoteImageName).exec();
         if (!locals.isEmpty()) {
             Verify.verify(locals.size() == 1, "expect exactly one image matching %s, but got %s", remoteImageName, locals);
