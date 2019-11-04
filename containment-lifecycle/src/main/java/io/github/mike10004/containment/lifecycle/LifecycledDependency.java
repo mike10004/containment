@@ -14,20 +14,6 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
     private final ExecutionManager executionManager;
     private final Consumer<? super String> eventListener;
 
-    private class ExecutionManager {
-
-        private final ConcurrentMap<Object, Provision<D>> handler = new ConcurrentHashMap<>(1);
-        private final Object setupKey = new Object();
-
-        public Provision<D> compute(Supplier<Provision<D>> computer) {
-            return handler.computeIfAbsent(setupKey, k -> computer.get());
-        }
-    }
-
-    protected void notify(String message) {
-        eventListener.accept(message);
-    }
-
     /**
      * Constructs an instance of the rule.
      * @param lifecycle
@@ -79,7 +65,7 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
         }
     }
 
-    public final void finishLifecycle() {
+    public void finishLifecycle() {
         notify("LifecycledDependency.finishLifecycle() entered");
         try {
             lifecycle.decommission();
@@ -91,6 +77,20 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
 
     protected void handleTearDownError(RuntimeException t) {
         throw t;
+    }
+
+    private class ExecutionManager {
+
+        private final ConcurrentMap<Object, Provision<D>> handler = new ConcurrentHashMap<>(1);
+        private final Object setupKey = new Object();
+
+        public Provision<D> compute(Supplier<Provision<D>> computer) {
+            return handler.computeIfAbsent(setupKey, k -> computer.get());
+        }
+    }
+
+    protected void notify(String message) {
+        eventListener.accept(message);
     }
 
 }

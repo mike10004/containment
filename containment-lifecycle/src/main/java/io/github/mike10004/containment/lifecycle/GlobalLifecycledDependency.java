@@ -19,7 +19,7 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
     protected Computation<D> computeOnce() {
         try {
             D val = doCommission();
-            Thread thread = new Thread(this::finishLifecycle);
+            Thread thread = new Thread(this::finishLifecycleNow);
             addRuntimeShutdownHook(thread);
             return GlobalComputation.succeeded(val, thread);
         } catch (Exception t) {
@@ -27,9 +27,18 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
         }
     }
 
-    protected void addRuntimeShutdownHook(Thread thread) {
+    private void addRuntimeShutdownHook(Thread thread) {
         notify("DependencyManager.addRuntimeShutdownHook() entered");
         Runtime.getRuntime().addShutdownHook(thread);
+    }
+
+    @Override
+    public void finishLifecycle() {
+        notify("skipping finishLifecycle because a runtime shutdown hook will handle that");
+    }
+
+    public void finishLifecycleNow() {
+        super.finishLifecycle();
     }
 
     @Override

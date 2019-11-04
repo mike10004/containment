@@ -5,9 +5,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -42,9 +44,12 @@ public class LifecycleStackTest {
             stack.commission();
             fail("should have excepted");
         } catch (LifecycleStack.CommissionFailedAndUnwindFailedException e) {
+            assertEquals(third, e.commissionExceptionThrower);
             assertTrue(e.commissionException.getClass() == CommissionException.class);
             assertEquals(1, e.unwindException.exceptionsThrown.size());
-            assertTrue(e.unwindException.exceptionsThrown.get(0).getClass() == RuntimeDecommissionException.class);
+            Map.Entry<DependencyLifecycle<?>, RuntimeException> entry = e.unwindException.exceptionsThrown.entrySet().iterator().next();
+            assertEquals(entry.getKey(), second);
+            assertEquals(entry.getValue().getClass(), RuntimeDecommissionException.class);
         }
         assertEquals(1, first.commissioned);
         assertEquals(2, second.commissioned);
@@ -104,7 +109,9 @@ public class LifecycleStackTest {
             stack.decommission();
         } catch (LifecycleStack.UnwindException e) {
             assertEquals(1, e.exceptionsThrown.size());
-            assertTrue(e.exceptionsThrown.get(0) instanceof RuntimeDecommissionException);
+            Map.Entry<DependencyLifecycle<?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
+            assertSame(third, entry.getKey());
+            assertSame(RuntimeDecommissionException.class, entry.getValue().getClass());
         }
         assertEquals(1, first.commissioned);
         assertEquals(2, second.commissioned);
