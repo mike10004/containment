@@ -21,7 +21,7 @@ public class ManualContainerMonitorTest {
         UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor();
         Random random = new Random("ManualContainerMonitorTest.removeAll_hanging".hashCode());
         ContainerParametry p = ContainerParametry.builder("oogabooga:latest").build();
-        RunnableContainer c = new UnitTestContainerRunner(monitor, random).create(p);
+        RunnableContainer c = new UnitTestContainerCreator(monitor, random).create(p);
         monitor.removeAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });
@@ -34,7 +34,7 @@ public class ManualContainerMonitorTest {
         UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor();
         Random random = new Random("ManualContainerMonitorTest.removeAll_hanging".hashCode());
         ContainerParametry p = ContainerParametry.builder("oogabooga:latest").build();
-        RunnableContainer c = new UnitTestContainerRunner(monitor, random).create(p);
+        RunnableContainer c = new UnitTestContainerCreator(monitor, random).create(p);
         monitor.stopAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });

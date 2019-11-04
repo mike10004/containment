@@ -5,7 +5,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import io.github.mike10004.containment.ContainerMonitor;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.DefaultDockerManager;
-import io.github.mike10004.containment.DjContainerRunner;
+import io.github.mike10004.containment.DjContainerCreator;
 import io.github.mike10004.containment.DockerClientBuilder;
 import io.github.mike10004.containment.DockerExecutor;
 import io.github.mike10004.containment.DockerManager;
@@ -15,7 +15,6 @@ import io.github.mike10004.containment.ShutdownHookContainerMonitor;
 import io.github.mike10004.containment.Uuids;
 import org.junit.Test;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Random;
@@ -33,7 +32,7 @@ public class ContainerLifecycleTest {
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()
                 .build();
-        ContainerLifecycle lifecycle = ContainerLifecycle.create(() -> new DjContainerRunner(dockerManager), parametry, Collections.emptyList());
+        ContainerLifecycle lifecycle = ContainerLifecycle.create(() -> new DjContainerCreator(dockerManager), parametry, Collections.emptyList());
         RunningContainer container = lifecycle.commission();
         DockerSubprocessResult<String> result;
         try {

@@ -3,10 +3,10 @@ package io.github.mike10004.containment.junit4;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.ContainerRunner;
+import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.DefaultDockerManager;
-import io.github.mike10004.containment.DjContainerRunner;
+import io.github.mike10004.containment.DjContainerCreator;
 import io.github.mike10004.containment.DockerClientBuilder;
 import io.github.mike10004.containment.DockerManager;
 import io.github.mike10004.containment.ManualContainerMonitor;
@@ -17,7 +17,6 @@ import io.github.mike10004.containment.lifecycle.ContainerLifecycle;
 import io.github.mike10004.containment.lifecycle.ContainerRunnerConstructor;
 import io.github.mike10004.containment.lifecycle.GlobalLifecycledDependency;
 import io.github.mike10004.containment.lifecycle.LifecycledDependency;
-import jdk.nashorn.internal.objects.Global;
 import org.junit.rules.ExternalResource;
 
 import java.util.ArrayList;
@@ -75,19 +74,19 @@ public class ContainerDependencyRule extends ExternalResource {
         private static class GlobalRunnerConstructor implements ContainerRunnerConstructor {
 
             @Override
-            public ContainerRunner instantiate() throws ContainmentException {
+            public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
                 DockerManager manager = new DefaultDockerManager(config, new ManualContainerMonitor());
-                return new DjContainerRunner(manager);
+                return new DjContainerCreator(manager);
             }
         }
 
         private static class LocalRunnerConstructor implements ContainerRunnerConstructor {
             @Override
-            public ContainerRunner instantiate() throws ContainmentException {
+            public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
                 DockerManager manager = new DefaultDockerManager(config, new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build()));
-                return new DjContainerRunner(manager);
+                return new DjContainerCreator(manager);
             }
         }
 

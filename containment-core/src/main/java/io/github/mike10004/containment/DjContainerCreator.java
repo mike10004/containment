@@ -21,16 +21,16 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-public class DjContainerRunner implements ContainerRunner {
+public class DjContainerCreator implements ContainerCreator {
 
     private final DockerClient client;
     private final ContainerMonitor containerMonitor;
 
-    public DjContainerRunner(DockerManager dockerManager) {
+    public DjContainerCreator(DockerManager dockerManager) {
         this(dockerManager.openClient(), dockerManager.getContainerMonitor());
     }
 
-    public DjContainerRunner(DockerClient client, ContainerMonitor containerMonitor) {
+    public DjContainerCreator(DockerClient client, ContainerMonitor containerMonitor) {
         this.client = requireNonNull(client, "client");
         this.containerMonitor = requireNonNull(containerMonitor, "containerMonitor");
     }

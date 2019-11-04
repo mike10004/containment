@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
-class UnitTestContainerRunner implements ContainerRunner {
+class UnitTestContainerCreator implements ContainerCreator {
 
     private final ContainerMonitor monitor;
     private final Random random;
 
-    UnitTestContainerRunner(ContainerMonitor monitor, Random random) {
+    UnitTestContainerCreator(ContainerMonitor monitor, Random random) {
         this.random = random;
         this.monitor = monitor;
     }

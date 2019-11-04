@@ -1,7 +1,7 @@
 package io.github.mike10004.containment.lifecycle;
 
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.ContainerRunner;
+import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.PreStartAction;
 import io.github.mike10004.containment.RunnableContainer;
 import io.github.mike10004.containment.RunningContainer;
@@ -18,8 +18,8 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         super(others, top);
     }
 
-    private static class ContainerRunnerLifecycle extends DecoupledLifecycle<ContainerRunner> {
-        public ContainerRunnerLifecycle(Commissioner<ContainerRunner> commissioner) {
+    private static class ContainerRunnerLifecycle extends DecoupledLifecycle<ContainerCreator> {
+        public ContainerRunnerLifecycle(Commissioner<ContainerCreator> commissioner) {
             super(commissioner, new RuntimeExceptionWrapper<>());
         }
 
@@ -86,15 +86,15 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
     }
 
     public static ContainerLifecycle create(ContainerRunnerConstructor constructor, ContainerParametry parametry, List<? extends PreStartAction> preStartActions) {
-        AtomicReference<ContainerRunner> runnerRef = new AtomicReference<>();
-        DependencyLifecycle<ContainerRunner> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
-            ContainerRunner runner = constructor.instantiate();
+        AtomicReference<ContainerCreator> runnerRef = new AtomicReference<>();
+        DependencyLifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
+            ContainerCreator runner = constructor.instantiate();
             runnerRef.set(runner);
             return runner;
         });
         AtomicReference<RunnableContainer> runnableRef = new AtomicReference<>();
         DependencyLifecycle<RunnableContainer> runnableLifecycle = new RunnableContainerLifecycle(() -> {
-            ContainerRunner runner = runnerRef.get();
+            ContainerCreator runner = runnerRef.get();
             RunnableContainer runnable = runner.create(parametry);
             runnableRef.set(runnable);
             return runnable;

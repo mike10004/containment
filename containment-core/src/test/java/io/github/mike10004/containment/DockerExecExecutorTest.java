@@ -16,7 +16,7 @@ public class DockerExecExecutorTest {
                 .commandToWaitIndefinitely()
                 .build();
         DockerSubprocessResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              RunnableContainer runnable = runner.create(parametry)) {
             try (RunningContainer container = runnable.start()) {
                 DockerExecutor executor = new DockerExecExecutor(container.info().id(), new HashMap<>(), UTF_8);
@@ -35,7 +35,7 @@ public class DockerExecExecutorTest {
                 .build();
 
         DockerSubprocessResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              RunnableContainer runnable = runner.create(parametry)) {
             try (RunningContainer container = runnable.start()) {
                 Map<String, String> processEnvironment = new HashMap<>();

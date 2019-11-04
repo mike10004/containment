@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class DjContainerRunnerTest {
+public class DjContainerCreatorTest {
 
     @ClassRule
     public static final TemporaryFolder tempdir = new TemporaryFolder();
@@ -45,7 +45,7 @@ public class DjContainerRunnerTest {
                 .build();
 
         DockerSubprocessResult<String> result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              RunnableContainer runnable = runner.create(parametry)) {
             try (RunningContainer container = runnable.start()) {
                 DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
@@ -90,8 +90,8 @@ public class DjContainerRunnerTest {
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
         PreCopier copier = new PreCopier(client, file, copiedFileDestDir);
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
-            RunnableContainer runnableContainer = runner.create(parametry)) {
+        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
+             RunnableContainer runnableContainer = runner.create(parametry)) {
             runnableContainer.execute(copier);
             try (RunningContainer container = runnableContainer.start()) {
                 DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
@@ -110,7 +110,7 @@ public class DjContainerRunnerTest {
                 .expose(httpdPort)
                 .build();
         String result;
-        try (ContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              RunnableContainer runnable = runner.create(parametry)) {
             try (RunningContainer container = runnable.start()) {
                 List<PortMapping> ports = container.fetchPorts();
@@ -153,7 +153,7 @@ public class DjContainerRunnerTest {
                         "--bind-address=" + bindAddress)
                 .build();
         List<String> colors = new ArrayList<>();
-        try (DjContainerRunner runner = new DjContainerRunner(TestDockerManager.getInstance());
+        try (DjContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              RunnableContainer runnable = runner.create(parametry)) {
             try (RunningContainer container = runnable.start()) {
                 int hostPort = container.fetchPorts().stream()

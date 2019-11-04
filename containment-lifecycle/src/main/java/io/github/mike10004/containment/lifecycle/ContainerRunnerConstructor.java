@@ -1,8 +1,8 @@
 package io.github.mike10004.containment.lifecycle;
 
-import io.github.mike10004.containment.ContainerRunner;
+import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainmentException;
 
 public interface ContainerRunnerConstructor {
-    ContainerRunner instantiate() throws ContainmentException;
+    ContainerCreator instantiate() throws ContainmentException;
 }
