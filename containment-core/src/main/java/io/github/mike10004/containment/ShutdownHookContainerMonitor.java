@@ -41,9 +41,10 @@ public class ShutdownHookContainerMonitor extends ManualContainerMonitor {
     private static void report(@Nullable String message, @Nullable Throwable e) {
         if (isVerbose()) {
             if (message != null) {
-                System.err.println(message);
+                System.err.format("ShutdownHookContainerMonitor report: %s%n", message);
             }
             if (e != null) {
+                System.err.format("ShutdownHookContainerMonitor exception%n");
                 e.printStackTrace(System.err);
             }
         }
