@@ -1,7 +1,5 @@
 package io.github.mike10004.containment;
 
-import com.google.common.collect.Lists;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,7 +62,10 @@ public interface ContainerParametry {
         }
 
         public Builder command(String first, String...others) {
-            return command(Lists.asList(first, others));
+            List<String> list = new ArrayList<>();
+            list.add(first);
+            list.addAll(Arrays.asList(others));
+            return command(list);
         }
 
         public Builder command(List<String> val) {

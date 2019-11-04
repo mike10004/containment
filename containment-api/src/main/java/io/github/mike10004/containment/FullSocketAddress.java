@@ -24,7 +24,7 @@ public interface FullSocketAddress {
     }
 
     static FullSocketAddress fromHostAndPort(HostAndPort hostAndPort) {
-        return new WellDefinedSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());
+        return new WellDefinedSocketAddress(hostAndPort.getHost(), hostAndPort.getPort());
     }
 
 }

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.github.mike10004.subprocess.Subprocess;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
@@ -11,7 +12,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Implementation of an executor that launches an external {@code docker exec} process.
  */
-class DockerExecExecutor extends DockerSubprocessExecutorBase implements DockerExecutor {
+public class DockerExecExecutor extends DockerSubprocessExecutorBase implements DockerExecutor {
 
     private final String containerId;
     private final Map<String, String> containerProcessEnvironment;
@@ -26,6 +27,18 @@ class DockerExecExecutor extends DockerSubprocessExecutorBase implements DockerE
         this.containerId = requireNonNull(containerId, "containerId");
         this.containerProcessEnvironment = ImmutableMap.copyOf(containerProcessEnvironment);
         this.execOutputCharset = requireNonNull(execOutputCharset);
+    }
+
+    public static DockerExecutor create(String containerId, Map<String, String> executionEnvironmentVariables) {
+        return create(containerId, executionEnvironmentVariables, Charset.defaultCharset());
+    }
+
+    public static DockerExecutor create(String containerId, Charset charset) {
+        return create(containerId, Collections.emptyMap(), charset);
+    }
+
+    public static DockerExecutor create(String containerId, Map<String, String> executionEnvironmentVariables, Charset charset) {
+        return new DockerExecExecutor(containerId, executionEnvironmentVariables, charset);
     }
 
     @Override

@@ -7,7 +7,7 @@ import org.easymock.EasyMock;
 
 import java.util.function.Supplier;
 
-public class TestDockerManager extends DefaultDockerManager {
+public class TestDockerManager extends DefaultDjDockerManager {
 
     private TestDockerManager() {
         super(EasyMock.createMock(DockerClient.class), EasyMock.createMock(ContainerMonitor.class));
@@ -21,22 +21,22 @@ public class TestDockerManager extends DefaultDockerManager {
         return () -> DockerClientBuilder.getInstance(config).build();
     }
 
-    private static DockerManager createManager(DockerClientConfig clientConfig) {
+    private static DjDockerManager createManager(DockerClientConfig clientConfig) {
         ShutdownHookContainerMonitor monitor = new ShutdownHookContainerMonitor(configToSupplier(clientConfig));
-        return new DefaultDockerManager(clientConfig, monitor);
+        return new DefaultDjDockerManager(clientConfig, monitor);
     }
 
-    private static final DockerManager INSTANCE = createManager(createClientConfig());
+    private static final DjDockerManager INSTANCE = createManager(createClientConfig());
 
     /**
      * Returns a manager instance that uses a real client.
      * @return singleton instance
      */
-    public static DockerManager getInstance() {
+    public static DjDockerManager getInstance() {
         return INSTANCE;
     }
 
-    public static DockerManager createMock() {
+    public static DjDockerManager createMock() {
         return new TestDockerManager();
     }
 }

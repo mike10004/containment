@@ -56,11 +56,4 @@ public interface DockerCopier {
         }
     }
 
-    static DockerCopier create() {
-        return new DockerSubprocessCopier();
-    }
-
-    static DockerCopier create(Duration timeout) {
-        return new DockerSubprocessCopier(timeout.toMillis(), TimeUnit.MILLISECONDS);
-    }
 }

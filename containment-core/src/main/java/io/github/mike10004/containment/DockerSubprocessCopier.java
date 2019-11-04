@@ -9,6 +9,7 @@ import io.github.mike10004.subprocess.SubprocessException;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeoutException;
  * Copier implementation that launches external {@code docker} subprocesses
  * to execute copy commands.
  */
-class DockerSubprocessCopier implements DockerCopier {
+public class DockerSubprocessCopier implements DockerCopier {
 
     private final long timeout;
     private TimeUnit timeoutUnit;
@@ -103,4 +104,11 @@ class DockerSubprocessCopier implements DockerCopier {
         }
     }
 
+    public static DockerCopier create() {
+        return new DockerSubprocessCopier();
+    }
+
+    public static DockerCopier create(Duration timeout) {
+        return new DockerSubprocessCopier(timeout.toMillis(), TimeUnit.MILLISECONDS);
+    }
 }

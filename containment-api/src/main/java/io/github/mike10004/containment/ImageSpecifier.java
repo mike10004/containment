@@ -38,8 +38,8 @@ public class ImageSpecifier {
     }
 
     public ImageSpecifier(String name, @Nullable String tag, @Nullable String repository, @Nullable String registry) {
-        this.name = checkNotNull(name, "name");
-        checkArgument(!name.trim().isEmpty(), "name must be nonempty/nonwhitespace");
+        this.name = Preconditions.checkNotNull(name, "name");
+        Preconditions.checkArgument(!name.trim().isEmpty(), "name must be nonempty/nonwhitespace");
         this.tag = tag;
         this.repository = repository;
         Preconditions.checkArgument(repository == null || (repository.equals(repository.toLowerCase())), "repository name must be lowercase: %s", StringUtils.abbreviate(repository, 128));
@@ -63,7 +63,7 @@ public class ImageSpecifier {
             sb.append(repository);
             sb.append("/");
         }
-        checkArgument(name != null && !name.trim().isEmpty(), "name must be non-null and nonempty");
+        Preconditions.checkArgument(name != null && !name.trim().isEmpty(), "name must be non-null and nonempty");
         sb.append(name);
         if (tag != null) {
             sb.append(':');
