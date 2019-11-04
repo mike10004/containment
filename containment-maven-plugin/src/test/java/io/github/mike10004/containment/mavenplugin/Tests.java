@@ -7,7 +7,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.google.common.base.Verify;
 import io.github.mike10004.containment.ContainerMonitor;
 import io.github.mike10004.containment.DockerClientBuilder;
-import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.DjDockerManager;
 import io.github.mike10004.containment.ShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.SettingSet;
 import org.junit.Assume;
@@ -40,9 +40,9 @@ public class Tests {
 
     private static final DockerClientConfig DOCKER_CLIENT_CONFIG = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
     private static final ContainerMonitor SINGLETON_CONTAINER_MONITOR = new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(DOCKER_CLIENT_CONFIG).build());
-    private static final DockerManager SINGLETON_MANAGER = new MojoDockerManager(DOCKER_CLIENT_CONFIG, SINGLETON_CONTAINER_MONITOR);
+    private static final DjDockerManager SINGLETON_MANAGER = new MojoDockerManager(DOCKER_CLIENT_CONFIG, SINGLETON_CONTAINER_MONITOR);
 
-    public static DockerManager realDockerManager() {
+    public static DjDockerManager realDockerManager() {
         return SINGLETON_MANAGER;
     }
 
@@ -51,8 +51,8 @@ public class Tests {
         Assume.assumeTrue(String.format("set sysprop %s.destructiveMode=true to enable", SYSPROP_PREFIX), enabled);
     }
 
-    public static DockerManager mockDockerManager() {
-        return new DockerManager() {
+    public static DjDockerManager mockDockerManager() {
+        return new DjDockerManager() {
             @Override
             public DockerClient openClient() {
                 throw new UnsupportedOperationException("not supported by mock");
@@ -70,7 +70,7 @@ public class Tests {
         };
     }
 
-    public static void enforceImageDoesNotExistLocally(DockerManager dockerManager, String remoteImageName) {
+    public static void enforceImageDoesNotExistLocally(DjDockerManager dockerManager, String remoteImageName) {
         DockerClient client = dockerManager.openClient();
         List<Image> locals = client.listImagesCmd().withImageNameFilter(remoteImageName).exec();
         if (!locals.isEmpty()) {

@@ -1,15 +1,15 @@
 package io.github.mike10004.containment.mavenplugin;
 
-import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.DjDockerManager;
 import org.apache.maven.plugin.logging.Log;
 
 import static java.util.Objects.requireNonNull;
 
 abstract class ClientAbsentImageActor extends AbsentImageActorBase {
 
-    protected final DockerManager dockerManager;
+    protected final DjDockerManager dockerManager;
 
-    protected ClientAbsentImageActor(Log log, DockerManager dockerManager) {
+    protected ClientAbsentImageActor(Log log, DjDockerManager dockerManager) {
         super(log);
         this.dockerManager = requireNonNull(dockerManager);
     }

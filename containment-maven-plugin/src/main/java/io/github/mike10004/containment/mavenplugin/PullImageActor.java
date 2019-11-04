@@ -7,7 +7,7 @@ import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.google.common.base.Preconditions;
 import io.github.mike10004.containment.BlockableCallback;
-import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.DjDockerManager;
 import io.github.mike10004.containment.ImageSpecifier;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -18,7 +18,7 @@ import static java.util.Objects.requireNonNull;
 
 class PullImageActor extends ClientAbsentImageActor {
 
-    public PullImageActor(Log mojoLog, DockerManager dockerManager) {
+    public PullImageActor(Log mojoLog, DjDockerManager dockerManager) {
         super(mojoLog, dockerManager);
     }
 

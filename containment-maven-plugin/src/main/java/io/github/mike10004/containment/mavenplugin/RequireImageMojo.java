@@ -5,7 +5,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import io.github.mike10004.containment.ContainerMonitor;
 import io.github.mike10004.containment.DockerClientBuilder;
-import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.DjDockerManager;
 import io.github.mike10004.containment.ShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.Durations;
 import org.apache.maven.plugin.AbstractMojo;
@@ -147,7 +147,7 @@ public class RequireImageMojo extends AbstractMojo {
         RequireImageParametry parametry = buildParametry();
         DockerClientConfig clientConfig = createConfig(getProject(), parametry);
         ContainerMonitor containerMonitor = createContainerMonitor(clientConfig);
-        DockerManager dockerManager = new MojoDockerManager(clientConfig, containerMonitor);
+        DjDockerManager dockerManager = new MojoDockerManager(clientConfig, containerMonitor);
         boolean existsLocally = dockerManager.queryImageExistsLocally(parametry.name);
         if (!existsLocally) {
             AbsentImageActor actor = determineActor(dockerManager, directive);
@@ -169,7 +169,7 @@ public class RequireImageMojo extends AbstractMojo {
                 .build();
     }
 
-    protected AbsentImageActor determineActor(DockerManager dockerManager, AbsentImageDirective directive) {
+    protected AbsentImageActor determineActor(DjDockerManager dockerManager, AbsentImageDirective directive) {
         switch (directive.action) {
             case pull:
                 return new PullImageActor(getLog(), dockerManager);

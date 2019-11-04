@@ -26,7 +26,7 @@ public class DjContainerCreator implements ContainerCreator {
     private final DockerClient client;
     private final ContainerMonitor containerMonitor;
 
-    public DjContainerCreator(DockerManager dockerManager) {
+    public DjContainerCreator(DjDockerManager dockerManager) {
         this(dockerManager.openClient(), dockerManager.getContainerMonitor());
     }
 

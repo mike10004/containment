@@ -5,7 +5,7 @@ import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import io.github.mike10004.containment.BlockableCallback;
-import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.DjDockerManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -23,7 +23,7 @@ class BuildImageActor extends ClientAbsentImageActor {
 
     private final Function<String, String> mavenPropertiesProvider;
 
-    public BuildImageActor(Log log, DockerManager dockerManager, Function<String, String> mavenPropertiesProvider) {
+    public BuildImageActor(Log log, DjDockerManager dockerManager, Function<String, String> mavenPropertiesProvider) {
         super(log, dockerManager);
         this.mavenPropertiesProvider = requireNonNull(mavenPropertiesProvider);
     }

@@ -5,10 +5,10 @@ import com.github.dockerjava.core.DockerClientConfig;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.DefaultDockerManager;
+import io.github.mike10004.containment.DefaultDjDockerManager;
 import io.github.mike10004.containment.DjContainerCreator;
 import io.github.mike10004.containment.DockerClientBuilder;
-import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.DjDockerManager;
 import io.github.mike10004.containment.ManualContainerMonitor;
 import io.github.mike10004.containment.PreStartAction;
 import io.github.mike10004.containment.RunningContainer;
@@ -76,7 +76,7 @@ public class ContainerDependencyRule extends ExternalResource {
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-                DockerManager manager = new DefaultDockerManager(config, new ManualContainerMonitor());
+                DjDockerManager manager = new DefaultDjDockerManager(config, new ManualContainerMonitor());
                 return new DjContainerCreator(manager);
             }
         }
@@ -85,7 +85,7 @@ public class ContainerDependencyRule extends ExternalResource {
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-                DockerManager manager = new DefaultDockerManager(config, new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build()));
+                DjDockerManager manager = new DefaultDjDockerManager(config, new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build()));
                 return new DjContainerCreator(manager);
             }
         }

@@ -4,7 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import com.google.common.io.ByteStreams;
-import io.github.mike10004.containment.DockerManager;
+import io.github.mike10004.containment.DjDockerManager;
 import io.github.mike10004.containment.Uuids;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -47,7 +47,7 @@ public class BuildImageActorTest {
 
     @Test
     public void perform_basic() throws Exception {
-        DockerManager dockerManager = Tests.realDockerManager();
+        DjDockerManager dockerManager = Tests.realDockerManager();
         BuildImageActor actor = new BuildImageActor(new LogBucket(), dockerManager, x -> null);
         String imageName = Uuids.randomUuidString(random);
         RequireImageParametry parametry = RequireImageParametry.newBuilder(imageName)
@@ -60,7 +60,7 @@ public class BuildImageActorTest {
         confirmBasicImageBuilt(dockerManager, imageName);
     }
 
-    private void confirmBasicImageBuilt(DockerManager dockerManager, String imageName) throws IOException {
+    private void confirmBasicImageBuilt(DjDockerManager dockerManager, String imageName) throws IOException {
         DockerClient client = dockerManager.openClient();
         File tarFile = new File(tempdir.newFolder(), imageName + ".tar");
 
