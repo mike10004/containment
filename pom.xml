@@ -10,6 +10,7 @@
         <module>containment-core</module>
         <module>containment-maven-plugin</module>
         <module>containment-junit4</module>
+        <module>containment-lifecycle</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
