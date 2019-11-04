@@ -1,5 +1,6 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
+import io.github.mike10004.containment.dockerjava.BlockableLogFollower;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;

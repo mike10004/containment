@@ -1,8 +1,10 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.subprocess;
+
+import io.github.mike10004.containment.PortMapping;
 
 import java.util.List;
 
-interface DockerPsContent {
+public interface DockerPsContent {
 
     List<PortMapping> parsePortMappings();
 

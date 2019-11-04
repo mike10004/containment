@@ -1,8 +1,8 @@
 package io.github.mike10004.containment.mavenplugin;
 
 import com.github.dockerjava.core.DockerClientConfig;
-import io.github.mike10004.containment.ContainerMonitor;
-import io.github.mike10004.containment.DefaultDjDockerManager;
+import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
 
 public class MojoDockerManager extends DefaultDjDockerManager {
 

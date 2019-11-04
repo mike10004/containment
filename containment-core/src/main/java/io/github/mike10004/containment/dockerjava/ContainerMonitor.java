@@ -1,4 +1,4 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;

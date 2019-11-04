@@ -1,6 +1,8 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.subprocess;
 
 import com.google.common.base.MoreObjects;
+import io.github.mike10004.containment.ContainmentException;
+import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.subprocess.ProcessMonitor;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.ScopedProcessTracker;
@@ -11,7 +13,7 @@ import java.util.function.BiFunction;
 
 import static java.util.Objects.requireNonNull;
 
-class DockerSubprocessExecutorBase {
+public class DockerSubprocessExecutorBase {
 
     private final SubprocessConfig subprocessConfig;
 
@@ -24,7 +26,7 @@ class DockerSubprocessExecutorBase {
         return Subprocess.running(dockerExecutable);
     }
 
-    protected static SubprocessConfig emptySubprocessConfig() {
+    public static SubprocessConfig emptySubprocessConfig() {
         return (x, y) -> y;
     }
 
@@ -42,7 +44,7 @@ class DockerSubprocessExecutorBase {
     /**
      * Interface of a service that provides subprocess configuration settings.
      */
-    protected interface SubprocessConfig extends BiFunction<String, String, String> {
+    public interface SubprocessConfig extends BiFunction<String, String, String> {
 
         /**
          * Gets the value of a setting.

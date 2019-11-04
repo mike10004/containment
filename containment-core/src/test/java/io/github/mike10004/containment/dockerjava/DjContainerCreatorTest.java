@@ -1,7 +1,24 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
 import com.github.dockerjava.api.DockerClient;
 import com.google.common.io.ByteSource;
+import io.github.mike10004.containment.ContainerCreator;
+import io.github.mike10004.containment.ContainerInfo;
+import io.github.mike10004.containment.ContainerParametry;
+import io.github.mike10004.containment.DockerExecutor;
+import io.github.mike10004.containment.DockerSubprocessResult;
+import io.github.mike10004.containment.Durations;
+import io.github.mike10004.containment.FullSocketAddress;
+import io.github.mike10004.containment.ImageSpecifier;
+import io.github.mike10004.containment.PortMapping;
+import io.github.mike10004.containment.PreStartAction;
+import io.github.mike10004.containment.RunnableContainer;
+import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.TestDockerManager;
+import io.github.mike10004.containment.Tests;
+import io.github.mike10004.containment.dockerjava.BlockableLogFollower;
+import io.github.mike10004.containment.dockerjava.DjContainerCreator;
+import io.github.mike10004.containment.subprocess.DockerExecExecutor;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

@@ -1,7 +1,9 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.subprocess;
 
 import com.google.common.base.Verify;
 import com.google.common.io.CharSource;
+import io.github.mike10004.containment.ContainmentException;
+import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.subprocess.Subprocess;
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,7 +15,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-class DockerPsExecutor extends DockerSubprocessExecutorBase {
+public class DockerPsExecutor extends DockerSubprocessExecutorBase {
 
     public DockerPsExecutor() {
         this(emptySubprocessConfig());

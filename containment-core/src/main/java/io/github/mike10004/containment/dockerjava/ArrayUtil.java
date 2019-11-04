@@ -1,4 +1,4 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;

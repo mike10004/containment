@@ -2,24 +2,24 @@ package io.github.mike10004.containment.lifecycle;
 
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import io.github.mike10004.containment.ContainerMonitor;
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.DefaultDjDockerManager;
-import io.github.mike10004.containment.DjContainerCreator;
-import io.github.mike10004.containment.DockerClientBuilder;
-import io.github.mike10004.containment.DockerExecutor;
-import io.github.mike10004.containment.DjDockerManager;
 import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.containment.RunningContainer;
-import io.github.mike10004.containment.ShutdownHookContainerMonitor;
 import io.github.mike10004.containment.Uuids;
+import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
+import io.github.mike10004.containment.dockerjava.DjContainerCreator;
+import io.github.mike10004.containment.dockerjava.DjDockerManager;
+import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
+import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
+import io.github.mike10004.containment.subprocess.DockerExecExecutor;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ContainerLifecycleTest {
 
@@ -37,7 +37,7 @@ public class ContainerLifecycleTest {
         DockerSubprocessResult<String> result;
         try {
             String text = Uuids.randomUuidString(random);
-            result = DockerExecutor.create(container.info().id(), StandardCharsets.UTF_8).execute("echo", text);
+            result = DockerExecExecutor.create(container.info().id(), StandardCharsets.UTF_8).execute("echo", text);
             assertEquals("exit code", 0, result.exitCode());
             assertEquals("text", text, result.stdout().trim());
             System.out.println("container running OK");

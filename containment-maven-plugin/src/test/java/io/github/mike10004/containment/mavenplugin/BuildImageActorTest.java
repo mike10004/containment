@@ -4,7 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import com.google.common.io.ByteStreams;
-import io.github.mike10004.containment.DjDockerManager;
+import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.Uuids;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;

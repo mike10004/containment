@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.mavenplugin;
 
-import io.github.mike10004.containment.DjDockerManager;
+import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import org.apache.maven.plugin.logging.Log;
 
 import static java.util.Objects.requireNonNull;

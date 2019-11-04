@@ -1,4 +1,4 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
 
 import com.github.dockerjava.api.DockerClient;
@@ -9,6 +9,13 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
+import io.github.mike10004.containment.ContainerCreator;
+import io.github.mike10004.containment.ContainerInfo;
+import io.github.mike10004.containment.ContainerParametry;
+import io.github.mike10004.containment.ContainmentException;
+import io.github.mike10004.containment.PreStartAction;
+import io.github.mike10004.containment.RunnableContainer;
+import io.github.mike10004.containment.RunningContainer;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;

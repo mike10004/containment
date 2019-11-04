@@ -3,6 +3,11 @@ package io.github.mike10004.containment;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
+import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
+import io.github.mike10004.containment.dockerjava.DjDockerManager;
+import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
+import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
 import org.easymock.EasyMock;
 
 import java.util.function.Supplier;

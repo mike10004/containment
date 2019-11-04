@@ -1,6 +1,7 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
 import com.google.common.primitives.Ints;
+import io.github.mike10004.containment.Durations;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;

@@ -1,6 +1,9 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.subprocess;
 
 import com.google.common.collect.ImmutableMap;
+import io.github.mike10004.containment.ContainmentException;
+import io.github.mike10004.containment.DockerExecutor;
+import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.subprocess.Subprocess;
 
 import java.nio.charset.Charset;

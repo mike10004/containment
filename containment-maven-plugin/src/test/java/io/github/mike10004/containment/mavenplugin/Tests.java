@@ -5,10 +5,10 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.google.common.base.Verify;
-import io.github.mike10004.containment.ContainerMonitor;
-import io.github.mike10004.containment.DockerClientBuilder;
-import io.github.mike10004.containment.DjDockerManager;
-import io.github.mike10004.containment.ShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
+import io.github.mike10004.containment.dockerjava.DjDockerManager;
+import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.SettingSet;
 import org.junit.Assume;
 

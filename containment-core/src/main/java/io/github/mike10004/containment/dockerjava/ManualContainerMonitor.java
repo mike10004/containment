@@ -1,8 +1,9 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.SyncDockerCmd;
 import com.google.common.collect.Lists;
+import io.github.mike10004.containment.dockerjava.ContainerMonitor;
 
 import java.util.Arrays;
 import java.util.Collections;

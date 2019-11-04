@@ -2,7 +2,7 @@ package io.github.mike10004.containment.mavenplugin;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
-import io.github.mike10004.containment.DjDockerManager;
+import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.ImageSpecifier;
 import io.github.mike10004.containment.Uuids;
 import org.junit.ClassRule;

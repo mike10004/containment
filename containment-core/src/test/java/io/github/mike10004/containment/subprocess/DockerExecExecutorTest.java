@@ -1,5 +1,15 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.subprocess;
 
+import io.github.mike10004.containment.ContainerCreator;
+import io.github.mike10004.containment.ContainerParametry;
+import io.github.mike10004.containment.DockerExecutor;
+import io.github.mike10004.containment.DockerSubprocessResult;
+import io.github.mike10004.containment.RunnableContainer;
+import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.TestDockerManager;
+import io.github.mike10004.containment.Tests;
+import io.github.mike10004.containment.dockerjava.DjContainerCreator;
+import io.github.mike10004.containment.subprocess.DockerExecExecutor;
 import org.junit.Test;
 
 import java.util.HashMap;

@@ -1,7 +1,13 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.dockerjava;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.SyncDockerCmd;
+import io.github.mike10004.containment.ContainerParametry;
+import io.github.mike10004.containment.ContainmentException;
+import io.github.mike10004.containment.RunnableContainer;
+import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.UnitTestContainerCreator;
+import io.github.mike10004.containment.dockerjava.ManualContainerMonitor;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;

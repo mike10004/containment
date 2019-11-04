@@ -1,9 +1,10 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.subprocess;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
+import io.github.mike10004.containment.PortMapping;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ class PsOutputParser implements DockerPsContent {
                     String containerProtocol = containerParts[1];
                     if (hostPart != null) {
                         HostAndPort hap = HostAndPort.fromString(hostPart);
-                        return new PortMapping(hap.getPort(), hap.getHostText(), containerPort, containerProtocol);
+                        return new PortMapping(hap.getPort(), hap.getHost(), containerPort, containerProtocol);
                     } else {
                         return new PortMapping(containerPort, containerProtocol);
                     }

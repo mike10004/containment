@@ -1,5 +1,6 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.subprocess;
 
+import io.github.mike10004.containment.DockerCopier;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.ScopedProcessTracker;
 import io.github.mike10004.subprocess.StreamContent;
