@@ -48,6 +48,10 @@ public class ContainerDependencyRule extends ExternalResource {
         return wrappedRule.container();
     }
 
+    public static Builder builder(ContainerParametry parametry) {
+        return new Builder(parametry);
+    }
+
     public static class Builder {
 
         private Consumer<? super String> eventListener = ignore -> {};
@@ -55,7 +59,7 @@ public class ContainerDependencyRule extends ExternalResource {
         private List<ContainerAction> preStartActions;
         private Supplier<? extends LifecycledDependency<RunningContainer>> dependencyCreator;
 
-        public Builder(ContainerParametry containerParametry) {
+        private Builder(ContainerParametry containerParametry) {
             this.containerParametry = requireNonNull(containerParametry);
             dependencyCreator = new LocalDependencyCreator();
             preStartActions = new ArrayList<>();

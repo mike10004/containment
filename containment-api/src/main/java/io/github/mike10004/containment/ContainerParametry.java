@@ -10,10 +10,18 @@ import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Interface of an object that defines parameters for creation and starting of a container.
+ */
 public interface ContainerParametry {
 
     ImageSpecifier image();
 
+    /**
+     * Command to execute. An empty list is interpreted to mean the container's default
+     * command is to be executed.
+     * @return the command to execute
+     */
     List<String> command();
 
     CommandType commandType();
@@ -22,7 +30,6 @@ public interface ContainerParametry {
 
     Map<String, String> environment();
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     default boolean disableAutoRemove() {
         return false;
     }
@@ -82,6 +89,7 @@ public interface ContainerParametry {
         }
 
         public Builder commandToWaitIndefinitely() {
+            // TODO decide whether `sleep infinity` is a better command to use
             return blockingCommand(Arrays.asList("tail", "-f", "/dev/null"));
         }
 
