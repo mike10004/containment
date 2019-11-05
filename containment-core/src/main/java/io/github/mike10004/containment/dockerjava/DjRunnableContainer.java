@@ -11,6 +11,7 @@ import io.github.mike10004.containment.RunningContainer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.StandardOpenOption;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Objects.requireNonNull;
@@ -145,4 +146,11 @@ public class DjRunnableContainer implements RunnableContainer {
         }
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", DjRunnableContainer.class.getSimpleName() + "[", "]")
+                .add("info=" + info)
+                .add("started=" + started)
+                .toString();
+    }
 }

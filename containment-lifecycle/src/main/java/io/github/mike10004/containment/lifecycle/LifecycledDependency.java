@@ -12,7 +12,7 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
 
     private final DependencyLifecycle<D> lifecycle;
     private final ExecutionManager executionManager;
-    private final Consumer<? super String> eventListener;
+    private final Consumer<? super LifecycleEvent> eventListener;
 
     /**
      * Constructs an instance of the rule.
@@ -22,7 +22,7 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
         this(lifecycle, ignore -> {});
     }
 
-    public LifecycledDependency(DependencyLifecycle<D> lifecycle, Consumer<? super String> eventListener) {
+    public LifecycledDependency(DependencyLifecycle<D> lifecycle, Consumer<? super LifecycleEvent> eventListener) {
         this.lifecycle = requireNonNull(lifecycle);
         executionManager = new ExecutionManager();
         this.eventListener = requireNonNull(eventListener);
@@ -37,7 +37,7 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
      */
     @Override
     public final Provision<D> provide() {
-        notify("LifecycledDependency.provide() entered");
+        notify(LifecycleEvent.Category.PROVIDE_STARTED);
         AtomicBoolean computed = new AtomicBoolean(false);
         Provision<D> invocation = executionManager.compute(new Supplier<Provision<D>>(){
             @Override
@@ -46,33 +46,36 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
                 return computeOnce();
             }
         });
-        notify(String.format("LifecycledDependency.provide() %s %s", computed.get() ? "computed" : "got", invocation));
+        notify(LifecycleEvent.Category.PROVIDE_COMPLETED, String.format("%s %s", computed.get() ? "computed" : "recalled", invocation));
         return invocation;
     }
 
-    protected final D doCommission() throws Exception {
+    protected D doCommission() throws Exception {
+        notify(LifecycleEvent.Category.COMMISSION_STARTED);
         D commissioned = lifecycle.commission();
-        Verify.verifyNotNull(commissioned, "lifecycle produced non-null provision() result");
+        Verify.verifyNotNull(commissioned, "lifecycle produced non-null commission() result");
         return commissioned;
     }
 
     protected Computation<D> computeOnce() {
         try {
             D val = doCommission();
+            notify(LifecycleEvent.Category.COMMISSION_SUCCEEDED);
             return Computation.succeeded(val);
         } catch (Throwable t) {
+            notify(LifecycleEvent.Category.COMMISSION_FAILED);
             return Computation.failed(t);
         }
     }
 
     public void finishLifecycle() {
-        notify("LifecycledDependency.finishLifecycle() entered");
+        notify(LifecycleEvent.of(LifecycleEvent.Category.FINISH_STARTED));
         try {
             lifecycle.decommission();
         } catch (RuntimeException t) {
             handleTearDownError(t);
         }
-        notify("LifecycledDependency.finishLifecycle() exiting");
+        notify(LifecycleEvent.of(LifecycleEvent.Category.FINISH_COMPLETED));
     }
 
     protected void handleTearDownError(RuntimeException t) {
@@ -89,8 +92,16 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
         }
     }
 
-    protected void notify(String message) {
-        eventListener.accept(message);
+    protected void notify(LifecycleEvent.Category category, String message) {
+        notify(new LifecycleEvent(category, message));
+    }
+
+    protected void notify(LifecycleEvent event) {
+        eventListener.accept(event);
+    }
+
+    protected void notify(LifecycleEvent.Category category) {
+        eventListener.accept(LifecycleEvent.of(category));
     }
 
 }

@@ -20,6 +20,7 @@ import io.github.mike10004.containment.subprocess.DockerPsExecutor;
 import io.github.mike10004.containment.subprocess.DockerSubprocessExecutorBase;
 
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
@@ -148,5 +149,12 @@ public class DjRunningContainer implements RunningContainer {
         public void onNext(Frame object) {
             consumer.accept(object.getPayload());
         }
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", DjRunningContainer.class.getSimpleName() + "[", "]")
+                .add("info=" + info)
+                .toString();
     }
 }

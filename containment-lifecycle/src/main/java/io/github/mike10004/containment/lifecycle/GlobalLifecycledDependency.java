@@ -16,11 +16,11 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
         this(innerRule, ignore -> {});
     }
 
-    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super String> eventListener) {
+    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super LifecycleEvent> eventListener) {
         this(innerRule, eventListener, Runtime.getRuntime()::addShutdownHook);
     }
 
-    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super String> eventListener, Consumer<? super Thread> addShutdownHookMethod) {
+    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super LifecycleEvent> eventListener, Consumer<? super Thread> addShutdownHookMethod) {
         super(innerRule, eventListener);
         this.addShutdownHookMethod = requireNonNull(addShutdownHookMethod);
     }
@@ -37,16 +37,16 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
     }
 
     private void addRuntimeShutdownHook(Thread thread) {
-        notify("DependencyManager.addRuntimeShutdownHook() entered");
+        notify(LifecycleEvent.Category.NOTICE, "DependencyManager.addRuntimeShutdownHook() entered");
         addShutdownHookMethod.accept(thread);
     }
 
     @Override
-    public void finishLifecycle() {
-        notify("skipping finishLifecycle because a runtime shutdown hook will handle that");
+    public final void finishLifecycle() {
+        notify(LifecycleEvent.Category.NOTICE, "skipping finishLifecycle because a runtime shutdown hook will handle that");
     }
 
-    public void finishLifecycleNow() {
+    public final void finishLifecycleNow() {
         super.finishLifecycle();
     }
 

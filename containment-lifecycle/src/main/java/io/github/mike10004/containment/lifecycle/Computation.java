@@ -38,9 +38,13 @@ class Computation<D> implements Provision<D> {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", Computation.class.getSimpleName() + "[", "]")
-                .add("provisioned=" + provisioned)
-                .add("exception=" + exception)
-                .toString();
+        StringJoiner j = new StringJoiner(", ", Computation.class.getSimpleName() + "[", "]");
+        if (provisioned != null) {
+            j.add("provisioned=" + provisioned);
+        }
+        if (exception != null) {
+            j.add("exception=" + exception);
+        }
+        return j.toString();
     }
 }
