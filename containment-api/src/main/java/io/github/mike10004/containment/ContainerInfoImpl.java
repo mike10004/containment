@@ -1,12 +1,17 @@
 package io.github.mike10004.containment;
 
-import java.util.Objects;
+import static java.util.Objects.requireNonNull;
 
 public class ContainerInfoImpl implements ContainerInfo {
-    private final String containerId;
 
-    public ContainerInfoImpl(String containerId) {
-        this.containerId = containerId;
+    private final String containerId;
+    private final Stickiness stickiness;
+    private final ContainerParametry.CommandType commandType;
+
+    public ContainerInfoImpl(String containerId, Stickiness stickiness, ContainerParametry.CommandType commandType) {
+        this.containerId = requireNonNull(containerId, "containerId");
+        this.stickiness = requireNonNull(stickiness);
+        this.commandType = requireNonNull(commandType);
     }
 
     @Override
@@ -16,19 +21,16 @@ public class ContainerInfoImpl implements ContainerInfo {
 
     @Override
     public String toString() {
-        return String.format("ContainerInfo{id=%s}", containerId);
+        return String.format("ContainerInfo{id=%s,%s,%s}", containerId, stickiness, commandType);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ContainerInfoImpl)) return false;
-        ContainerInfoImpl that = (ContainerInfoImpl) o;
-        return Objects.equals(containerId, that.containerId);
+    public boolean isAutoRemoveEnabled() {
+        return stickiness == Stickiness.AUTO_REMOVE_ENABLED;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(containerId);
+    public boolean isStopRequired() {
+        return commandType == ContainerParametry.CommandType.BLOCKING;
     }
 }

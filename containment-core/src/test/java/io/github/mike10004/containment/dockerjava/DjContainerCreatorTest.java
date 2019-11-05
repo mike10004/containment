@@ -16,8 +16,6 @@ import io.github.mike10004.containment.RunnableContainer;
 import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.TestDockerManager;
 import io.github.mike10004.containment.Tests;
-import io.github.mike10004.containment.dockerjava.BlockableLogFollower;
-import io.github.mike10004.containment.dockerjava.DjContainerCreator;
 import io.github.mike10004.containment.subprocess.DockerExecExecutor;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -165,7 +163,7 @@ public class DjContainerCreatorTest {
                 .expose(mysqlPort)
                 .env("MYSQL_ROOT_PASSWORD", password)
                 // entrypoint script supports just adding options as the command
-                .command("--character-set-server=utf8mb4",
+                .blockingCommand("--character-set-server=utf8mb4",
                         "--collation-server=utf8mb4_unicode_ci",
                         "--bind-address=" + bindAddress)
                 .build();

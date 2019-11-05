@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
@@ -15,10 +16,13 @@ public interface ContainerParametry {
 
     List<String> command();
 
+    CommandType commandType();
+
     List<Integer> exposedPorts();
 
     Map<String, String> environment();
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     default boolean disableAutoRemove() {
         return false;
     }
@@ -31,9 +35,29 @@ public interface ContainerParametry {
         return new Builder(image);
     }
 
+    /**
+     * Enumeration of constants that represents types of commands executed
+     * upon container start.
+     */
+    enum CommandType {
+
+        /**
+         * Command that blocks indefinitely. The container remains running.
+         * This is the default assumed if no type is specified.
+         */
+        BLOCKING,
+
+        /**
+         * Command that exits immediately. The container stops after the command executes.
+         */
+        EXITING_IMMEDIATELY
+    }
+
     final class Builder {
 
         private ImageSpecifier image;
+
+        private CommandType commandType = CommandType.BLOCKING;
 
         private List<String> command = Collections.emptyList();
 
@@ -49,7 +73,7 @@ public interface ContainerParametry {
             this.image = requireNonNull(image);
         }
 
-        public  Builder expose(int port) {
+        public Builder expose(int port) {
             if (port <= 0 || port > 65535) {
                 throw new IllegalArgumentException("invalid port value: " + port);
             }
@@ -58,18 +82,35 @@ public interface ContainerParametry {
         }
 
         public Builder commandToWaitIndefinitely() {
-            return command(Arrays.asList("tail", "-f", "/dev/null"));
+            return blockingCommand(Arrays.asList("tail", "-f", "/dev/null"));
         }
 
-        public Builder command(String first, String...others) {
+        public Builder nonblockingCommand(List<String> cmd) {
+            return command(CommandType.EXITING_IMMEDIATELY, cmd);
+        }
+
+        public Builder nonblockingCommand(String first, String...others) {
+            return command(CommandType.EXITING_IMMEDIATELY, first, others);
+        }
+
+        public Builder blockingCommand(List<String> cmd) {
+            return command(CommandType.BLOCKING, cmd);
+        }
+
+        public Builder blockingCommand(String first, String...others) {
+            return command(CommandType.BLOCKING, first, others);
+        }
+
+        public Builder command(CommandType commandType, String first, String...others) {
             List<String> list = new ArrayList<>();
             list.add(first);
             list.addAll(Arrays.asList(others));
-            return command(list);
+            return command(commandType, list);
         }
 
-        public Builder command(List<String> val) {
-            command = requireNonNull(val);
+        public Builder command(CommandType commandType, List<String> command) {
+            this.command = requireNonNull(command);
+            this.commandType = requireNonNull(commandType, "commandType");
             return this;
         }
 
@@ -87,6 +128,7 @@ public interface ContainerParametry {
         private static class FrozenContainerParametry implements ContainerParametry {
 
             private final ImageSpecifier image;
+            private final CommandType commandType;
             private final List<String> command;
             private final List<Integer> exposedPorts;
             private final Map<String, String> env;
@@ -96,24 +138,43 @@ public interface ContainerParametry {
                 command = builder.command;
                 exposedPorts = new ArrayList<>(builder.exposedPorts);
                 env = new LinkedHashMap<>(builder.env);
+                this.commandType = requireNonNull(builder.commandType);
             }
 
+            @Override
+            public CommandType commandType() {
+                return commandType;
+            }
+
+            @Override
             public ImageSpecifier image() {
                 return image;
             }
 
+            @Override
             public List<String> command() {
                 return command;
             }
 
+            @Override
             public List<Integer> exposedPorts() {
                 return exposedPorts;
             }
 
+            @Override
             public Map<String, String> environment() {
                 return env;
             }
 
+            @Override
+            public String toString() {
+                return new StringJoiner(", ", "ContainerParametry" + "[", "]")
+                        .add("image=" + image)
+                        .add("command=" + command)
+                        .add("exposedPorts=" + exposedPorts)
+                        .add("env=" + env)
+                        .toString();
+            }
         }
 
     }

@@ -51,16 +51,29 @@ public class DjContainerCreator implements ContainerCreator {
         }
     }
 
-    protected CreateContainerCmd applyParametry(ContainerParametry parametry) {
-        CreateContainerCmd createCmd = client.createContainerCmd(parametry.image().toString());
+    protected HostConfig createHostConfig(ContainerParametry parametry) {
         List<PortBinding> bindings = parametry.exposedPorts().stream().map(portNumber -> {
             return new PortBinding(Ports.Binding.empty(), new ExposedPort(portNumber));
         }).collect(Collectors.toList());
-        HostConfig hostConfig = HostConfig.newHostConfig()
+        return HostConfig.newHostConfig()
                 .withAutoRemove(!parametry.disableAutoRemove())
                 .withPortBindings(bindings);
+    }
+
+    /**
+     * Creates the command object to be executed.
+     * Override this method to customize the command that is created.
+     * @param parametry parameter set
+     * @return the command object
+     */
+    protected CreateContainerCmd constructCreateCommand(ContainerParametry parametry) {
+        CreateContainerCmd createCmd = client.createContainerCmd(parametry.image().toString());
+        HostConfig hostConfig = createHostConfig(parametry);
         createCmd.withHostConfig(hostConfig);
-        createCmd.withCmd(parametry.command());
+        List<String> command = parametry.command();
+        if (!command.isEmpty()) {
+            createCmd.withCmd(command);
+        }
         List<String> envDefinitions = parametry.environment().entrySet().stream()
                 .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue())).collect(Collectors.toList());
         createCmd.withEnv(envDefinitions);
@@ -132,12 +145,10 @@ public class DjContainerCreator implements ContainerCreator {
 
         private final ContainerInfo info;
         private final AtomicBoolean started;
-        private final boolean autoRemove;
 
-        private DjRunnableContainer(ContainerInfo info, boolean autoRemove) {
+        private DjRunnableContainer(ContainerInfo info) {
             this.info = requireNonNull(info, "info");
             started = new AtomicBoolean(false);
-            this.autoRemove = autoRemove;
         }
 
         @Override
@@ -158,7 +169,7 @@ public class DjContainerCreator implements ContainerCreator {
 
         private void maybeRemove() throws ContainmentException {
             boolean hasBeenStarted = started.get();
-            if (hasBeenStarted && autoRemove) {
+            if (hasBeenStarted && info.isAutoRemoveEnabled()) {
                 /*
                  * Then the container will be removed when it stops, so we don't
                  * have to do remove it explicitly.
@@ -204,7 +215,7 @@ public class DjContainerCreator implements ContainerCreator {
     @Override
     public DjRunnableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException {
         try {
-            CreateContainerCmd createCmd = applyParametry(parametry);
+            CreateContainerCmd createCmd = constructCreateCommand(parametry);
             CreateContainerResponse create = createCmd.exec();
             String[] warnings = ArrayUtil.nullToEmpty(create.getWarnings());
             for (String warning : warnings) {
@@ -212,8 +223,7 @@ public class DjContainerCreator implements ContainerCreator {
             }
             String containerId = create.getId();
             containerMonitor.created(containerId);
-            boolean autoRemoveEnabled = !parametry.disableAutoRemove();
-            return new DjRunnableContainer(ContainerInfo.define(containerId), autoRemoveEnabled);
+            return new DjRunnableContainer(ContainerInfo.define(containerId, parametry));
         } catch (DockerException e) {
             throw new ContainmentException(e);
         }

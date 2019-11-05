@@ -21,7 +21,7 @@ public class UnitTestContainerCreator implements ContainerCreator {
     public RunnableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException {
         String id = Uuids.randomUuidString(random);
         monitor.created(id);
-        return new UnitTestRunnableContainer(ContainerInfo.define(id));
+        return new UnitTestRunnableContainer(ContainerInfo.define(id, ContainerInfo.Stickiness.MANUAL_REMOVE_REQUIRED, ContainerParametry.CommandType.BLOCKING));
     }
 
     @Override
