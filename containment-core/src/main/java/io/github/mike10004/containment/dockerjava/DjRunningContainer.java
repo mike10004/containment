@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
-class DjRunningContainer implements RunningContainer {
+public class DjRunningContainer implements RunningContainer {
 
     private final DockerClient client;
     private final ContainerInfo info;
@@ -87,6 +87,9 @@ class DjRunningContainer implements RunningContainer {
 
     @Override
     public void close() throws ContainmentException {
+        if (!info().isStopRequired()) {
+            return;
+        }
         try {
             String id = info().id();
             try {
