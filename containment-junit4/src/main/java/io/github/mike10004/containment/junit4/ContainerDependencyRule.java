@@ -10,7 +10,7 @@ import io.github.mike10004.containment.dockerjava.DjContainerCreator;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
-import io.github.mike10004.containment.PreStartAction;
+import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.containment.lifecycle.ContainerLifecycle;
@@ -52,7 +52,7 @@ public class ContainerDependencyRule extends ExternalResource {
 
         private Consumer<? super String> eventListener = ignore -> {};
         private ContainerParametry containerParametry;
-        private List<PreStartAction> preStartActions;
+        private List<ContainerAction> preStartActions;
         private Supplier<? extends LifecycledDependency<RunningContainer>> dependencyCreator;
 
         public Builder(ContainerParametry containerParametry) {
@@ -61,7 +61,7 @@ public class ContainerDependencyRule extends ExternalResource {
             preStartActions = new ArrayList<>();
         }
 
-        public Builder addPreStartAction(PreStartAction action) {
+        public Builder addPreStartAction(ContainerAction action) {
             preStartActions.add(action);
             return this;
         }

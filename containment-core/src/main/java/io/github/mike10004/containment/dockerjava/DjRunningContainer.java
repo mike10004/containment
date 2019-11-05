@@ -10,6 +10,7 @@ import com.github.dockerjava.api.model.Frame;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.PortMapping;
@@ -75,6 +76,11 @@ public class DjRunningContainer implements RunningContainer {
             default:
                 throw new IllegalArgumentException(String.valueOf(d));
         }
+    }
+
+    @Override
+    public void execute(ContainerAction action) throws ContainmentException {
+        action.perform(info);
     }
 
     protected DockerSubprocessExecutorBase.SubprocessConfig getSubprocessConfig() {

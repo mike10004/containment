@@ -11,7 +11,7 @@ import io.github.mike10004.containment.Durations;
 import io.github.mike10004.containment.FullSocketAddress;
 import io.github.mike10004.containment.ImageSpecifier;
 import io.github.mike10004.containment.PortMapping;
-import io.github.mike10004.containment.PreStartAction;
+import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.RunnableContainer;
 import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.TestDockerManager;
@@ -71,7 +71,7 @@ public class DjContainerCreatorTest {
         Tests.assertStdoutHasLine(result, "FOO=bar");
     }
 
-    private static class PreCopier implements PreStartAction {
+    private static class PreCopier implements ContainerAction {
 
         private final DockerClient client;
         private final File srcFile;
@@ -84,8 +84,8 @@ public class DjContainerCreatorTest {
         }
 
         @Override
-        public void perform(ContainerInfo unstartedContainer) {
-            client.copyArchiveToContainerCmd(unstartedContainer.id())
+        public void perform(ContainerInfo container) {
+            client.copyArchiveToContainerCmd(container.id())
                     .withHostResource(srcFile.getAbsolutePath())
                     .withRemotePath(destination)
                     .exec();

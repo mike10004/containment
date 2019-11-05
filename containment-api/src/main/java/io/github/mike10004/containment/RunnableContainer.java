@@ -4,20 +4,13 @@ package io.github.mike10004.containment;
  * Interface of a runnable container. A runnable container has been created but
  * not yet started. To close a runnable container is to remove (destroy) it.
  */
-public interface RunnableContainer extends AutoCloseable {
+public interface RunnableContainer extends ActionableContainer, AutoCloseable {
 
     /**
      * Gets the container info.
      * @return container info
      */
     ContainerInfo info();
-
-    /**
-     * Executes an action against the container.
-     * @param preStartAction the action
-     * @throws ContainmentException on error
-     */
-    void execute(PreStartAction preStartAction) throws ContainmentException;
 
     /**
      * Starts the container. Creates a new instance of {@link RunningContainer}.

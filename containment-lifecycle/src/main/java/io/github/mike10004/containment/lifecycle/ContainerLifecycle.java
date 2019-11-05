@@ -2,7 +2,7 @@ package io.github.mike10004.containment.lifecycle;
 
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerCreator;
-import io.github.mike10004.containment.PreStartAction;
+import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.RunnableContainer;
 import io.github.mike10004.containment.RunningContainer;
 
@@ -56,9 +56,9 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
     private static class PreStartActionExecutor implements DependencyLifecycle<Integer> {
 
         private final Supplier<? extends RunnableContainer> containerSupplier;
-        private final List<? extends PreStartAction> preStartActions;
+        private final List<? extends ContainerAction> preStartActions;
 
-        public PreStartActionExecutor(Supplier<? extends RunnableContainer> containerSupplier, List<? extends PreStartAction> preStartActions) {
+        public PreStartActionExecutor(Supplier<? extends RunnableContainer> containerSupplier, List<? extends ContainerAction> preStartActions) {
             this.containerSupplier = containerSupplier;
             this.preStartActions = preStartActions;
         }
@@ -74,7 +74,7 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         @Override
         public Integer commission() throws Exception {
             RunnableContainer runnable = containerSupplier.get();
-            for (PreStartAction action : preStartActions) {
+            for (ContainerAction action : preStartActions) {
                 runnable.execute(action);
             }
             return preStartActions.size();
@@ -85,7 +85,7 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         }
     }
 
-    public static ContainerLifecycle create(ContainerRunnerConstructor constructor, ContainerParametry parametry, List<? extends PreStartAction> preStartActions) {
+    public static ContainerLifecycle create(ContainerRunnerConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions) {
         AtomicReference<ContainerCreator> runnerRef = new AtomicReference<>();
         DependencyLifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
             ContainerCreator runner = constructor.instantiate();

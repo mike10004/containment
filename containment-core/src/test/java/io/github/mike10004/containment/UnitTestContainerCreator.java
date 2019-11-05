@@ -42,7 +42,7 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
 
         @Override
-        public void execute(PreStartAction preStartAction) throws ContainmentException {
+        public void execute(ContainerAction preStartAction) throws ContainmentException {
             System.out.format("%s.execute(%s)%n", getClass().getSimpleName(), preStartAction);
         }
 
@@ -74,6 +74,11 @@ public class UnitTestContainerCreator implements ContainerCreator {
         @Override
         public void close() throws ContainmentException {
             monitor.stopped(info().id());
+        }
+
+        @Override
+        public void execute(ContainerAction action) throws ContainmentException {
+            action.perform(info);
         }
 
         @Override

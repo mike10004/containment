@@ -4,7 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.PreStartAction;
+import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.RunnableContainer;
 import io.github.mike10004.containment.RunningContainer;
 
@@ -35,7 +35,7 @@ public class DjRunnableContainer implements RunnableContainer {
     }
 
     @Override
-    public void execute(PreStartAction preStartAction) throws ContainmentException {
+    public void execute(ContainerAction preStartAction) throws ContainmentException {
         preStartAction.perform(info);
     }
 
@@ -99,7 +99,7 @@ public class DjRunnableContainer implements RunnableContainer {
         }
     }
 
-    private class CopyFileAction implements PreStartAction {
+    private class CopyFileAction implements ContainerAction {
 
         private final File srcFile;
         private final String destinationPathname;
@@ -110,12 +110,12 @@ public class DjRunnableContainer implements RunnableContainer {
         }
 
         @Override
-        public void perform(ContainerInfo unstartedContainer) throws ContainmentException {
-            copyFileToContainer(unstartedContainer.id(), srcFile, destinationPathname);
+        public void perform(ContainerInfo container) throws ContainmentException {
+            copyFileToContainer(container.id(), srcFile, destinationPathname);
         }
     }
 
-    private class CopyBytesAction implements PreStartAction {
+    private class CopyBytesAction implements ContainerAction {
 
         private final File tmpDir;
         private final byte[] sourceBytes;
@@ -128,12 +128,12 @@ public class DjRunnableContainer implements RunnableContainer {
         }
 
         @Override
-        public void perform(ContainerInfo unstartedContainer) throws ContainmentException {
+        public void perform(ContainerInfo container) throws ContainmentException {
             File tempFile = null;
             try {
                 tempFile = File.createTempFile("pre-start-action", ".tmp", tmpDir);
                 java.nio.file.Files.write(tempFile.toPath(), sourceBytes, StandardOpenOption.WRITE);
-                copyFileToContainer(unstartedContainer.id(), tempFile, destinationPathname);
+                copyFileToContainer(container.id(), tempFile, destinationPathname);
             } catch (DockerException | IOException e) {
                 throw new ContainmentException(e);
             } finally {

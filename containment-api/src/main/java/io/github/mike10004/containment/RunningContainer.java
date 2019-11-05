@@ -3,7 +3,7 @@ package io.github.mike10004.containment;
 import java.util.List;
 import java.util.function.Consumer;
 
-public interface RunningContainer extends AutoCloseable {
+public interface RunningContainer extends ActionableContainer, AutoCloseable {
 
     ContainerInfo info();
 
