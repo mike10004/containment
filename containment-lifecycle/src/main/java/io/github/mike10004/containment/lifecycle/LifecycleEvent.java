@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -60,5 +61,12 @@ public class LifecycleEvent {
             j.add("message='" + message + "'");
         }
         return j.toString();
+    }
+
+    private static final Consumer INACTIVE_CONSUMER = ignore -> {};
+
+    @SuppressWarnings("unchecked")
+    public static <T> Consumer<T> inactiveConsumer() {
+        return INACTIVE_CONSUMER;
     }
 }

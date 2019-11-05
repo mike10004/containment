@@ -1,33 +1,31 @@
 package io.github.mike10004.containment.lifecycle;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  *
  * @param <T> type of top element of the stack (last created, first destroyed)
  */
-public class LifecycleStack<T> implements DependencyLifecycle<T> {
+public class LifecycleStack<T> implements Lifecycle<T> {
 
-    private final Iterable<? extends DependencyLifecycle<?>> others;
-    private final Deque<DependencyLifecycle<?>> commissioned;
-    private final DependencyLifecycle<T> top;
+    private final Iterable<? extends Lifecycle<?>> others;
+    private final Deque<Lifecycle<?>> commissioned;
+    private final Lifecycle<T> top;
 
-    public LifecycleStack(Iterable<? extends DependencyLifecycle<?>> others, DependencyLifecycle<T> top) {
+    public LifecycleStack(Iterable<? extends Lifecycle<?>> others, Lifecycle<T> top) {
         commissioned = new ArrayDeque<>();
         this.top = top;
         this.others = others;
     }
 
     private void unwind() {
-        Map<DependencyLifecycle<?>, RuntimeException> exceptionsThrown = new LinkedHashMap<>();
+        Map<Lifecycle<?>, RuntimeException> exceptionsThrown = new LinkedHashMap<>();
         while (!commissioned.isEmpty()) {
-            DependencyLifecycle<?> lifecycle = commissioned.pop();
+            Lifecycle<?> lifecycle = commissioned.pop();
             try {
                 lifecycle.decommission();
             } catch (RuntimeException e) {
@@ -41,9 +39,9 @@ public class LifecycleStack<T> implements DependencyLifecycle<T> {
 
     @Override
     public T commission() throws Exception {
-        DependencyLifecycle<?> thrower = null;
+        Lifecycle<?> thrower = null;
         Exception throwable = null;
-        for (DependencyLifecycle<?> lifecycle : others) {
+        for (Lifecycle<?> lifecycle : others) {
             try {
                 lifecycle.commission();
                 commissioned.push(lifecycle);
@@ -81,11 +79,11 @@ public class LifecycleStack<T> implements DependencyLifecycle<T> {
     }
 
     static class CommissionFailedAndUnwindFailedException extends Exception {
-        public final DependencyLifecycle<?> commissionExceptionThrower;
+        public final Lifecycle<?> commissionExceptionThrower;
         public final Exception commissionException;
         public final UnwindException unwindException;
 
-        public CommissionFailedAndUnwindFailedException(DependencyLifecycle<?> commissionExceptionThrower, Exception commissionException, UnwindException unwindException) {
+        public CommissionFailedAndUnwindFailedException(Lifecycle<?> commissionExceptionThrower, Exception commissionException, UnwindException unwindException) {
             super(String.format("commission failed and %d exceptions were thrown while unwinding", unwindException.exceptionsThrown.size()));
             this.commissionExceptionThrower = commissionExceptionThrower;
             this.commissionException = commissionException;
@@ -94,8 +92,8 @@ public class LifecycleStack<T> implements DependencyLifecycle<T> {
     }
 
     static class UnwindException extends RuntimeException {
-        public final Map<DependencyLifecycle<?>, RuntimeException> exceptionsThrown;
-        public UnwindException(Map<DependencyLifecycle<?>, RuntimeException> exceptionsThrown) {
+        public final Map<Lifecycle<?>, RuntimeException> exceptionsThrown;
+        public UnwindException(Map<Lifecycle<?>, RuntimeException> exceptionsThrown) {
             super(String.format("%d lifecycle decommission methods threw exception(s): %s", exceptionsThrown.size(), exceptionsThrown.keySet()));
             this.exceptionsThrown = Collections.unmodifiableMap(new LinkedHashMap<>(exceptionsThrown));
         }

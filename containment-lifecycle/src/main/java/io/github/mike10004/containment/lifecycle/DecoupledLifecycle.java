@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
-public class DecoupledLifecycle<D> implements DependencyLifecycle<D> {
+public class DecoupledLifecycle<D> implements Lifecycle<D> {
 
     private transient final Object lock = new Object();
     private final Decommissioner<D> decommissioner;

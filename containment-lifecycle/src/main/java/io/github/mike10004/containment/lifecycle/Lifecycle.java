@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
-public interface DependencyLifecycle<D> {
+public interface Lifecycle<D> {
 
     D commission() throws Exception;
 

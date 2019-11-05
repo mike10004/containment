@@ -6,14 +6,14 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class LifecycledDependencyTest {
+public class LifecyclingCachingProviderTest {
 
     @org.junit.Test
     public void provide() {
         ObjectCommissioner commissioner = new ObjectCommissioner();
         ObjectDecommissioner decommissioner = new ObjectDecommissioner();
         Widget value;
-        try (CloseableLifecycledDependency<Widget> dependency = new CloseableLifecycledDependency<>(new DecoupledLifecycle<>(commissioner, decommissioner))) {
+        try (CloseableLifecyclingCachingProvider<Widget> dependency = new CloseableLifecyclingCachingProvider<>(new DecoupledLifecycle<>(commissioner, decommissioner))) {
             Provision<Widget> provision = dependency.provide();
             assertTrue("expect succeeded: " + provision, provision.isSucceeded());
             value = provision.require();

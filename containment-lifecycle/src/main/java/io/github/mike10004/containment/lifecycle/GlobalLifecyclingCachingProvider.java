@@ -4,7 +4,12 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
-public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D> {
+/**
+ * Implementation of a provider of a resource whose lifecycle begins on first
+ * retrieval and ends on JVM termination.
+ * @param <D> resource type
+ */
+public final class GlobalLifecyclingCachingProvider<D> extends LifecyclingCachingProvider<D> {
 
     private final Consumer<? super Thread> addShutdownHookMethod;
 
@@ -12,15 +17,15 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
      * Constructs an instance of the rule.
      * @param innerRule
      */
-    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule) {
+    public GlobalLifecyclingCachingProvider(Lifecycle<D> innerRule) {
         this(innerRule, ignore -> {});
     }
 
-    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super LifecycleEvent> eventListener) {
+    public GlobalLifecyclingCachingProvider(Lifecycle<D> innerRule, Consumer<? super LifecycleEvent> eventListener) {
         this(innerRule, eventListener, Runtime.getRuntime()::addShutdownHook);
     }
 
-    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super LifecycleEvent> eventListener, Consumer<? super Thread> addShutdownHookMethod) {
+    public GlobalLifecyclingCachingProvider(Lifecycle<D> innerRule, Consumer<? super LifecycleEvent> eventListener, Consumer<? super Thread> addShutdownHookMethod) {
         super(innerRule, eventListener);
         this.addShutdownHookMethod = requireNonNull(addShutdownHookMethod);
     }

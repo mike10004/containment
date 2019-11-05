@@ -8,23 +8,27 @@ import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
-public class LifecycledDependency<D> implements LazyDependency<D> {
+/**
+ * Implementation of a provider of a resource that has a lifecycle.
+ * @param <D>
+ */
+public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
 
-    private final DependencyLifecycle<D> lifecycle;
-    private final ExecutionManager executionManager;
+    private final Lifecycle<D> lifecycle;
+    private final ConcurrentCache concurrentCache;
     private final Consumer<? super LifecycleEvent> eventListener;
 
     /**
      * Constructs an instance of the rule.
      * @param lifecycle
      */
-    public LifecycledDependency(DependencyLifecycle<D> lifecycle) {
-        this(lifecycle, ignore -> {});
+    public LifecyclingCachingProvider(Lifecycle<D> lifecycle) {
+        this(lifecycle, LifecycleEvent.inactiveConsumer());
     }
 
-    public LifecycledDependency(DependencyLifecycle<D> lifecycle, Consumer<? super LifecycleEvent> eventListener) {
+    public LifecyclingCachingProvider(Lifecycle<D> lifecycle, Consumer<? super LifecycleEvent> eventListener) {
         this.lifecycle = requireNonNull(lifecycle);
-        executionManager = new ExecutionManager();
+        concurrentCache = new ConcurrentCache();
         this.eventListener = requireNonNull(eventListener);
     }
 
@@ -39,7 +43,7 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
     public final Provision<D> provide() {
         notify(LifecycleEvent.Category.PROVIDE_STARTED);
         AtomicBoolean computed = new AtomicBoolean(false);
-        Provision<D> invocation = executionManager.compute(new Supplier<Provision<D>>(){
+        Provision<D> invocation = concurrentCache.compute(new Supplier<Provision<D>>(){
             @Override
             public Computation<D> get() {
                 computed.set(true);
@@ -82,13 +86,13 @@ public class LifecycledDependency<D> implements LazyDependency<D> {
         throw t;
     }
 
-    private class ExecutionManager {
+    private class ConcurrentCache {
 
-        private final ConcurrentMap<Object, Provision<D>> handler = new ConcurrentHashMap<>(1);
-        private final Object setupKey = new Object();
+        private final ConcurrentMap<Object, Provision<D>> concurrencyManager = new ConcurrentHashMap<>(1);
+        private transient final Object computeKey = new Object();
 
         public Provision<D> compute(Supplier<Provision<D>> computer) {
-            return handler.computeIfAbsent(setupKey, k -> computer.get());
+            return concurrencyManager.computeIfAbsent(computeKey, k -> computer.get());
         }
     }
 

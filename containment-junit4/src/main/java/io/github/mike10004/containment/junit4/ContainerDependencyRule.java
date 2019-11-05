@@ -1,7 +1,7 @@
 package io.github.mike10004.containment.junit4;
 
 import io.github.mike10004.containment.RunningContainer;
-import io.github.mike10004.containment.lifecycle.LifecycledDependency;
+import io.github.mike10004.containment.lifecycle.LifecyclingCachingProvider;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -10,9 +10,9 @@ import static java.util.Objects.requireNonNull;
 
 public class ContainerDependencyRule implements TestRule {
 
-    LifecycledDependency<RunningContainer> containerDependency;
+    LifecyclingCachingProvider<RunningContainer> containerDependency;
 
-    public ContainerDependencyRule(LifecycledDependency<RunningContainer> containerDependency) {
+    public ContainerDependencyRule(LifecyclingCachingProvider<RunningContainer> containerDependency) {
         this.containerDependency = requireNonNull(containerDependency);
     }
 

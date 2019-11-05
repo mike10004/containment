@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 
 public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
 
-    private ContainerLifecycle(Iterable<? extends DependencyLifecycle<?>> others, DependencyLifecycle<RunningContainer> top) {
+    private ContainerLifecycle(Iterable<? extends Lifecycle<?>> others, Lifecycle<RunningContainer> top) {
         super(others, top);
     }
 
@@ -53,7 +53,7 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         }
     }
 
-    private static class PreStartActionExecutor implements DependencyLifecycle<Integer> {
+    private static class PreStartActionExecutor implements Lifecycle<Integer> {
 
         private final Supplier<? extends RunnableContainer> containerSupplier;
         private final List<? extends ContainerAction> preStartActions;
@@ -82,25 +82,26 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
 
         @Override
         public void decommission() {
+            // no op
         }
     }
 
     public static ContainerLifecycle create(ContainerRunnerConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions) {
         AtomicReference<ContainerCreator> runnerRef = new AtomicReference<>();
-        DependencyLifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
+        Lifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
             ContainerCreator runner = constructor.instantiate();
             runnerRef.set(runner);
             return runner;
         });
         AtomicReference<RunnableContainer> runnableRef = new AtomicReference<>();
-        DependencyLifecycle<RunnableContainer> runnableLifecycle = new RunnableContainerLifecycle(() -> {
+        Lifecycle<RunnableContainer> runnableLifecycle = new RunnableContainerLifecycle(() -> {
             ContainerCreator runner = runnerRef.get();
             RunnableContainer runnable = runner.create(parametry);
             runnableRef.set(runnable);
             return runnable;
         });
-        DependencyLifecycle<Integer> preStartActionLifecycle = new PreStartActionExecutor(runnableRef::get, preStartActions);
-        DependencyLifecycle<RunningContainer> runningLifecycle = new RunningContainerLifecycle(() -> {
+        Lifecycle<Integer> preStartActionLifecycle = new PreStartActionExecutor(runnableRef::get, preStartActions);
+        Lifecycle<RunningContainer> runningLifecycle = new RunningContainerLifecycle(() -> {
             RunnableContainer runnable = runnableRef.get();
             return runnable.start();
         });

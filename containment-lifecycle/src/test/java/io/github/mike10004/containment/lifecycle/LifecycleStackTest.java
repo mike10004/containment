@@ -47,7 +47,7 @@ public class LifecycleStackTest {
             assertEquals(third, e.commissionExceptionThrower);
             assertTrue(e.commissionException.getClass() == CommissionException.class);
             assertEquals(1, e.unwindException.exceptionsThrown.size());
-            Map.Entry<DependencyLifecycle<?>, RuntimeException> entry = e.unwindException.exceptionsThrown.entrySet().iterator().next();
+            Map.Entry<Lifecycle<?>, RuntimeException> entry = e.unwindException.exceptionsThrown.entrySet().iterator().next();
             assertEquals(entry.getKey(), second);
             assertEquals(entry.getValue().getClass(), RuntimeDecommissionException.class);
         }
@@ -109,7 +109,7 @@ public class LifecycleStackTest {
             stack.decommission();
         } catch (LifecycleStack.UnwindException e) {
             assertEquals(1, e.exceptionsThrown.size());
-            Map.Entry<DependencyLifecycle<?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
+            Map.Entry<Lifecycle<?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
             assertSame(third, entry.getKey());
             assertSame(RuntimeDecommissionException.class, entry.getValue().getClass());
         }
@@ -138,7 +138,7 @@ public class LifecycleStackTest {
         }
     }
 
-    private static class WidgetLifecycle implements DependencyLifecycle<Widget> {
+    private static class WidgetLifecycle implements Lifecycle<Widget> {
 
         private final WidgetTracker tracker;
         public int commissioned, decommissioned;

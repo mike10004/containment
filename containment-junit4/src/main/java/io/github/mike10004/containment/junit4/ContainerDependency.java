@@ -16,9 +16,9 @@ import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 import io.github.mike10004.containment.lifecycle.ContainerLifecycle;
 import io.github.mike10004.containment.lifecycle.ContainerRunnerConstructor;
 import io.github.mike10004.containment.lifecycle.FirstProvisionFailedException;
-import io.github.mike10004.containment.lifecycle.GlobalLifecycledDependency;
+import io.github.mike10004.containment.lifecycle.GlobalLifecyclingCachingProvider;
 import io.github.mike10004.containment.lifecycle.LifecycleEvent;
-import io.github.mike10004.containment.lifecycle.LifecycledDependency;
+import io.github.mike10004.containment.lifecycle.LifecyclingCachingProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public interface ContainerDependency {
 
     RunningContainer container() throws FirstProvisionFailedException;
 
-    static ContainerDependency of(LifecycledDependency<RunningContainer> container) {
+    static ContainerDependency of(LifecyclingCachingProvider<RunningContainer> container) {
         return () -> container.provide().require();
     }
 
@@ -41,7 +41,7 @@ public interface ContainerDependency {
 
     class Builder {
 
-        private Consumer<? super LifecycleEvent> eventListener = ignore -> {};
+        private Consumer<? super LifecycleEvent> eventListener = LifecycleEvent.inactiveConsumer();
         private ContainerParametry containerParametry;
         private List<ContainerAction> preStartActions;
 
@@ -79,19 +79,19 @@ public interface ContainerDependency {
             }
         }
 
-        private class LocalDependencyCreator implements Supplier<LifecycledDependency<RunningContainer>> {
+        private class LocalDependencyCreator implements Supplier<LifecyclingCachingProvider<RunningContainer>> {
 
             @Override
-            public LifecycledDependency<RunningContainer> get() {
-                return new LifecycledDependency<>(ContainerLifecycle.create(new LocalRunnerConstructor(), containerParametry, preStartActions), eventListener);
+            public LifecyclingCachingProvider<RunningContainer> get() {
+                return new LifecyclingCachingProvider<>(ContainerLifecycle.create(new LocalRunnerConstructor(), containerParametry, preStartActions), eventListener);
             }
         }
 
-        private class GlobalDependencyCreator implements Supplier<GlobalLifecycledDependency<RunningContainer>> {
+        private class GlobalDependencyCreator implements Supplier<GlobalLifecyclingCachingProvider<RunningContainer>> {
 
             @Override
-            public GlobalLifecycledDependency<RunningContainer> get() {
-                return new GlobalLifecycledDependency<>(ContainerLifecycle.create(new GlobalRunnerConstructor(), containerParametry, preStartActions));
+            public GlobalLifecyclingCachingProvider<RunningContainer> get() {
+                return new GlobalLifecyclingCachingProvider<>(ContainerLifecycle.create(new GlobalRunnerConstructor(), containerParametry, preStartActions));
             }
         }
 
@@ -103,12 +103,12 @@ public interface ContainerDependency {
             return buildDependency(new GlobalDependencyCreator());
         }
 
-        private ContainerDependency buildDependency(Supplier<? extends LifecycledDependency<RunningContainer>> dependencyCreator) {
+        private ContainerDependency buildDependency(Supplier<? extends LifecyclingCachingProvider<RunningContainer>> dependencyCreator) {
             return ContainerDependency.of(dependencyCreator.get());
         }
 
         public ContainerDependencyRule buildLocalRule() {
-            LifecycledDependency<RunningContainer> dependency = new LocalDependencyCreator().get();
+            LifecyclingCachingProvider<RunningContainer> dependency = new LocalDependencyCreator().get();
             return new ContainerDependencyRule(dependency);
         }
 
