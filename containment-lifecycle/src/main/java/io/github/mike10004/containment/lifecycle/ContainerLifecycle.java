@@ -86,7 +86,43 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         }
     }
 
-    public static ContainerLifecycle create(ContainerRunnerConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions) {
+    private static class PostStartActionExecutor implements Lifecycle<RunningContainer> {
+
+        private final Supplier<? extends RunningContainer> containerSupplier;
+        private final List<? extends RunningContainerAction> postStartActions;
+
+        public PostStartActionExecutor(Supplier<? extends RunningContainer> containerSupplier, List<? extends RunningContainerAction> postStartActions) {
+            this.containerSupplier = containerSupplier;
+            this.postStartActions = postStartActions;
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", PreStartActionExecutor.class.getSimpleName() + "[", "]")
+                    .add("containerSupplier=" + containerSupplier)
+                    .add("postStartActions=" + postStartActions)
+                    .toString();
+        }
+
+        @Override
+        public RunningContainer commission() throws Exception {
+            RunningContainer container = containerSupplier.get();
+            for (RunningContainerAction action : postStartActions) {
+                if (container == null) {
+                    container = containerSupplier.get();
+                }
+                action.perform(container);
+            }
+            return container;
+        }
+
+        @Override
+        public void decommission() {
+            // no op
+        }
+    }
+
+    public static ContainerLifecycle create(ContainerRunnerConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions, List<? extends RunningContainerAction> postStartActions) {
         AtomicReference<ContainerCreator> runnerRef = new AtomicReference<>();
         Lifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
             ContainerCreator runner = constructor.instantiate();
@@ -101,11 +137,15 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
             return runnable;
         });
         Lifecycle<Integer> preStartActionLifecycle = new PreStartActionExecutor(runnableRef::get, preStartActions);
+        AtomicReference<RunningContainer> runningRef = new AtomicReference<>();
         Lifecycle<RunningContainer> runningLifecycle = new RunningContainerLifecycle(() -> {
             RunnableContainer runnable = runnableRef.get();
-            return runnable.start();
+            RunningContainer container = runnable.start();
+            runningRef.set(container);
+            return container;
         });
-        return new ContainerLifecycle(Arrays.asList(runnerLifecycle, runnableLifecycle, preStartActionLifecycle), runningLifecycle);
+        Lifecycle<RunningContainer> postStartActionsLifecycle = new PostStartActionExecutor(runningRef::get, postStartActions);
+        return new ContainerLifecycle(Arrays.asList(runnerLifecycle, runnableLifecycle, preStartActionLifecycle, runningLifecycle), postStartActionsLifecycle);
     }
 
     private static class RuntimeExceptionWrapper<T extends AutoCloseable> implements DecoupledLifecycle.Decommissioner<T> {

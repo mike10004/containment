@@ -26,7 +26,7 @@ public interface ContainerParametry {
 
     CommandType commandType();
 
-    List<Integer> exposedPorts();
+    List<Integer> bindablePort();
 
     Map<String, String> environment();
 
@@ -68,7 +68,7 @@ public interface ContainerParametry {
 
         private List<String> command = Collections.emptyList();
 
-        private List<Integer> exposedPorts = new ArrayList<>();
+        private List<Integer> bindablePorts = new ArrayList<>();
 
         private Map<String, String> env = new LinkedHashMap<>();
 
@@ -80,11 +80,11 @@ public interface ContainerParametry {
             this.image = requireNonNull(image);
         }
 
-        public Builder expose(int port) {
+        public Builder bindablePort(int port) {
             if (port <= 0 || port > 65535) {
                 throw new IllegalArgumentException("invalid port value: " + port);
             }
-            exposedPorts.add(port);
+            bindablePorts.add(port);
             return this;
         }
 
@@ -144,7 +144,7 @@ public interface ContainerParametry {
             private FrozenContainerParametry(Builder builder) {
                 image = builder.image;
                 command = builder.command;
-                exposedPorts = new ArrayList<>(builder.exposedPorts);
+                exposedPorts = new ArrayList<>(builder.bindablePorts);
                 env = new LinkedHashMap<>(builder.env);
                 this.commandType = requireNonNull(builder.commandType);
             }
@@ -165,7 +165,7 @@ public interface ContainerParametry {
             }
 
             @Override
-            public List<Integer> exposedPorts() {
+            public List<Integer> bindablePort() {
                 return exposedPorts;
             }
 

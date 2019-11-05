@@ -48,7 +48,7 @@ public class DjContainerCreator implements ContainerCreator {
     }
 
     protected HostConfig createHostConfig(ContainerParametry parametry) {
-        List<PortBinding> bindings = parametry.exposedPorts().stream().map(portNumber -> {
+        List<PortBinding> bindings = parametry.bindablePort().stream().map(portNumber -> {
             return new PortBinding(Ports.Binding.empty(), new ExposedPort(portNumber));
         }).collect(Collectors.toList());
         return HostConfig.newHostConfig()

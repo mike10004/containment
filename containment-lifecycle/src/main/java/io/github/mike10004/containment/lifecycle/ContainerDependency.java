@@ -43,14 +43,21 @@ public interface ContainerDependency {
         private Consumer<? super LifecycleEvent> eventListener = LifecycleEvent.inactiveConsumer();
         private ContainerParametry containerParametry;
         private List<ContainerAction> preStartActions;
+        private List<RunningContainerAction> postStartActions;
 
         private Builder(ContainerParametry containerParametry) {
             this.containerParametry = requireNonNull(containerParametry, "containerParametry");
             preStartActions = new ArrayList<>();
+            postStartActions = new ArrayList<>();
         }
 
         public Builder eventListener(Consumer<? super LifecycleEvent> eventListener) {
             this.eventListener = requireNonNull(eventListener);
+            return this;
+        }
+
+        public Builder addPostStartAction(RunningContainerAction containerAction) {
+            postStartActions.add(containerAction);
             return this;
         }
 
@@ -82,7 +89,7 @@ public interface ContainerDependency {
 
             @Override
             public LifecyclingCachingProvider<RunningContainer> get() {
-                return new LifecyclingCachingProvider<>(ContainerLifecycle.create(new LocalRunnerConstructor(), containerParametry, preStartActions), eventListener);
+                return new LifecyclingCachingProvider<>(ContainerLifecycle.create(new LocalRunnerConstructor(), containerParametry, preStartActions, postStartActions), eventListener);
             }
         }
 
@@ -90,7 +97,7 @@ public interface ContainerDependency {
 
             @Override
             public GlobalLifecyclingCachingProvider<RunningContainer> get() {
-                return new GlobalLifecyclingCachingProvider<>(ContainerLifecycle.create(new GlobalRunnerConstructor(), containerParametry, preStartActions));
+                return new GlobalLifecyclingCachingProvider<>(ContainerLifecycle.create(new GlobalRunnerConstructor(), containerParametry, preStartActions, postStartActions));
             }
         }
 

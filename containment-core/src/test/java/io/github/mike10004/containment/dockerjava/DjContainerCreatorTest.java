@@ -122,7 +122,7 @@ public class DjContainerCreatorTest {
     public void run_exposePorts() throws Exception {
         int httpdPort = 80;
         ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForHttpdTest())
-                .expose(httpdPort)
+                .bindablePort(httpdPort)
                 .build();
         String result;
         try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
@@ -160,7 +160,7 @@ public class DjContainerCreatorTest {
         String defaultBindAddress = "172.17.0.2";
         String bindAddress = Tests.Settings.getOpt("run_mysql.bindAddress").orElse(defaultBindAddress);
         ContainerParametry parametry = ContainerParametry.builder(getImageForMysqlTest())
-                .expose(mysqlPort)
+                .bindablePort(mysqlPort)
                 .env("MYSQL_ROOT_PASSWORD", password)
                 // entrypoint script supports just adding options as the command
                 .blockingCommand("--character-set-server=utf8mb4",

@@ -32,7 +32,7 @@ public class ContainerLifecycleTest {
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()
                 .build();
-        ContainerLifecycle lifecycle = ContainerLifecycle.create(() -> new DjContainerCreator(dockerManager), parametry, Collections.emptyList());
+        ContainerLifecycle lifecycle = ContainerLifecycle.create(() -> new DjContainerCreator(dockerManager), parametry, Collections.emptyList(), Collections.emptyList());
         RunningContainer container = lifecycle.commission();
         DockerSubprocessResult<String> result;
         try {
