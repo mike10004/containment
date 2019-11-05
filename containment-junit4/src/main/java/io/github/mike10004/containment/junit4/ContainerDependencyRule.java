@@ -9,10 +9,10 @@ import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjContainerCreator;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
-import io.github.mike10004.containment.dockerjava.ManualContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
 import io.github.mike10004.containment.PreStartAction;
 import io.github.mike10004.containment.RunningContainer;
-import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.containment.lifecycle.ContainerLifecycle;
 import io.github.mike10004.containment.lifecycle.ContainerRunnerConstructor;
 import io.github.mike10004.containment.lifecycle.GlobalLifecycledDependency;
@@ -76,7 +76,7 @@ public class ContainerDependencyRule extends ExternalResource {
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-                DjDockerManager manager = new DefaultDjDockerManager(config, new ManualContainerMonitor());
+                DjDockerManager manager = new DefaultDjDockerManager(config, new DjManualContainerMonitor());
                 return new DjContainerCreator(manager);
             }
         }
@@ -85,7 +85,7 @@ public class ContainerDependencyRule extends ExternalResource {
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-                DjDockerManager manager = new DefaultDjDockerManager(config, new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build()));
+                DjDockerManager manager = new DefaultDjDockerManager(config, new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build()));
                 return new DjContainerCreator(manager);
             }
         }

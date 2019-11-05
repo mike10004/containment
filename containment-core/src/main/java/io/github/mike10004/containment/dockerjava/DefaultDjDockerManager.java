@@ -11,9 +11,9 @@ import static java.util.Objects.requireNonNull;
 public class DefaultDjDockerManager implements DjDockerManager {
 
     private final DockerClientConfig clientConfig;
-    private final ContainerMonitor containerMonitor;
+    private final DjContainerMonitor containerMonitor;
 
-    public DefaultDjDockerManager(DockerClientConfig dockerClientConfig, ContainerMonitor containerMonitor) {
+    public DefaultDjDockerManager(DockerClientConfig dockerClientConfig, DjContainerMonitor containerMonitor) {
         this.clientConfig = requireNonNull(dockerClientConfig);
         this.containerMonitor = requireNonNull(containerMonitor);
     }
@@ -33,7 +33,7 @@ public class DefaultDjDockerManager implements DjDockerManager {
     }
 
     @Override
-    public ContainerMonitor getContainerMonitor() {
+    public DjContainerMonitor getContainerMonitor() {
         return containerMonitor;
     }
 }

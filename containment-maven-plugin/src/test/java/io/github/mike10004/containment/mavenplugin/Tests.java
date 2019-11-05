@@ -5,10 +5,10 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.google.common.base.Verify;
-import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
-import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.SettingSet;
 import org.junit.Assume;
 
@@ -39,7 +39,7 @@ public class Tests {
     }
 
     private static final DockerClientConfig DOCKER_CLIENT_CONFIG = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-    private static final ContainerMonitor SINGLETON_CONTAINER_MONITOR = new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(DOCKER_CLIENT_CONFIG).build());
+    private static final DjContainerMonitor SINGLETON_CONTAINER_MONITOR = new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(DOCKER_CLIENT_CONFIG).build());
     private static final DjDockerManager SINGLETON_MANAGER = new MojoDockerManager(DOCKER_CLIENT_CONFIG, SINGLETON_CONTAINER_MONITOR);
 
     public static DjDockerManager realDockerManager() {
@@ -64,7 +64,7 @@ public class Tests {
             }
 
             @Override
-            public ContainerMonitor getContainerMonitor() {
+            public DjContainerMonitor getContainerMonitor() {
                 throw new UnsupportedOperationException("not supported by mock");
             }
         };

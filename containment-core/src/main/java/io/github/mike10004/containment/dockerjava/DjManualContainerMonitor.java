@@ -3,7 +3,6 @@ package io.github.mike10004.containment.dockerjava;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.SyncDockerCmd;
 import com.google.common.collect.Lists;
-import io.github.mike10004.containment.dockerjava.ContainerMonitor;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,12 +20,12 @@ import static com.google.common.base.Preconditions.checkArgument;
  * invocation of stop and remove actions. This monitor keeps track of
  * containers that are created or started
  */
-public class ManualContainerMonitor implements ContainerMonitor {
+public class DjManualContainerMonitor implements DjContainerMonitor {
 
     private final Set<String> started, created;
     private final boolean removeWithForce;
 
-    public ManualContainerMonitor() {
+    public DjManualContainerMonitor() {
         this.created = Collections.synchronizedSet(new LinkedHashSet<>());
         this.started = Collections.synchronizedSet(new LinkedHashSet<>());
         removeWithForce = true;

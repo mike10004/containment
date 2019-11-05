@@ -7,7 +7,6 @@ import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.RunnableContainer;
 import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.UnitTestContainerCreator;
-import io.github.mike10004.containment.dockerjava.ManualContainerMonitor;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,7 +18,7 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 
-public class ManualContainerMonitorTest {
+public class DjManualContainerMonitorTest {
 
     @Test
     public void removeAll() throws ContainmentException {
@@ -56,7 +55,7 @@ public class ManualContainerMonitorTest {
         assertEquals(2, monitor.commandsExecuted.size());
     }
 
-    private static class UnitTestManualContainerMonitor extends ManualContainerMonitor {
+    private static class UnitTestManualContainerMonitor extends DjManualContainerMonitor {
 
         public List<Object> commandsExecuted = new ArrayList<>();
 

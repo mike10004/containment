@@ -3,10 +3,10 @@ package io.github.mike10004.containment.mavenplugin;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
-import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.Durations;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -146,7 +146,7 @@ public class RequireImageMojo extends AbstractMojo {
         AbsentImageDirective directive = AbsentImageDirective.parse(absentImageAction);
         RequireImageParametry parametry = buildParametry();
         DockerClientConfig clientConfig = createConfig(getProject(), parametry);
-        ContainerMonitor containerMonitor = createContainerMonitor(clientConfig);
+        DjContainerMonitor containerMonitor = createContainerMonitor(clientConfig);
         DjDockerManager dockerManager = new MojoDockerManager(clientConfig, containerMonitor);
         boolean existsLocally = dockerManager.queryImageExistsLocally(parametry.name);
         if (!existsLocally) {
@@ -155,9 +155,9 @@ public class RequireImageMojo extends AbstractMojo {
         }
     }
 
-    protected ContainerMonitor createContainerMonitor(DockerClientConfig config) {
+    protected DjContainerMonitor createContainerMonitor(DockerClientConfig config) {
         Supplier<DockerClient> clientConstructor = () -> DockerClientBuilder.getInstance(config).build();
-        return new ShutdownHookContainerMonitor(clientConstructor);
+        return new DjShutdownHookContainerMonitor(clientConstructor);
     }
 
     protected RequireImageParametry buildParametry() {

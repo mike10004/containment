@@ -3,11 +3,11 @@ package io.github.mike10004.containment;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
-import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import org.easymock.EasyMock;
 
 import java.util.function.Supplier;
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 public class TestDockerManager extends DefaultDjDockerManager {
 
     private TestDockerManager() {
-        super(EasyMock.createMock(DockerClient.class), EasyMock.createMock(ContainerMonitor.class));
+        super(EasyMock.createMock(DockerClient.class), EasyMock.createMock(DjContainerMonitor.class));
     }
 
     private static DockerClientConfig createClientConfig() {
@@ -27,7 +27,7 @@ public class TestDockerManager extends DefaultDjDockerManager {
     }
 
     private static DjDockerManager createManager(DockerClientConfig clientConfig) {
-        ShutdownHookContainerMonitor monitor = new ShutdownHookContainerMonitor(configToSupplier(clientConfig));
+        DjShutdownHookContainerMonitor monitor = new DjShutdownHookContainerMonitor(configToSupplier(clientConfig));
         return new DefaultDjDockerManager(clientConfig, monitor);
     }
 

@@ -29,9 +29,9 @@ class DjRunningContainer implements RunningContainer {
     private final DockerClient client;
     private final ContainerInfo info;
     private final LoadingCache<Datum, String> cache;
-    private final ContainerMonitor containerManager;
+    private final DjContainerMonitor containerManager;
 
-    public DjRunningContainer(DockerClient client, ContainerInfo info, ContainerMonitor containerManager) {
+    public DjRunningContainer(DockerClient client, ContainerInfo info, DjContainerMonitor containerManager) {
         this.client = client;
         this.info = info;
         this.containerManager = requireNonNull(containerManager);

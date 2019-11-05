@@ -9,7 +9,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Interface of a service that monitors the lifecycle of containers.
  */
-public interface ContainerMonitor {
+public interface DjContainerMonitor {
 
     /**
      * Notifies the monitor that a container was created.

@@ -15,11 +15,11 @@ import static java.util.Objects.requireNonNull;
  * to stop and remove containers. Instantiation of this class should
  * be kept to a minimum
  */
-public class ShutdownHookContainerMonitor extends ManualContainerMonitor {
+public class DjShutdownHookContainerMonitor extends DjManualContainerMonitor {
 
     public static final String SYSPROP_VERBOSE = "containment-core.shutdownHook.verbose";
 
-    private static final Logger log = Logger.getLogger(ShutdownHookContainerMonitor.class.getName());
+    private static final Logger log = Logger.getLogger(DjShutdownHookContainerMonitor.class.getName());
 
     private final Supplier<DockerClient> clientConstructor;
     private final ShutdownHook shutdownHook;
@@ -27,7 +27,7 @@ public class ShutdownHookContainerMonitor extends ManualContainerMonitor {
     private static final Object shutdownHookAddLock = new Object();
     private final ContainerActionErrorListener errorListener;
 
-    public ShutdownHookContainerMonitor(Supplier<DockerClient> clientConstructor) {
+    public DjShutdownHookContainerMonitor(Supplier<DockerClient> clientConstructor) {
         super();
         this.clientConstructor = requireNonNull(clientConstructor);
         this.shutdownHook = new ShutdownHook();

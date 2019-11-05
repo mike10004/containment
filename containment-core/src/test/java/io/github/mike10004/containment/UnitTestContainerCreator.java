@@ -1,6 +1,6 @@
 package io.github.mike10004.containment;
 
-import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 
 import java.util.Collections;
 import java.util.List;
@@ -9,10 +9,10 @@ import java.util.function.Consumer;
 
 public class UnitTestContainerCreator implements ContainerCreator {
 
-    private final ContainerMonitor monitor;
+    private final DjContainerMonitor monitor;
     private final Random random;
 
-    public UnitTestContainerCreator(ContainerMonitor monitor, Random random) {
+    public UnitTestContainerCreator(DjContainerMonitor monitor, Random random) {
         this.random = random;
         this.monitor = monitor;
     }

@@ -31,13 +31,13 @@ import static java.util.Objects.requireNonNull;
 public class DjContainerCreator implements ContainerCreator {
 
     private final DockerClient client;
-    private final ContainerMonitor containerMonitor;
+    private final DjContainerMonitor containerMonitor;
 
     public DjContainerCreator(DjDockerManager dockerManager) {
         this(dockerManager.openClient(), dockerManager.getContainerMonitor());
     }
 
-    public DjContainerCreator(DockerClient client, ContainerMonitor containerMonitor) {
+    public DjContainerCreator(DockerClient client, DjContainerMonitor containerMonitor) {
         this.client = requireNonNull(client, "client");
         this.containerMonitor = requireNonNull(containerMonitor, "containerMonitor");
     }

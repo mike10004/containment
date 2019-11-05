@@ -6,12 +6,12 @@ import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.Uuids;
-import io.github.mike10004.containment.dockerjava.ContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjContainerCreator;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
-import io.github.mike10004.containment.dockerjava.ShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.containment.subprocess.DockerExecExecutor;
 import org.junit.Test;
 
@@ -27,7 +27,7 @@ public class ContainerLifecycleTest {
     public void create() throws Exception {
         Random random = new Random();
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        ContainerMonitor monitor = new ShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance().build());
+        DjContainerMonitor monitor = new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance().build());
         DjDockerManager dockerManager = new DefaultDjDockerManager(config, monitor);
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()

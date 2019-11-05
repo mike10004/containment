@@ -19,5 +19,5 @@ public interface DjDockerManager {
 
     List<Image> queryImagesByName(DockerClient client, String imageName);
 
-    ContainerMonitor getContainerMonitor();
+    DjContainerMonitor getContainerMonitor();
 }
