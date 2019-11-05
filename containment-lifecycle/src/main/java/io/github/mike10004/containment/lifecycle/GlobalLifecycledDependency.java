@@ -2,7 +2,11 @@ package io.github.mike10004.containment.lifecycle;
 
 import java.util.function.Consumer;
 
+import static java.util.Objects.requireNonNull;
+
 public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D> {
+
+    private final Consumer<? super Thread> addShutdownHookMethod;
 
     /**
      * Constructs an instance of the rule.
@@ -13,7 +17,12 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
     }
 
     public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super String> eventListener) {
+        this(innerRule, eventListener, Runtime.getRuntime()::addShutdownHook);
+    }
+
+    public GlobalLifecycledDependency(DependencyLifecycle<D> innerRule, Consumer<? super String> eventListener, Consumer<? super Thread> addShutdownHookMethod) {
         super(innerRule, eventListener);
+        this.addShutdownHookMethod = requireNonNull(addShutdownHookMethod);
     }
 
     protected Computation<D> computeOnce() {
@@ -29,7 +38,7 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
 
     private void addRuntimeShutdownHook(Thread thread) {
         notify("DependencyManager.addRuntimeShutdownHook() entered");
-        Runtime.getRuntime().addShutdownHook(thread);
+        addShutdownHookMethod.accept(thread);
     }
 
     @Override
@@ -41,10 +50,17 @@ public final class GlobalLifecycledDependency<D> extends LifecycledDependency<D>
         super.finishLifecycle();
     }
 
+    /**
+     * Reports a teardown error to the process standard error stream.
+     * It does us no good to bubble up an exception in a shutdown hook,
+     * so we merely report the error.
+     *
+     * // TODO control reporting with instance flags, system properties, and environment variables
+     * @param t
+     */
     @Override
     protected void handleTearDownError(RuntimeException t) {
-        // it does us no good to bubble up an exception in a shutdown hook, so we merely report the error
-        t.printStackTrace(System.err); // TODO control reporting with instance flags, system properties, and environment variables
+        t.printStackTrace(System.err);
     }
 
     private static class GlobalComputation<D> extends Computation<D> {
