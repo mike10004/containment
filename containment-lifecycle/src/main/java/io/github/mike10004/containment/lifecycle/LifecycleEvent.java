@@ -63,7 +63,17 @@ public class LifecycleEvent {
         return j.toString();
     }
 
-    private static final Consumer INACTIVE_CONSUMER = ignore -> {};
+    private static final Consumer INACTIVE_CONSUMER = new Consumer() {
+        @Override
+        public void accept(Object o) {
+            // no op
+        }
+
+        @Override
+        public String toString() {
+            return "Consumer{INACTIVE}";
+        }
+    };
 
     @SuppressWarnings("unchecked")
     public static <T> Consumer<T> inactiveConsumer() {

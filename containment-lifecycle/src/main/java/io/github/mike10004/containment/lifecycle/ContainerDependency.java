@@ -1,4 +1,4 @@
-package io.github.mike10004.containment.junit4;
+package io.github.mike10004.containment.lifecycle;
 
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -13,12 +13,6 @@ import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
-import io.github.mike10004.containment.lifecycle.ContainerLifecycle;
-import io.github.mike10004.containment.lifecycle.ContainerRunnerConstructor;
-import io.github.mike10004.containment.lifecycle.FirstProvisionFailedException;
-import io.github.mike10004.containment.lifecycle.GlobalLifecyclingCachingProvider;
-import io.github.mike10004.containment.lifecycle.LifecycleEvent;
-import io.github.mike10004.containment.lifecycle.LifecyclingCachingProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,12 +21,17 @@ import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Interface of a service that lazily provides a running container.
+ */
 public interface ContainerDependency {
 
     RunningContainer container() throws FirstProvisionFailedException;
 
-    static ContainerDependency of(LifecyclingCachingProvider<RunningContainer> container) {
-        return () -> container.provide().require();
+    void finishLifecycle();
+
+    static ContainerDependency fromProvider(LifecyclingCachingProvider<RunningContainer> containerProvider) {
+        return new ProviderDependency(containerProvider);
     }
 
     static Builder builder(ContainerParametry parametry) {
@@ -79,7 +78,7 @@ public interface ContainerDependency {
             }
         }
 
-        private class LocalDependencyCreator implements Supplier<LifecyclingCachingProvider<RunningContainer>> {
+        private class LocalProviderCreator implements Supplier<LifecyclingCachingProvider<RunningContainer>> {
 
             @Override
             public LifecyclingCachingProvider<RunningContainer> get() {
@@ -87,7 +86,7 @@ public interface ContainerDependency {
             }
         }
 
-        private class GlobalDependencyCreator implements Supplier<GlobalLifecyclingCachingProvider<RunningContainer>> {
+        private class GlobalProviderCreator implements Supplier<GlobalLifecyclingCachingProvider<RunningContainer>> {
 
             @Override
             public GlobalLifecyclingCachingProvider<RunningContainer> get() {
@@ -96,20 +95,21 @@ public interface ContainerDependency {
         }
 
         public ContainerDependency buildLocalDependency() {
-            return buildDependency(new LocalDependencyCreator());
+            return buildDependencyFromProviderCreator(new LocalProviderCreator());
         }
 
+        /**
+         * Builds a global dependency instance. The instance's {@link ContainerDependency#finishLifecycle()}
+         * method will not actually cause the end of the container's lifecycle to be executed; that will
+         * only happen upon JVM termination.
+         * @return
+         */
         public ContainerDependency buildGlobalDependency() {
-            return buildDependency(new GlobalDependencyCreator());
+            return buildDependencyFromProviderCreator(new GlobalProviderCreator());
         }
 
-        private ContainerDependency buildDependency(Supplier<? extends LifecyclingCachingProvider<RunningContainer>> dependencyCreator) {
-            return ContainerDependency.of(dependencyCreator.get());
-        }
-
-        public ContainerDependencyRule buildLocalRule() {
-            LifecyclingCachingProvider<RunningContainer> dependency = new LocalDependencyCreator().get();
-            return new ContainerDependencyRule(dependency);
+        private ContainerDependency buildDependencyFromProviderCreator(Supplier<? extends LifecyclingCachingProvider<RunningContainer>> dependencyCreator) {
+            return ContainerDependency.fromProvider(dependencyCreator.get());
         }
 
     }

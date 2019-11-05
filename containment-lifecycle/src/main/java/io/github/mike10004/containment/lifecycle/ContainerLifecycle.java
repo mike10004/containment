@@ -127,4 +127,9 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("Container%s", super.toString());
+    }
 }

@@ -1,5 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -94,6 +95,11 @@ public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
         public Provision<D> compute(Supplier<Provision<D>> computer) {
             return concurrencyManager.computeIfAbsent(computeKey, k -> computer.get());
         }
+
+        @Override
+        public String toString() {
+            return String.format("ConcurrentCache[size=%d]", concurrencyManager.size());
+        }
     }
 
     protected void notify(LifecycleEvent.Category category, String message) {
@@ -108,4 +114,12 @@ public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
         eventListener.accept(LifecycleEvent.of(category));
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", LifecyclingCachingProvider.class.getSimpleName() + "[", "]")
+                .add("lifecycle=" + lifecycle)
+                .add("concurrentCache=" + concurrentCache)
+                .add("eventListener=" + eventListener)
+                .toString();
+    }
 }

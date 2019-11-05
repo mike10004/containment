@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  *
@@ -14,12 +15,21 @@ public class LifecycleStack<T> implements Lifecycle<T> {
 
     private final Iterable<? extends Lifecycle<?>> others;
     private final Deque<Lifecycle<?>> commissioned;
-    private final Lifecycle<T> top;
+    private transient final Lifecycle<T> top;
 
     public LifecycleStack(Iterable<? extends Lifecycle<?>> others, Lifecycle<T> top) {
         commissioned = new ArrayDeque<>();
         this.top = top;
         this.others = others;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", LifecycleStack.class.getSimpleName() + "[", "]")
+                .add("others=" + others)
+                .add("top=" + top)
+                .add("commissioned.size=" + commissioned.size())
+                .toString();
     }
 
     private void unwind() {
