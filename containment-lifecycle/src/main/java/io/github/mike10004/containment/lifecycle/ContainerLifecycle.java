@@ -39,7 +39,7 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
 
     private static class ContainerRunnerLifecycle extends DecoupledLifecycle<ContainerCreator> {
         public ContainerRunnerLifecycle(Commissioner<ContainerCreator> commissioner) {
-            super(commissioner, new RuntimeExceptionWrapper<>());
+            super(commissioner, new AutoCloseableDecommissioner<>());
         }
 
         @Override
@@ -51,7 +51,7 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
     private static class RunnableContainerLifecycle extends DecoupledLifecycle<StartableContainer> {
 
         public RunnableContainerLifecycle(Commissioner<StartableContainer> commissioner) {
-            super(commissioner, new RuntimeExceptionWrapper<>());
+            super(commissioner, new AutoCloseableDecommissioner<>());
         }
 
         @Override
@@ -63,7 +63,7 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
     private static class RunningContainerLifecycle extends DecoupledLifecycle<StartedContainer> {
 
         public RunningContainerLifecycle(Commissioner<StartedContainer> commissioner) {
-            super(commissioner, new RuntimeExceptionWrapper<>());
+            super(commissioner, new AutoCloseableDecommissioner<>());
         }
 
         @Override
@@ -175,12 +175,12 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
         return new ContainerLifecycle(Arrays.asList(runnerLifecycle, runnableLifecycle, preStartActionLifecycle, runningLifecycle), postStartActionsLifecycle);
     }
 
-    private static class RuntimeExceptionWrapper<T extends AutoCloseable> implements DecoupledLifecycle.Decommissioner<T> {
+    private static class AutoCloseableDecommissioner<T extends AutoCloseable> implements DecoupledLifecycle.Decommissioner<T> {
 
         @Override
-        public void decommission(T value) {
+        public void decommission(T resource) {
             try {
-                value.close();
+                resource.close();
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {

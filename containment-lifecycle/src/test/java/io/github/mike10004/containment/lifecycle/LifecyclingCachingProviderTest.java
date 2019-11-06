@@ -47,8 +47,8 @@ public class LifecyclingCachingProviderTest {
         public final List<Widget> decommissioned = Collections.synchronizedList(new ArrayList<>());
 
         @Override
-        public void decommission(Widget value) {
-            decommissioned.add(value);
+        public void decommission(Widget resource) {
+            decommissioned.add(resource);
         }
     }
 }

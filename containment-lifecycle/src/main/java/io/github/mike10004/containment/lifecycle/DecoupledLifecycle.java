@@ -16,6 +16,12 @@ public class DecoupledLifecycle<D> implements Lifecycle<D> {
         this.commissioner = commissioner;
     }
 
+    /**
+     * Invokes the commissioner.
+     * Stores the result for subquent decommissing.
+     * @return commissioned resource
+     * @throws Exception
+     */
     @Override
     public D commission() throws Exception {
         synchronized (lock) {
@@ -24,6 +30,9 @@ public class DecoupledLifecycle<D> implements Lifecycle<D> {
         }
     }
 
+    /**
+     * Invokes the decommissioner if and only if commission has succeeded.
+     */
     @Override
     public void decommission() {
         synchronized (lock) {
@@ -34,11 +43,28 @@ public class DecoupledLifecycle<D> implements Lifecycle<D> {
         }
     }
 
+    /**
+     * Interface of a service that commissions a resource.
+     * @param <D> resource type
+     */
     public interface Commissioner<D> {
+        /**
+         * Commissions the resource.
+         * @return resource
+         * @throws Exception on error
+         */
         D commission() throws Exception;
     }
 
+    /**
+     * Interface of a service that decommissions a resource.
+     * @param <D> resource type
+     */
     public interface Decommissioner<D> {
-        void decommission(D value);
+        /**
+         * Decommissions the resource.
+         * @param resource resource
+         */
+        void decommission(D resource);
     }
 }

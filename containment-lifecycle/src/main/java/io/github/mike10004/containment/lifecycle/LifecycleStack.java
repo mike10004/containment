@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Implementation of a lifecycle that composes multiple sequential lifecycles.
  * @param <T> type of top element of the stack (last created, first destroyed)
@@ -23,9 +25,10 @@ public class LifecycleStack<T> implements Lifecycle<T> {
      */
     public LifecycleStack(Iterable<? extends Lifecycle<?>> others, Lifecycle<T> top) {
         commissioned = new ArrayDeque<>();
-        this.top = top;
-        this.others = others;
+        this.top = requireNonNull(top);
+        this.others = requireNonNull(others);
     }
+
 
     @Override
     public String toString() {
