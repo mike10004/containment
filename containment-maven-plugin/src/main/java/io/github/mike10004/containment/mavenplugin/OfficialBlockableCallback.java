@@ -1,4 +1,4 @@
-package io.github.mike10004.containment.dockerjava;
+package io.github.mike10004.containment.mavenplugin;
 
 import com.github.dockerjava.api.async.ResultCallback;
 import com.google.common.base.MoreObjects;

@@ -4,8 +4,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.BuildResponseItem;
-import io.github.mike10004.containment.dockerjava.BlockableCallback;
-import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -15,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
@@ -23,13 +22,12 @@ class BuildImageActor extends ClientAbsentImageActor {
 
     private final Function<String, String> mavenPropertiesProvider;
 
-    public BuildImageActor(Log log, DjDockerManager dockerManager, Function<String, String> mavenPropertiesProvider) {
-        super(log, dockerManager);
+    public BuildImageActor(Log log, Supplier<DockerClient> clientFactory, Function<String, String> mavenPropertiesProvider) {
+        super(log, clientFactory);
         this.mavenPropertiesProvider = requireNonNull(mavenPropertiesProvider);
     }
 
-    protected BuildImageCmd createCommand(RequireImageParametry parametry, File dockerfileDir) {
-        DockerClient client = dockerManager.openClient();
+    protected BuildImageCmd createCommand(DockerClient client, RequireImageParametry parametry, File dockerfileDir) throws IOException {
         BuildImageCmd buildCmd = client.buildImageCmd(dockerfileDir);
         buildCmd.withTags(Collections.singleton(parametry.name));
         buildCmd.withLabels(parametry.labels);
@@ -45,19 +43,23 @@ class BuildImageActor extends ClientAbsentImageActor {
         } else {
             dockerfileDir = new File(directiveParameter);
         }
-        BuildImageCmd buildCmd = createCommand(parametry, dockerfileDir);
-        BlockableCallback<BuildResponseItem> callback = BlockableCallback.createSuccessCheckingCallback(BuildResponseItem::isBuildSuccessIndicated);
-        logger().info(String.format("starting build of %s using path %s", parametry.name, dockerfileDir));
-        buildCmd.exec(callback);
-        try {
-            callback.completeOrThrowException(parametry.buildTimeout, () -> new MojoExecutionException("build timeout exceeded"));
-        } catch (InterruptedException e) {
-            throw new MojoExecutionException("interrupted while waiting for build to complete", e);
-        }
-        boolean successful = callback.checkSucceeded();
-        logger().info("image build complete; success: " + successful);
-        if (!successful) {
-            throw new MojoExecutionException("build completed unsuccessfully: " + callback.summarize());
+        try (DockerClient client = clientFactory.get()) {
+            BuildImageCmd buildCmd = createCommand(client, parametry, dockerfileDir);
+            BlockableCallback<BuildResponseItem> callback = BlockableCallback.createSuccessCheckingCallback(BuildResponseItem::isBuildSuccessIndicated);
+            logger().info(String.format("starting build of %s using path %s", parametry.name, dockerfileDir));
+            buildCmd.exec(callback);
+            try {
+                callback.completeOrThrowException(parametry.buildTimeout, () -> new MojoExecutionException("build timeout exceeded"));
+            } catch (InterruptedException e) {
+                throw new MojoExecutionException("interrupted while waiting for build to complete", e);
+            }
+            boolean successful = callback.checkSucceeded();
+            logger().info("image build complete; success: " + successful);
+            if (!successful) {
+                throw new MojoExecutionException("build completed unsuccessfully: " + callback.summarize());
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException("docker client I/O error", e);
         }
     }
 

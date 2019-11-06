@@ -2,14 +2,15 @@ package io.github.mike10004.containment.mavenplugin;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
-import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.ImageSpecifier;
 import io.github.mike10004.containment.Uuids;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -42,7 +43,7 @@ public class PullImageActorTest {
         String bareImageName = Tests.getSetting("helloWorldImageName", "hello-world");
         ImageSpecifier remoteImageSpec = ImageSpecifier.fromNameAndTag(bareImageName, tag);
         String remoteImageName = remoteImageSpec.toString();
-        DjDockerManager dockerManager = Tests.realDockerManager();
+        Supplier<DockerClient> dockerManager = Tests.realDockerManager();
         Tests.enforceImageDoesNotExistLocally(dockerManager, remoteImageSpec.withDefaultTag("latest").toString());
         RequireImageParametry parametry = RequireImageParametry.newBuilder(name).build();
         LogBucket log = new LogBucket();
@@ -51,12 +52,13 @@ public class PullImageActorTest {
         confirmTaggedImageExists(dockerManager, parametry.name);
     }
 
-    private void confirmTaggedImageExists(DjDockerManager dockerManager, String name) {
-        DockerClient client = dockerManager.openClient();
-        List<Image> images = dockerManager.queryImagesByName(client, name);
-        if (images.isEmpty()) {
-            images = client.listImagesCmd().withShowAll(true).exec();
-            fail("image with name " + name + " not found among " + images);
+    private void confirmTaggedImageExists(Supplier<DockerClient> dockerManager, String name) throws IOException {
+        try (DockerClient client = dockerManager.get()) {
+            List<Image> images = RequireImageMojo.queryImagesByName(client, name);
+            if (images.isEmpty()) {
+                images = client.listImagesCmd().withShowAll(true).exec();
+                fail("image with name " + name + " not found among " + images);
+            }
         }
     }
 

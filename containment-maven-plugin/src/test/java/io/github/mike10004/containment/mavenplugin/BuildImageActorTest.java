@@ -4,7 +4,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import com.google.common.io.ByteStreams;
-import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.Uuids;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -26,6 +25,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,7 +47,7 @@ public class BuildImageActorTest {
 
     @Test
     public void perform_basic() throws Exception {
-        DjDockerManager dockerManager = Tests.realDockerManager();
+        Supplier<DockerClient> dockerManager = Tests.realDockerManager();
         BuildImageActor actor = new BuildImageActor(new LogBucket(), dockerManager, x -> null);
         String imageName = Uuids.randomUuidString(random);
         RequireImageParametry parametry = RequireImageParametry.newBuilder(imageName)
@@ -60,11 +60,11 @@ public class BuildImageActorTest {
         confirmBasicImageBuilt(dockerManager, imageName);
     }
 
-    private void confirmBasicImageBuilt(DjDockerManager dockerManager, String imageName) throws IOException {
-        DockerClient client = dockerManager.openClient();
+    private void confirmBasicImageBuilt(Supplier<DockerClient> dockerManager, String imageName) throws IOException {
         File tarFile = new File(tempdir.newFolder(), imageName + ".tar");
 
-        try (InputStream in = client.saveImageCmd(imageName).exec();
+        try (DockerClient client = dockerManager.get();
+             InputStream in = client.saveImageCmd(imageName).exec();
              OutputStream out = new FileOutputStream(tarFile)) {
             ByteStreams.copy(in, out);
         }

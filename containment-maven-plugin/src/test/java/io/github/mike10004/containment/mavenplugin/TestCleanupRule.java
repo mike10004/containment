@@ -5,6 +5,7 @@ import com.github.dockerjava.api.model.Image;
 import com.google.common.collect.ImmutableMap;
 import org.junit.rules.ExternalResource;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -23,9 +24,13 @@ public class TestCleanupRule extends ExternalResource {
         if (!Tests.isRealDockerManagerAnyClientsCreated()) {
             return;
         }
-        DockerClient client = Tests.realDockerManager().openClient();
-        doWithCatch(() -> removeImagesBylabel(client));
-        doWithCatch(() -> removeImagesByTag(client));
+        try (DockerClient client = Tests.realDockerManager().get()) {
+            doWithCatch(() -> removeImagesBylabel(client));
+            doWithCatch(() -> removeImagesByTag(client));
+        } catch (IOException e) {
+            System.err.println("docker client close error");
+            e.printStackTrace(System.err);
+        }
     }
 
     private void removeImagesByTag(DockerClient client) {

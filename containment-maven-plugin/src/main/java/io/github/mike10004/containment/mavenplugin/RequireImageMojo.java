@@ -1,12 +1,10 @@
 package io.github.mike10004.containment.mavenplugin;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
-import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
-import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
-import io.github.mike10004.containment.dockerjava.DjDockerManager;
-import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.nitsick.Durations;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -16,7 +14,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -146,18 +146,23 @@ public class RequireImageMojo extends AbstractMojo {
         AbsentImageDirective directive = AbsentImageDirective.parse(absentImageAction);
         RequireImageParametry parametry = buildParametry();
         DockerClientConfig clientConfig = createConfig(getProject(), parametry);
-        DjContainerMonitor containerMonitor = createContainerMonitor(clientConfig);
-        DjDockerManager dockerManager = new MojoDockerManager(clientConfig, containerMonitor);
-        boolean existsLocally = dockerManager.queryImageExistsLocally(parametry.name);
+        Supplier<DockerClient> clientFactory = () -> {
+            return DockerClientBuilder.getInstance(clientConfig).build();
+        };
+        boolean existsLocally;
+        try (DockerClient client = clientFactory.get()) {
+            existsLocally = !queryImagesByName(client, parametry.name).isEmpty();
+        } catch (IOException e) {
+            throw new MojoExecutionException("docker client I/O error", e);
+        }
         if (!existsLocally) {
-            AbsentImageActor actor = determineActor(dockerManager, directive);
+            AbsentImageActor actor = constructActor(clientFactory, directive);
             actor.perform(parametry, directive.parameter);
         }
     }
 
-    protected DjContainerMonitor createContainerMonitor(DockerClientConfig config) {
-        Supplier<DockerClient> clientConstructor = () -> DockerClientBuilder.getInstance(config).build();
-        return new DjShutdownHookContainerMonitor(clientConstructor);
+    static List<Image> queryImagesByName(DockerClient client, String imageName) {
+        return client.listImagesCmd().withImageNameFilter(imageName).exec();
     }
 
     protected RequireImageParametry buildParametry() {
@@ -169,14 +174,14 @@ public class RequireImageMojo extends AbstractMojo {
                 .build();
     }
 
-    protected AbsentImageActor determineActor(DjDockerManager dockerManager, AbsentImageDirective directive) {
+    protected AbsentImageActor constructActor(Supplier<DockerClient> clientFactory, AbsentImageDirective directive) {
         switch (directive.action) {
             case pull:
-                return new PullImageActor(getLog(), dockerManager);
+                return new PullImageActor(getLog(), clientFactory);
             case fail:
                 return new FailBuildActor(getLog());
             case build:
-                return new BuildImageActor(getLog(), dockerManager, createMavenPropertiesProvider());
+                return new BuildImageActor(getLog(), clientFactory, createMavenPropertiesProvider());
             case ignore:
                 return new IgnoreImageActor(getLog());
             default:

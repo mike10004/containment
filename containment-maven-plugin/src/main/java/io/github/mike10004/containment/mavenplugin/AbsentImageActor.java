@@ -11,6 +11,13 @@ import javax.annotation.Nullable;
  */
 public interface AbsentImageActor {
 
+    /**
+     * Performs the action.
+     * @param parametry parametry
+     * @param directiveParameter directive
+     * @throws MojoExecutionException on mojo error
+     * @throws DockerException on docker error
+     */
     void perform(RequireImageParametry parametry, @Nullable String directiveParameter) throws MojoExecutionException, DockerException;
 
 }
