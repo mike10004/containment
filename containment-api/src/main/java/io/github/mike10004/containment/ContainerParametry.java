@@ -15,29 +15,61 @@ import static java.util.Objects.requireNonNull;
  */
 public interface ContainerParametry {
 
+    /**
+     * Returns the image specifier.
+     * @return image specifier
+     */
     ImageSpecifier image();
 
     /**
-     * Command to execute. An empty list is interpreted to mean the container's default
+     * Returns the command to execute. An empty list is interpreted to mean the container's default
      * command is to be executed.
      * @return the command to execute
      */
     List<String> command();
 
+    /**
+     * Returns the command type.
+     * @return command type
+     */
     CommandType commandType();
 
+    /**
+     * Returns a list of ports within the container that are to be binded to ports on the container host.
+     * @return list of ports
+     */
     List<Integer> bindablePort();
 
+    /**
+     * Returns a map of environment variables available to the container.
+     * @return map of environment variables
+     */
     Map<String, String> environment();
 
+    /**
+     * Returns a flag that specifies whether automatic remove-on-stop should be disabled for
+     * the container built from this parameter set.
+     * @return flag specifying disabling of auto-remove
+     */
     default boolean disableAutoRemove() {
         return false;
     }
 
+    /**
+     * Creates a new builder for the image specified by the given string.
+     * @param image image name and optional tag
+     * @return a new builder instance
+     * @see ImageSpecifier#parseSpecifier(String)
+     */
     static Builder builder(String image) {
         return new Builder(image);
     }
 
+    /**
+     * Creates a new builder for the specified image.
+     * @param image image specifier
+     * @return a new builder instance
+     */
     static Builder builder(ImageSpecifier image) {
         return new Builder(image);
     }
@@ -60,6 +92,9 @@ public interface ContainerParametry {
         EXITING_IMMEDIATELY
     }
 
+    /**
+     * Builder of parameter set instances.
+     */
     final class Builder {
 
         private ImageSpecifier image;
@@ -80,7 +115,13 @@ public interface ContainerParametry {
             this.image = requireNonNull(image);
         }
 
-        public Builder bindablePort(int port) {
+        /**
+         * Adds a port to the list of bound ports.
+         * @param port
+         * @return this builder instance
+         * @see ContainerParametry#bindablePort()
+         */
+        public Builder bindPort(int port) {
             if (port <= 0 || port > 65535) {
                 throw new IllegalArgumentException("invalid port value: " + port);
             }
@@ -88,27 +129,77 @@ public interface ContainerParametry {
             return this;
         }
 
+        /**
+         * @deprecated use {@link #bindPort(int)}
+         */
+        @Deprecated
+        public Builder bindablePort(int port) {
+            return bindPort(port);
+        }
+
+        /**
+         * Sets the command to one that will cause the container to remain alive indefinitely.
+         * This implementation uses {@code tail -f /dev/null}.
+         * @return this builder instance
+         */
         public Builder commandToWaitIndefinitely() {
             // TODO decide whether `sleep infinity` is a better command to use
             return blockingCommand(Arrays.asList("tail", "-f", "/dev/null"));
         }
 
+        /**
+         * Sets the command to the given non-blocking command.
+         * An empty list as the command argument is interpreted to mean that
+         * the container's default command is to be used.
+         * @param cmd the command
+         * @return this builder instance
+         * @see CommandType#EXITING_IMMEDIATELY
+         */
         public Builder nonblockingCommand(List<String> cmd) {
             return command(CommandType.EXITING_IMMEDIATELY, cmd);
         }
 
+        /**
+         * Sets the command to the given non-blocking command.
+         * @param first command executable
+         * @param others command arguments
+         * @return this builder instance
+         * @see CommandType#EXITING_IMMEDIATELY
+         */
         public Builder nonblockingCommand(String first, String...others) {
             return command(CommandType.EXITING_IMMEDIATELY, first, others);
         }
 
+        /**
+         * Sets the command to the given blocking command.
+         * An empty list as the command argument is interpreted to mean that
+         * the container's default command is to be used.
+         * @param cmd the command
+         * @return this builder instance
+         * @see CommandType#BLOCKING
+         */
         public Builder blockingCommand(List<String> cmd) {
             return command(CommandType.BLOCKING, cmd);
         }
 
+        /**
+         * Sets the command to the given blocking command.
+         * @param first command executable
+         * @param others command arguments
+         * @return this builder instance
+         * @see CommandType#BLOCKING
+         */
         public Builder blockingCommand(String first, String...others) {
             return command(CommandType.BLOCKING, first, others);
         }
 
+        /**
+         * Sets the command type and command.
+         * @param commandType command type
+         * @param first command executable
+         * @param others command arguments
+         * @return this builder instance
+         */
         public Builder command(CommandType commandType, String first, String...others) {
             List<String> list = new ArrayList<>();
             list.add(first);
@@ -116,16 +207,35 @@ public interface ContainerParametry {
             return command(commandType, list);
         }
 
+        /**
+         * Sets the command type and command.
+         * An empty list as the command argument is interpreted to mean that
+         * the container's default command is to be used.
+         * @param commandType command type
+         * @param command command
+         * @return this builder instance
+         */
         public Builder command(CommandType commandType, List<String> command) {
             this.command = requireNonNull(command);
             this.commandType = requireNonNull(commandType, "commandType");
             return this;
         }
 
+        /**
+         * Builds an immutable parameter set instance.
+         * @return a new parameter set instance
+         */
         public ContainerParametry build() {
             return new FrozenContainerParametry(this);
         }
 
+        /**
+         * Defines an environment variable to be added to the environment of the container
+         * created from this parameter set.
+         * @param name variable name
+         * @param value variable value
+         * @return this builder instance
+         */
         public Builder env(String name, String value) {
             requireNonNull(name, "name");
             requireNonNull(value, "value");

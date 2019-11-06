@@ -8,35 +8,62 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Immutable value class that specifies a container image.
  */
 public class ImageSpecifier {
 
+    /**
+     * Bare image name. For example, {@code apache} is the name
+     */
     public final String name;
 
+    /**
+     * Image tag. For example, {@code latest}.
+     */
     @Nullable
     public final String tag;
 
+    /**
+     * Image repository. For example {@code fedora}.
+     */
     @Nullable
     public final String repository;
 
+    /**
+     * Image registry. For example, {@code localhost:5000}.
+     */
     @Nullable
     public final String registry;
 
     private transient final String stringification;
 
-    public ImageSpecifier(String name) {
-        this(name, null);
+    /**
+     * Constructs a new instance from a bare image name.
+     * @param name bare image name without any tag, repository, or registry specification
+     * @return a new instance
+     */
+    public static ImageSpecifier fromNameOnly(String name) {
+        return fromNameAndTag(name, null);
     }
 
-    public ImageSpecifier(String name, @Nullable String tag) {
-        this(name, tag, null, null);
+    /**
+     * Constructs and returns a new instance.
+     * @param name Bare image name
+     * @param tag optional tag
+     * @return a new instance
+     */
+    public static ImageSpecifier fromNameAndTag(String name, @Nullable String tag) {
+        return new ImageSpecifier(name, tag, null, null);
     }
 
+    /**
+     * Constructs a new instance.
+     * @param name bare image name
+     * @param tag optional tag
+     * @param repository optional repository
+     * @param registry optional registry
+     */
     public ImageSpecifier(String name, @Nullable String tag, @Nullable String repository, @Nullable String registry) {
         this.name = Preconditions.checkNotNull(name, "name");
         Preconditions.checkArgument(!name.trim().isEmpty(), "name must be nonempty/nonwhitespace");
@@ -51,21 +78,23 @@ public class ImageSpecifier {
         return s == null ? 0 : s.length();
     }
 
+    private static final String DEFAULT_REPOSITORY = "library";
+
     private static String stringify(String name, @Nullable String tag, @Nullable String repository, @Nullable String registry) {
         StringBuilder sb = new StringBuilder(length(name) + length(tag) + length(repository) + length(registry) + 3);
-        if (registry != null) {
+        if (registry != null && !registry.isEmpty()) {
             sb.append(registry);
             if (repository == null) {
-                repository = "_";
+                repository = DEFAULT_REPOSITORY;
             }
         }
-        if (repository != null) {
+        if (repository != null && !repository.isEmpty()) {
             sb.append(repository);
             sb.append("/");
         }
         Preconditions.checkArgument(name != null && !name.trim().isEmpty(), "name must be non-null and nonempty");
         sb.append(name);
-        if (tag != null) {
+        if (tag != null && !tag.isEmpty()) {
             sb.append(':');
             sb.append(tag);
         }

@@ -1,11 +1,12 @@
 package io.github.mike10004.containment;
 
-import io.github.mike10004.containment.ContainerAction;
-import io.github.mike10004.containment.ContainmentException;
-
+/**
+ * Interface of a container that supports actions targeted at itself.
+ */
 public interface ActionableContainer {
+
     /**
-     * Executes an action against the container.
+     * Executes an action against targeted at the container.
      * @param action the action
      * @throws ContainmentException on error
      */
