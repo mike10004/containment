@@ -1,12 +1,12 @@
 package io.github.mike10004.containment.core;
 
-import io.github.mike10004.containment.ContainerAction;
+import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.containment.ContainerCreator;
+import io.github.mike10004.containment.ContainerExecutor;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.Uuids;
@@ -52,11 +52,6 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
 
         @Override
-        public void performAction(ContainerAction preStartAction) throws ContainmentException {
-            System.out.format("%s.execute(%s)%n", getClass().getSimpleName(), preStartAction);
-        }
-
-        @Override
         public StartedContainer start() throws ContainmentException {
             monitor.started(info.id());
             return new UnitTestStartedContainer(info);
@@ -92,11 +87,6 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
 
         @Override
-        public void performAction(ContainerAction action) throws ContainmentException {
-            action.perform(info);
-        }
-
-        @Override
         public List<ContainerPort> fetchPorts() throws ContainmentException {
             return Collections.emptyList();
         }
@@ -112,6 +102,11 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
         @Override
         public ContainerCopier copier() {
+            throw new UnsupportedOperationException("not implemented in this unit test");
+        }
+
+        @Override
+        public ContainerExecutor executor() {
             throw new UnsupportedOperationException("not implemented in this unit test");
         }
     }

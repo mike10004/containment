@@ -1,4 +1,7 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.lifecycle;
+
+import io.github.mike10004.containment.ContainerInfo;
+import io.github.mike10004.containment.ContainmentException;
 
 /**
  * Interface of an action that targets a container. The container

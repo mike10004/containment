@@ -2,7 +2,6 @@ package io.github.mike10004.containment.lifecycle;
 
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainmentException;

@@ -2,7 +2,6 @@ package io.github.mike10004.containment.dockerjava;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
-import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.ContainerCopier;
@@ -36,11 +35,6 @@ public class DjStartableContainer implements StartableContainer {
     @Override
     public ContainerInfo info() {
         return info;
-    }
-
-    @Override
-    public void performAction(ContainerAction preStartAction) throws ContainmentException {
-        preStartAction.perform(info);
     }
 
     @Override
