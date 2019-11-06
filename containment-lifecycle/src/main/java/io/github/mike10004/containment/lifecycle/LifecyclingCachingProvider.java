@@ -12,7 +12,7 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of a provider of a resource that has a lifecycle.
- * @param <D>
+ * @param <D> provided resource type
  */
 public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
 

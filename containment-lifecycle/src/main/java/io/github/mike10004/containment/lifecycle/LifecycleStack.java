@@ -52,12 +52,12 @@ public class LifecycleStack<T> implements Lifecycle<T> {
     }
 
     /**
-     * Commissions each lifecycle in sequence.
+     * Performs the commission stage of each lifecycle in this instance's sequence.
      * If commissioning any lifecycle in the sequence fails, then
      * those already commissioned are decommissioned before throwing
-     * the exception that
-     * @return the final commissioned object
-     * @throws Exception on error
+     * the exception that caused the commissioning failure.
+     * @return the final commissioned resource
+     * @throws LifecycleStackCommissionException on error
      */
     @Override
     public T commission() throws LifecycleStackCommissionException {

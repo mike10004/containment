@@ -4,7 +4,7 @@ package io.github.mike10004.containment.lifecycle;
  * Interface of a service that provides a resource and caches the resource.
  * In the case of a failure to produce the resource, the failure is cached
  * instead. A second attempt to produce a resource is never executed.
- * @param <T>
+ * @param <T> provided resource type
  */
 public interface CachingProvider<T> {
 

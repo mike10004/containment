@@ -18,7 +18,7 @@ public final class GlobalLifecyclingCachingProvider<D> extends LifecyclingCachin
 
     /**
      * Constructs an instance.
-     * @param lifecycle
+     * @param lifecycle lifecycle
      */
     public GlobalLifecyclingCachingProvider(Lifecycle<D> lifecycle) {
         this(lifecycle, ignore -> {});
@@ -108,7 +108,7 @@ public final class GlobalLifecyclingCachingProvider<D> extends LifecyclingCachin
      * so we merely report the error.
      *
      * // TODO control reporting with instance flags, system properties, and environment variables
-     * @param t
+     * @param t the error
      */
     @Override
     protected void handleTearDownError(RuntimeException t) {

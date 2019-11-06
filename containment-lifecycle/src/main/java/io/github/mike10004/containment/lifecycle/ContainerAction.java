@@ -12,7 +12,7 @@ public interface ContainerAction {
     /**
      * Performs the action. Note that the container may not be started.
      * @param container container info
-     * @throws ContainmentException
+     * @throws ContainmentException on error
      */
     void perform(ContainerInfo container) throws ContainmentException;
 
