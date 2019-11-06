@@ -10,6 +10,7 @@ cache:
 before_install:
   - docker pull busybox:latest
   - docker pull httpd:2.4
+  - docker pull mariadb:10.4
   - docker pull alpine:3.10.3
 install:
   - mvn -B -V $MORE_MAVEN_OPTS dependency:go-offline compile test-compile
