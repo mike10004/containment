@@ -1,0 +1,20 @@
+language: java
+jdk: openjdk11
+services:
+  - docker
+notifications:
+  email: false
+cache:
+  directories:
+    - $HOME/.m2
+before_install:
+  - docker pull busybox:latest
+  - docker pull httpd:2.4
+  - docker pull alpine:3.10.3
+install:
+  - mvn -B -V $MORE_MAVEN_OPTS dependency:go-offline compile test-compile
+before_script: true
+script:
+  - mvn -B -V $MORE_MAVEN_OPTS install
+  - mvn -B -V $MORE_MAVEN_OPTS javadoc:javadoc
+  - docker ps -a
