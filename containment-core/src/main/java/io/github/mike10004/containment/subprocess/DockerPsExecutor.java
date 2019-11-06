@@ -3,7 +3,7 @@ package io.github.mike10004.containment.subprocess;
 import com.google.common.base.Verify;
 import com.google.common.io.CharSource;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.DockerSubprocessResult;
+import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.subprocess.Subprocess;
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,7 +41,7 @@ public class DockerPsExecutor extends DockerSubprocessExecutorBase {
                 .arg("--filter=" + filter)
                 .arg("--format={{json .}}")
                 .build();
-        DockerSubprocessResult<String> result = executeDockerSubprocess(subprocess, Charset.defaultCharset());
+        ContainerSubprocessResult<String> result = executeDockerSubprocess(subprocess, Charset.defaultCharset());
         if (result.exitCode() != 0) {
             throw new ContainmentException(String.format("nonzero exit code from docker subprocess: %s", result));
         }

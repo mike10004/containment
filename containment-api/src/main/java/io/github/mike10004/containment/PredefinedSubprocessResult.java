@@ -3,7 +3,7 @@ package io.github.mike10004.containment;
 import com.google.common.base.MoreObjects;
 import org.apache.commons.lang3.StringUtils;
 
-class PredefinedSubprocessResult<T> implements DockerSubprocessResult<T> {
+class PredefinedSubprocessResult<T> implements ContainerSubprocessResult<T> {
 
     private final int exitCode;
     private final T stdout, stderr;

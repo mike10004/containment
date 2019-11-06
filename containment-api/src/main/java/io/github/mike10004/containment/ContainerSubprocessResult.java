@@ -5,7 +5,7 @@ package io.github.mike10004.containment;
  * launching a process within a container.
  * @param <T> type of output consumed from the process standard output and error streams
  */
-public interface DockerSubprocessResult<T> {
+public interface ContainerSubprocessResult<T> {
 
      /**
       * Returns the process exit code.
@@ -33,7 +33,7 @@ public interface DockerSubprocessResult<T> {
       * @param <T> type of standard stream content
       * @return new result instance
       */
-     static <T> DockerSubprocessResult<T> create(int exitCode, T stdout, T stderr) {
+     static <T> ContainerSubprocessResult<T> create(int exitCode, T stdout, T stderr) {
           return new PredefinedSubprocessResult<>(exitCode, stdout, stderr);
      }
 
@@ -43,7 +43,7 @@ public interface DockerSubprocessResult<T> {
       * @param <T> standard stream content type
       * @return a new result instance
       */
-     static <T> DockerSubprocessResult<T> noContent(int exitCode) {
+     static <T> ContainerSubprocessResult<T> noContent(int exitCode) {
           return new PredefinedSubprocessResult.ContentlessSubprocessResult<>(exitCode);
      };
 

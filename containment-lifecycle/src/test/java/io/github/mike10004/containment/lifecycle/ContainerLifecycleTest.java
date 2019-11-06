@@ -3,7 +3,7 @@ package io.github.mike10004.containment.lifecycle;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.DockerSubprocessResult;
+import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.Uuids;
 import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
@@ -34,10 +34,10 @@ public class ContainerLifecycleTest {
                 .build();
         ContainerLifecycle lifecycle = ContainerLifecycle.create(() -> new DjContainerCreator(dockerManager), parametry, Collections.emptyList(), Collections.emptyList());
         StartedContainer container = lifecycle.commission();
-        DockerSubprocessResult<String> result;
+        ContainerSubprocessResult<String> result;
         try {
             String text = Uuids.randomUuidString(random);
-            result = DockerExecExecutor.create(container.info().id(), StandardCharsets.UTF_8).execute("echo", text);
+            result = container.executor().execute(StandardCharsets.UTF_8, "echo", text);
             assertEquals("exit code", 0, result.exitCode());
             assertEquals("text", text, result.stdout().trim());
             System.out.println("container running OK");

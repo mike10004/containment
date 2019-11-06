@@ -95,7 +95,7 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
         public Integer commission() throws Exception {
             StartableContainer runnable = containerSupplier.get();
             for (ContainerAction action : preStartActions) {
-                runnable.execute(action);
+                action.perform(runnable.info());
             }
             return preStartActions.size();
         }

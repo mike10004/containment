@@ -4,8 +4,8 @@ import com.google.common.io.ByteSource;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerPort;
-import io.github.mike10004.containment.DockerExecutor;
-import io.github.mike10004.containment.DockerSubprocessResult;
+import io.github.mike10004.containment.ContainerExecutor;
+import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.containment.Durations;
 import io.github.mike10004.containment.FullSocketAddress;
 import io.github.mike10004.containment.ImageSpecifier;
@@ -58,12 +58,12 @@ public class DjContainerCreatorTest {
                 .commandToWaitIndefinitely()
                 .build();
 
-        DockerSubprocessResult<String> result;
+        ContainerSubprocessResult<String> result;
         try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
-                DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
-                result = executor.execute("printenv");
+                ContainerExecutor executor = container.executor();
+                result = executor.execute(UTF_8, "printenv");
             }
         }
         assertEquals("process exit code", 0, result.exitCode());
@@ -78,15 +78,15 @@ public class DjContainerCreatorTest {
         ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
                 .commandToWaitIndefinitely()
                 .build();
-        DockerSubprocessResult<String> result;
+        ContainerSubprocessResult<String> result;
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
         try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              StartableContainer runnableContainer = runner.create(parametry)) {
             runnableContainer.copier().copyToContainer(file, copiedFileDestDir);
             try (StartedContainer container = runnableContainer.start()) {
-                DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
-                result = executor.execute("cat", pathnameOfFileInContainer);
+                ContainerExecutor executor = container.executor();
+                result = executor.execute(UTF_8, "cat", pathnameOfFileInContainer);
             }
         }
         assertEquals("process exit code", 0, result.exitCode());

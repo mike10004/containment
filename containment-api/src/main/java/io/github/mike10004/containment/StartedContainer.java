@@ -53,4 +53,10 @@ public interface StartedContainer extends ActionableContainer, AutoCloseable {
      */
     <C extends Consumer<? super byte[]>> C followStderr(C consumer) throws ContainmentException;
 
+    /**
+     * Returns an executor that can execute processes within the container.
+     * @return an executor
+     */
+    ContainerExecutor executor();
+
 }

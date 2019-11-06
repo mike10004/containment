@@ -2,7 +2,7 @@ package io.github.mike10004.containment.subprocess;
 
 import com.google.common.base.MoreObjects;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.DockerSubprocessResult;
+import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.subprocess.ProcessMonitor;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.ScopedProcessTracker;
@@ -13,6 +13,9 @@ import java.util.function.BiFunction;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Superclass of classes that execute a {@code docker} process on the host system.
+ */
 public class DockerSubprocessExecutorBase {
 
     private final SubprocessConfig subprocessConfig;
@@ -30,7 +33,7 @@ public class DockerSubprocessExecutorBase {
         return (x, y) -> y;
     }
 
-    protected DockerSubprocessResult<String> executeDockerSubprocess(Subprocess subprocess, Charset execOutputCharset) throws ContainmentException {
+    protected ContainerSubprocessResult<String> executeDockerSubprocess(Subprocess subprocess, Charset execOutputCharset) throws ContainmentException {
         try (ScopedProcessTracker processTracker = new ScopedProcessTracker()) {
             ProcessMonitor<String, String> monitor = subprocess.launcher(processTracker)
                     .outputStrings(execOutputCharset).launch();
@@ -57,7 +60,7 @@ public class DockerSubprocessExecutorBase {
 
     }
 
-    private static class SubprocessExecResult<T> implements DockerSubprocessResult<T> {
+    private static class SubprocessExecResult<T> implements ContainerSubprocessResult<T> {
 
         private final ProcessResult<T, T> result;
 

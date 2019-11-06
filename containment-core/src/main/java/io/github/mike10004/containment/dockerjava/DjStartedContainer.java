@@ -10,12 +10,13 @@ import com.github.dockerjava.api.model.Frame;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import io.github.mike10004.containment.ContainerAction;
-import io.github.mike10004.containment.ContainerInfo;
-import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.ContainerCopier;
+import io.github.mike10004.containment.ContainerExecutor;
+import io.github.mike10004.containment.ContainerInfo;
+import io.github.mike10004.containment.ContainerPort;
+import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.subprocess.DockerExecExecutor;
 import io.github.mike10004.containment.subprocess.DockerPsContent;
 import io.github.mike10004.containment.subprocess.DockerPsExecutor;
 import io.github.mike10004.containment.subprocess.DockerSubprocessExecutorBase;
@@ -44,6 +45,11 @@ public class DjStartedContainer implements StartedContainer {
                 return execute(key);
             }
         });
+    }
+
+    @Override
+    public ContainerExecutor executor() {
+        return new DockerExecExecutor(info.id());
     }
 
     @Override
@@ -83,11 +89,6 @@ public class DjStartedContainer implements StartedContainer {
             default:
                 throw new IllegalArgumentException(String.valueOf(d));
         }
-    }
-
-    @Override
-    public void execute(ContainerAction action) throws ContainmentException {
-        action.perform(info);
     }
 
     protected DockerSubprocessExecutorBase.SubprocessConfig getSubprocessConfig() {

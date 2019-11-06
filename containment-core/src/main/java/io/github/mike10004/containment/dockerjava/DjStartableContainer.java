@@ -39,7 +39,7 @@ public class DjStartableContainer implements StartableContainer {
     }
 
     @Override
-    public void execute(ContainerAction preStartAction) throws ContainmentException {
+    public void performAction(ContainerAction preStartAction) throws ContainmentException {
         preStartAction.perform(info);
     }
 
