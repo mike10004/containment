@@ -11,10 +11,21 @@ import java.util.Set;
 /**
  * Interface of a service that copies files to and from a Docker container.
  */
-public interface DockerCopier {
+public interface ContainerCopier {
 
+    /**
+     * Enumeration of copy options.
+     */
     enum Option {
+
+        /**
+         * Archive mode (copy all uid/gid information).
+         */
         ARCHIVE,
+
+        /**
+         * Always follow symbol link in source path.
+         */
         FOLLOW_LINK
     }
 
@@ -54,11 +65,20 @@ public interface DockerCopier {
      * Copies a file from the container filesystem to the local filesystem.
      * @param path the path of the source file within the container filesystem
      * @param destinationFile the destination path on the local filesystem; must be a file pathname, not a directory
-     * @param options copy options
+     * @param options copy options; depending on the implementation, these may not have any effect
      * @throws IOException
      */
     void copyFromContainer(String path, File destinationFile, Set<Option> options) throws IOException, ContainmentException;
 
+    /**
+     * Copies a file from the container filesystem to the local filesystem.
+     * @param path the path of the source file within the container filesystem
+     * @param destinationFile the destination path on the local filesystem; must be a file pathname, not a directory
+     * @param firstOption a copy option
+     * @param otherOptions more copy options
+     * @throws IOException
+     * @see #copyFromContainer(String, File, Set)
+     */
     default void copyFromContainer(String path, File destinationFile, Option firstOption, Option...otherOptions) throws IOException, ContainmentException {
         copyFromContainer(path, destinationFile, EnumSet.copyOf(Lists.asList(firstOption, otherOptions)));
     }

@@ -5,7 +5,7 @@ import com.github.dockerjava.api.exception.DockerException;
 import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.DockerCopier;
+import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 
@@ -29,8 +29,8 @@ public class DjStartableContainer implements StartableContainer {
     }
 
     @Override
-    public DockerCopier copier() {
-        return new DjCopier(client, info);
+    public ContainerCopier copier() {
+        return new DjContainerCopier(client, info);
     }
 
     @Override

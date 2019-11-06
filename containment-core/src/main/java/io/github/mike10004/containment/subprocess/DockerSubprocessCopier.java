@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.subprocess;
 
-import io.github.mike10004.containment.DockerCopier;
+import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.ScopedProcessTracker;
 import io.github.mike10004.subprocess.StreamContent;
@@ -20,7 +20,7 @@ import static java.util.Objects.requireNonNull;
  * Copier implementation that launches external {@code docker} subprocesses
  * to execute copy commands.
  */
-public class DockerSubprocessCopier implements DockerCopier {
+public class DockerSubprocessCopier implements ContainerCopier {
 
     private final String containerId;
     private final long timeout;

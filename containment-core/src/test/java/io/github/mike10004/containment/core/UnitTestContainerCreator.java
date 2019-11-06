@@ -6,7 +6,7 @@ import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.DockerCopier;
+import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.Uuids;
@@ -68,7 +68,7 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
 
         @Override
-        public DockerCopier copier() {
+        public ContainerCopier copier() {
             throw new UnsupportedOperationException("not implemented in this unit test");
         }
     }
@@ -111,7 +111,7 @@ public class UnitTestContainerCreator implements ContainerCreator {
             return consumer;
         }
         @Override
-        public DockerCopier copier() {
+        public ContainerCopier copier() {
             throw new UnsupportedOperationException("not implemented in this unit test");
         }
     }

@@ -5,7 +5,7 @@ import com.github.dockerjava.api.exception.DockerException;
 import com.google.common.io.ByteStreams;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.DockerCopier;
+import io.github.mike10004.containment.ContainerCopier;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FilenameUtils;
@@ -19,12 +19,12 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
-public class DjCopier implements DockerCopier {
+class DjContainerCopier implements ContainerCopier {
 
     private final DockerClient client;
     private final ContainerInfo containerInfo;
 
-    public DjCopier(DockerClient client, ContainerInfo containerInfo) {
+    public DjContainerCopier(DockerClient client, ContainerInfo containerInfo) {
         this.client = requireNonNull(client);
         this.containerInfo = requireNonNull(containerInfo);
     }
@@ -43,6 +43,9 @@ public class DjCopier implements DockerCopier {
 
     @Override
     public void copyFromContainer(String path, File destinationFile, Set<Option> options) throws IOException, ContainmentException {
+        if (!options.isEmpty()) {
+            throw new ContainmentException("this copier does not support any options, but these were specified: " + options);
+        }
         try (InputStream in = client.copyArchiveFromContainerCmd(containerInfo.id(), path).exec();
              TarArchiveInputStream tarIn = new TarArchiveInputStream(in)
         ) {

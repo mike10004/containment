@@ -16,6 +16,6 @@ public interface ActionableContainer {
      * Returns a service that can be used to copy files to and from the container.
      * @return a copier service
      */
-    DockerCopier copier();
+    ContainerCopier copier();
 
 }

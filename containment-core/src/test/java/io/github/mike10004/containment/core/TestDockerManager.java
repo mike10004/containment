@@ -34,7 +34,8 @@ public class TestDockerManager extends DefaultDjDockerManager {
     private static final DjDockerManager INSTANCE = createManager(createClientConfig());
 
     /**
-     * Returns a manager instance that uses a real client.
+     * Returns a manager instance that uses a real client and a global shutdown hook
+     * to stop and remove any containers.
      * @return singleton instance
      */
     public static DjDockerManager getInstance() {
