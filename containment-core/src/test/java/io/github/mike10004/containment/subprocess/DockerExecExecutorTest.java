@@ -6,8 +6,8 @@ import io.github.mike10004.containment.DockerExecutor;
 import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
-import io.github.mike10004.containment.TestDockerManager;
-import io.github.mike10004.containment.Tests;
+import io.github.mike10004.containment.core.TestDockerManager;
+import io.github.mike10004.containment.core.Tests;
 import io.github.mike10004.containment.dockerjava.DjContainerCreator;
 import org.junit.Test;
 

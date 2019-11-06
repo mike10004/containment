@@ -1,5 +1,14 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.core;
 
+import io.github.mike10004.containment.ContainerAction;
+import io.github.mike10004.containment.ContainerCreator;
+import io.github.mike10004.containment.ContainerInfo;
+import io.github.mike10004.containment.ContainerParametry;
+import io.github.mike10004.containment.ContainerPort;
+import io.github.mike10004.containment.ContainmentException;
+import io.github.mike10004.containment.StartableContainer;
+import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.Uuids;
 import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 
 import java.util.Collections;

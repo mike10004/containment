@@ -6,7 +6,7 @@ import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
-import io.github.mike10004.containment.UnitTestContainerCreator;
+import io.github.mike10004.containment.core.UnitTestContainerCreator;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;

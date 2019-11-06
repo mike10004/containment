@@ -1,6 +1,8 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.core;
 
 import com.google.common.io.CharSource;
+import io.github.mike10004.containment.DockerSubprocessResult;
+import io.github.mike10004.containment.ImageSpecifier;
 import io.github.mike10004.nitsick.SettingSet;
 
 import java.io.IOException;

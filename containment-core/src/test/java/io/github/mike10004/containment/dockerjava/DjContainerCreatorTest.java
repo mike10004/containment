@@ -14,8 +14,8 @@ import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
-import io.github.mike10004.containment.TestDockerManager;
-import io.github.mike10004.containment.Tests;
+import io.github.mike10004.containment.core.TestDockerManager;
+import io.github.mike10004.containment.core.Tests;
 import io.github.mike10004.containment.subprocess.DockerExecExecutor;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -131,8 +131,9 @@ public class DjContainerCreatorTest {
                 List<ContainerPort> ports = container.fetchPorts();
                 ContainerPort httpdExposedPortMapping = ports.stream().filter(p -> p.number() == httpdPort).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
                 assertTrue("exposed", httpdExposedPortMapping.isBound());
-                assertNotNull(httpdExposedPortMapping.hostBinding());
-                URL url = new URL("http", "localhost", httpdExposedPortMapping.hostBinding().getPort(), "/");
+                FullSocketAddress hostBinding = httpdExposedPortMapping.hostBinding();
+                assertNotNull(hostBinding);
+                URL url = new URL("http", "localhost", hostBinding.getPort(), "/");
                 byte[] content = new JreClient().fetchPageContent(url);
                 result = new String(content, UTF_8);
             }
@@ -172,8 +173,7 @@ public class DjContainerCreatorTest {
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
                 int hostPort = container.fetchPorts().stream()
-                        .filter(ContainerPort::isBound)
-                        .map(pm -> pm.hostBinding())
+                        .map(ContainerPort::hostBinding)
                         .filter(Objects::nonNull)
                         .mapToInt(FullSocketAddress::getPort)
                         .findFirst().orElseThrow(() -> new AssertionError("port not bound"));

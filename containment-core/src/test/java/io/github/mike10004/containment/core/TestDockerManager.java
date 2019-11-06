@@ -1,4 +1,4 @@
-package io.github.mike10004.containment;
+package io.github.mike10004.containment.core;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
