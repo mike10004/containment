@@ -10,10 +10,11 @@ import io.github.mike10004.subprocess.SubprocessException;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Copier implementation that launches external {@code docker} subprocesses
@@ -21,20 +22,22 @@ import java.util.concurrent.TimeoutException;
  */
 public class DockerSubprocessCopier implements DockerCopier {
 
+    private final String containerId;
     private final long timeout;
     private TimeUnit timeoutUnit;
 
-    public DockerSubprocessCopier() {
-        this(30, TimeUnit.SECONDS);
+    public DockerSubprocessCopier(String containerId) {
+        this(containerId, 30, TimeUnit.SECONDS);
     }
 
-    public DockerSubprocessCopier(long timeout, TimeUnit timeoutUnit) {
+    public DockerSubprocessCopier(String containerId, long timeout, TimeUnit timeoutUnit) {
         this.timeout = timeout;
+        this.containerId = requireNonNull(containerId);
         this.timeoutUnit = timeoutUnit;
     }
 
     @Override
-    public void copyToContainer(File filepath, String containerId, String destpath) throws IOException {
+    public void copyToContainer(File filepath, String destpath) throws IOException {
         Subprocess subprocess = Subprocess.running("docker")
                 .arg("cp")
                 .arg(filepath.getAbsolutePath())
@@ -59,7 +62,7 @@ public class DockerSubprocessCopier implements DockerCopier {
     }
 
     @Override
-    public void copyFromContainer(String containerId, String path, File destinationFile, Set<Option> options) throws IOException {
+    public void copyFromContainer(String path, File destinationFile, Set<Option> options) throws IOException {
         if (path.isEmpty()) {
             throw new DockerCopyException("source path is empty");
         }
@@ -105,11 +108,4 @@ public class DockerSubprocessCopier implements DockerCopier {
         }
     }
 
-    public static DockerCopier create() {
-        return new DockerSubprocessCopier();
-    }
-
-    public static DockerCopier create(Duration timeout) {
-        return new DockerSubprocessCopier(timeout.toMillis(), TimeUnit.MILLISECONDS);
-    }
 }

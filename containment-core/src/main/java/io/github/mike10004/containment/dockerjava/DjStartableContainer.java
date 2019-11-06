@@ -2,15 +2,13 @@ package io.github.mike10004.containment.dockerjava;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
+import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.ContainerAction;
+import io.github.mike10004.containment.DockerCopier;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.StandardOpenOption;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -28,6 +26,11 @@ public class DjStartableContainer implements StartableContainer {
         this.client = requireNonNull(client);
         this.containerMonitor = requireNonNull(containerMonitor);
         started = new AtomicBoolean(false);
+    }
+
+    @Override
+    public DockerCopier copier() {
+        return new DjCopier(client, info);
     }
 
     @Override
@@ -63,19 +66,6 @@ public class DjStartableContainer implements StartableContainer {
         }
     }
 
-    /**
-     * Adds a pre-start action that copies a file to the container.
-     * @param sourceFile
-     * @param destinationPathname
-     */
-    public void copyToContainer(File sourceFile, String destinationPathname) throws ContainmentException {
-        execute(new CopyFileAction(sourceFile, destinationPathname));
-    }
-
-    public void copyToContainer(byte[] sourceBytes, String destinationPathname, File localTempDirectory) throws ContainmentException {
-        execute(new CopyBytesAction(localTempDirectory, sourceBytes, destinationPathname));
-    }
-
     @Override
     public synchronized StartedContainer start() throws ContainmentException {
         ContainerInfo info = info();
@@ -89,62 +79,6 @@ public class DjStartableContainer implements StartableContainer {
         return new DjStartedContainer(client, info, containerMonitor);
     }
 
-    private void copyFileToContainer(String containerId, File srcFile, String destinationPathname) throws ContainmentException {
-        try {
-            client.copyArchiveToContainerCmd(containerId)
-                    .withHostResource(srcFile.getAbsolutePath())
-                    .withRemotePath(destinationPathname)
-                    .exec();
-        } catch (DockerException e) {
-            throw new ContainmentException(e);
-        }
-    }
-
-    private class CopyFileAction implements ContainerAction {
-
-        private final File srcFile;
-        private final String destinationPathname;
-
-        private CopyFileAction(File srcFile, String destinationPathname) {
-            this.srcFile = srcFile;
-            this.destinationPathname = destinationPathname;
-        }
-
-        @Override
-        public void perform(ContainerInfo container) throws ContainmentException {
-            copyFileToContainer(container.id(), srcFile, destinationPathname);
-        }
-    }
-
-    private class CopyBytesAction implements ContainerAction {
-
-        private final File tmpDir;
-        private final byte[] sourceBytes;
-        private final String destinationPathname;
-
-        public CopyBytesAction(File tmpDir, byte[] sourceBytes, String destinationPathname) {
-            this.tmpDir = tmpDir;
-            this.sourceBytes = sourceBytes;
-            this.destinationPathname = destinationPathname;
-        }
-
-        @Override
-        public void perform(ContainerInfo container) throws ContainmentException {
-            File tempFile = null;
-            try {
-                tempFile = File.createTempFile("pre-start-action", ".tmp", tmpDir);
-                java.nio.file.Files.write(tempFile.toPath(), sourceBytes, StandardOpenOption.WRITE);
-                copyFileToContainer(container.id(), tempFile, destinationPathname);
-            } catch (DockerException | IOException e) {
-                throw new ContainmentException(e);
-            } finally {
-                if (tempFile != null) {
-                    //noinspection ResultOfMethodCallIgnored
-                    tempFile.delete();
-                }
-            }
-        }
-    }
 
     @Override
     public String toString() {

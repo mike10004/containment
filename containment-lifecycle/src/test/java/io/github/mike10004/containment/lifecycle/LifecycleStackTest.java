@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -24,6 +25,7 @@ public class LifecycleStackTest {
         WidgetLifecycle third = new WidgetLifecycle(tracker);
         LifecycleStack<Widget> stack = new LifecycleStack<>(others, third);
         Widget topWidget = stack.commission();
+        assertNotNull(topWidget);
         stack.decommission();
         assertEquals(1, first.commissioned);
         assertEquals(2, second.commissioned);
@@ -45,11 +47,11 @@ public class LifecycleStackTest {
             fail("should have excepted");
         } catch (LifecycleStackCommissionUnwindException e) {
             assertEquals(third, e.commissionExceptionThrower);
-            assertTrue(e.commissionException.getClass() == CommissionException.class);
+            assertTrue(e.commissionException.getClass() == TestCommissionException.class);
             assertEquals(1, e.unwindException.exceptionsThrown.size());
             Map.Entry<Lifecycle<?>, RuntimeException> entry = e.unwindException.exceptionsThrown.entrySet().iterator().next();
             assertEquals(entry.getKey(), second);
-            assertEquals(entry.getValue().getClass(), RuntimeDecommissionException.class);
+            assertEquals(entry.getValue().getClass(), TestRuntimeDecommissionException.class);
         }
         assertEquals(1, first.commissioned);
         assertEquals(2, second.commissioned);
@@ -69,7 +71,8 @@ public class LifecycleStackTest {
         try {
             stack.commission();
             fail("should have excepted");
-        } catch (CommissionException ignore) {
+        } catch (LifecycleStackCommissionException e) {
+            assertTrue(e.getCause() instanceof TestCommissionException);
         }
         assertEquals(1, first.commissioned);
         assertEquals(2, second.commissioned);
@@ -89,7 +92,8 @@ public class LifecycleStackTest {
         try {
             stack.commission();
             fail("should have thrown commissionexception");
-        } catch (CommissionException ignore) {
+        } catch (LifecycleStackCommissionException e) {
+            assertTrue(e.getCause() instanceof TestCommissionException);
         }
         assertEquals(0, first.commissioned);
         assertEquals(0, top.commissioned);
@@ -111,7 +115,7 @@ public class LifecycleStackTest {
             assertEquals(1, e.exceptionsThrown.size());
             Map.Entry<Lifecycle<?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
             assertSame(third, entry.getKey());
-            assertSame(RuntimeDecommissionException.class, entry.getValue().getClass());
+            assertSame(TestRuntimeDecommissionException.class, entry.getValue().getClass());
         }
         assertEquals(1, first.commissioned);
         assertEquals(2, second.commissioned);
@@ -168,11 +172,11 @@ public class LifecycleStackTest {
 
         @Override
         public Widget commission() throws Exception {
-            throw new CommissionException();
+            throw new TestCommissionException();
         }
     }
 
-    private static final class CommissionException extends Exception {}
+    private static final class TestCommissionException extends Exception {}
 
     private static final class ErrorOnDecommission extends WidgetLifecycle {
 
@@ -182,11 +186,11 @@ public class LifecycleStackTest {
 
         @Override
         public void decommission() {
-            throw new RuntimeDecommissionException();
+            throw new TestRuntimeDecommissionException();
         }
 
     }
 
-    private static final class RuntimeDecommissionException extends RuntimeException {}
+    private static final class TestRuntimeDecommissionException extends RuntimeException {}
 
 }

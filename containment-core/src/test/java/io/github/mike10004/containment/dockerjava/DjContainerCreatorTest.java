@@ -1,17 +1,14 @@
 package io.github.mike10004.containment.dockerjava;
 
-import com.github.dockerjava.api.DockerClient;
 import com.google.common.io.ByteSource;
 import io.github.mike10004.containment.ContainerCreator;
-import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
+import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.DockerExecutor;
 import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.containment.Durations;
 import io.github.mike10004.containment.FullSocketAddress;
 import io.github.mike10004.containment.ImageSpecifier;
-import io.github.mike10004.containment.ContainerPort;
-import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.core.TestDockerManager;
@@ -27,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -44,6 +42,7 @@ import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -71,27 +70,6 @@ public class DjContainerCreatorTest {
         Tests.assertStdoutHasLine(result, "FOO=bar");
     }
 
-    private static class PreCopier implements ContainerAction {
-
-        private final DockerClient client;
-        private final File srcFile;
-        private final String destination;
-
-        public PreCopier(DockerClient client, File srcFile, String destination) {
-            this.client = client;
-            this.srcFile = srcFile;
-            this.destination = destination;
-        }
-
-        @Override
-        public void perform(ContainerInfo container) {
-            client.copyArchiveToContainerCmd(container.id())
-                    .withHostResource(srcFile.getAbsolutePath())
-                    .withRemotePath(destination)
-                    .exec();
-        }
-    }
-
     @Test
     public void run_copyFilesBeforeStart() throws Exception {
         String content = UUID.randomUUID().toString();
@@ -101,13 +79,11 @@ public class DjContainerCreatorTest {
                 .commandToWaitIndefinitely()
                 .build();
         DockerSubprocessResult<String> result;
-        DockerClient client = TestDockerManager.getInstance().openClient();
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
-        PreCopier copier = new PreCopier(client, file, copiedFileDestDir);
         try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
              StartableContainer runnableContainer = runner.create(parametry)) {
-            runnableContainer.execute(copier);
+            runnableContainer.copier().copyToContainer(file, copiedFileDestDir);
             try (StartedContainer container = runnableContainer.start()) {
                 DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
                 result = executor.execute("cat", pathnameOfFileInContainer);
@@ -116,6 +92,33 @@ public class DjContainerCreatorTest {
         assertEquals("process exit code", 0, result.exitCode());
         System.out.format("contents of %s: %s%n", pathnameOfFileInContainer, result.stdout().trim());
         assertEquals("text", content, result.stdout().trim());
+    }
+
+    @Test
+    public void run_copyFilesFromContainer() throws Exception {
+        String content = UUID.randomUUID().toString();
+        File file = tempdir.newFile();
+        Charset charset = UTF_8;
+        java.nio.file.Files.write(file.toPath(), content.getBytes(charset));
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
+                .commandToWaitIndefinitely()
+                .build();
+        String copiedFileDestDir = "/root/";
+        String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
+        File pulledFile = tempdir.newFile();
+        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
+             StartableContainer runnableContainer = runner.create(parametry)) {
+            runnableContainer.copier().copyToContainer(file, copiedFileDestDir);
+            try (StartedContainer container = runnableContainer.start()) {
+                container.copier().copyFromContainer(pathnameOfFileInContainer, pulledFile);
+            }
+        }
+        assertNotEquals("expect file nonempty", 0, pulledFile.length());
+        byte[] pulledBytes = java.nio.file.Files.readAllBytes(pulledFile.toPath());
+        assertEquals("pulled bytes", file.length(), pulledBytes.length);
+        String pulledContent = new String(pulledBytes, charset);
+        System.out.format("contents of %s: %s%n", pulledFile, pulledContent);
+        assertEquals("text", content, pulledContent);
     }
 
     @Test
@@ -152,13 +155,7 @@ public class DjContainerCreatorTest {
         boolean verboseWait = Tests.Settings.get("run_mysql.verboseWait", false);
         int mysqlPort = 3306;
         String password = "sUpers3cret";
-        // The default bind address here was obtained by observation; future updates to the
-        // container image or to the docker engine may affect this value. It can be ascertained
-        // by `docker inspect` (NetworkSettings.Networks.bridge.IPAddress), but that must be
-        // executed on a running container, and we need this value at time of container creation.
-        // If this test starts failing, try it with bind address 0.0.0.0, and if that works,
-        // it probably means this value needs to be changed.
-        String defaultBindAddress = "172.17.0.2";
+        String defaultBindAddress = "0.0.0.0";
         String bindAddress = Tests.Settings.getOpt("run_mysql.bindAddress").orElse(defaultBindAddress);
         ContainerParametry parametry = ContainerParametry.builder(getImageForMysqlTest())
                 .bindPort(mysqlPort)
@@ -180,17 +177,17 @@ public class DjContainerCreatorTest {
                 String jdbcUrl = "jdbc:mysql://127.0.0.1:" + hostPort + "/";
                 System.out.println("connecting on " + jdbcUrl);
                 String dbName = "widget_factory";
-                String requiredLineRegex = "^.*Server socket created on IP: '\\d+\\.\\d+\\.\\d+\\.\\d+'\\.$";
-                System.out.format("awaiting line matching in %s%n", requiredLineRegex);
+                String requiredLineSubstring = String.format("Server socket created on IP: '%s'.", bindAddress);
+                System.out.format("awaiting line containing this substring: %s%n", requiredLineSubstring);
                 Duration mysqlStartupTimeout = Tests.Settings.timeouts().get("run_mysql.startup", Duration.ofMinutes(5));
                 AtomicBoolean doneWaiting = new AtomicBoolean(false);
                 if (verboseWait) {
                     timer(Duration.ofSeconds(1), elapsed -> System.out.format("waited %s seconds for mysql up-ness%n", elapsed.getSeconds()), doneWaiting::get);
                 }
-                boolean logMessageAppeared = container.followStderr(BlockableLogFollower.untilLine(line -> line.matches(requiredLineRegex), UTF_8, System.err))
+                boolean logMessageAppeared = container.followStderr(BlockableLogFollower.untilLine(line -> line.contains(requiredLineSubstring), UTF_8, System.err))
                         .await(mysqlStartupTimeout);
                 doneWaiting.set(true);
-                System.out.format("saw line matching %s: %s%n", requiredLineRegex, logMessageAppeared);
+                System.out.format("saw line containing %s: %s%n", requiredLineSubstring, logMessageAppeared);
                 try (Connection conn = java.sql.DriverManager.getConnection(jdbcUrl, "root", password)) {
                     System.out.format("connected to %s%n", jdbcUrl);
                     try (Statement stmt = conn.createStatement()) {
