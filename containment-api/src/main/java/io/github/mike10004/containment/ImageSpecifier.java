@@ -1,5 +1,6 @@
 package io.github.mike10004.containment;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
@@ -8,21 +9,17 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * Immutable value class that specifies a container image.
  */
-public class ImageSpecifier {
+public abstract class ImageSpecifier {
 
     /**
      * Bare image name. For example, {@code apache} is the name
      */
     public final String name;
-
-    /**
-     * Image tag. For example, {@code latest}.
-     */
-    @Nullable
-    public final String tag;
 
     /**
      * Image repository. For example {@code fedora}.
@@ -35,8 +32,6 @@ public class ImageSpecifier {
      */
     @Nullable
     public final String registry;
-
-    private transient final String stringification;
 
     /**
      * Constructs a new instance from a bare image name.
@@ -54,7 +49,7 @@ public class ImageSpecifier {
      * @return a new instance
      */
     public static ImageSpecifier fromNameAndTag(String name, @Nullable String tag) {
-        return new ImageSpecifier(name, tag, null, null);
+        return new StandardImageSpecifier(name, tag, null, null);
     }
 
     /**
@@ -64,50 +59,59 @@ public class ImageSpecifier {
      * @param repository optional repository
      * @param registry optional registry
      */
-    public ImageSpecifier(String name, @Nullable String tag, @Nullable String repository, @Nullable String registry) {
+    public static ImageSpecifier standard(String name, @Nullable String tag, @Nullable String repository, @Nullable String registry) {
+        return new StandardImageSpecifier(name, tag, repository, registry);
+    }
+
+
+    protected ImageSpecifier(String name, @Nullable String repository, @Nullable String registry) {
         this.name = Preconditions.checkNotNull(name, "name");
-        Preconditions.checkArgument(!name.trim().isEmpty(), "name must be nonempty/nonwhitespace");
-        this.tag = tag;
+        checkArgument(!name.trim().isEmpty(), "name must be nonempty/nonwhitespace");
         this.repository = repository;
-        Preconditions.checkArgument(repository == null || (repository.equals(repository.toLowerCase())), "repository name must be lowercase: %s", StringUtils.abbreviate(repository, 128));
+        checkArgument(repository == null || (repository.equals(repository.toLowerCase())), "repository name must be lowercase: %s", StringUtils.abbreviate(repository, 128));
         this.registry = registry;
-        stringification = stringify(name, tag, repository, registry);
     }
 
-    private static int length(@Nullable String s) {
-        return s == null ? 0 : s.length();
-    }
-
-    private static final String DEFAULT_REPOSITORY = "library";
-
-    private static String stringify(String name, @Nullable String tag, @Nullable String repository, @Nullable String registry) {
-        StringBuilder sb = new StringBuilder(length(name) + length(tag) + length(repository) + length(registry) + 3);
+    protected static String doStringify(String name, @Nullable String repository, @Nullable String registry, char pinDelimiter, Object pin) {
+        StringBuilder sb = new StringBuilder(length(name) + length(pin) + 1 + length(repository) + length(registry) + 3);
         if (registry != null && !registry.isEmpty()) {
             sb.append(registry);
             if (repository == null) {
                 repository = DEFAULT_REPOSITORY;
             }
+            sb.append('/');
         }
         if (repository != null && !repository.isEmpty()) {
             sb.append(repository);
             sb.append("/");
         }
-        Preconditions.checkArgument(name != null && !name.trim().isEmpty(), "name must be non-null and nonempty");
+        checkArgument(name != null && !name.trim().isEmpty(), "name must be non-null and nonempty");
         sb.append(name);
-        if (tag != null && !tag.isEmpty()) {
-            sb.append(':');
-            sb.append(tag);
+        if (pin != null) {
+            sb.append(pinDelimiter);
+            sb.append(pin);
         }
         return sb.toString();
     }
 
+    private static int length(@Nullable Object s) {
+        return s == null ? 0 : s.toString().length();
+    }
+
+    protected static final String DEFAULT_REPOSITORY = "library";
+
     /**
-     * Returns an instance that has the given tag if and only if this instance's tag is not defined.
+     * Returns an instance that has the given tag if and only if this instance's pin is not defined.
      * @param defaultTag the default tag to apply
      * @return a specifier instance
      */
     public ImageSpecifier withDefaultTag(String defaultTag) {
-        return withTag(tag == null ? defaultTag : tag);
+        checkArgument(defaultTag != null && !defaultTag.trim().isEmpty(), "default tag must be non-null and nonempty");
+        Object pin = pin();
+        if (pin != null) {
+            return this;
+        }
+        return new StandardImageSpecifier(name, defaultTag, repository, registry);
     }
 
     /**
@@ -116,7 +120,11 @@ public class ImageSpecifier {
      * @return a specifier instance
      */
     public ImageSpecifier withTag(String tag) {
-        return Objects.equals(this.tag, tag) ? this : new ImageSpecifier(name, tag, repository, registry);
+        if (this instanceof StandardImageSpecifier) {
+            StandardImageSpecifier s = (StandardImageSpecifier) this;
+            return Objects.equals(s.tag, tag) ? this : new StandardImageSpecifier(name, tag, repository, registry);
+        }
+        return new StandardImageSpecifier(name, tag, repository, registry);
     }
 
     /**
@@ -124,23 +132,32 @@ public class ImageSpecifier {
      * @param repository the repository
      * @return a specifier instance
      */
-    public ImageSpecifier withRepository(String repository) {
-        return Objects.equals(this.repository, repository) ? this : new ImageSpecifier(name, tag, repository, registry);
-    }
+    public abstract ImageSpecifier withRepository(String repository);
 
     /**
      * Returns an instance that has the given registry and all other fields equal to this instance's fields.
      * @param registry the registry
      * @return a specifier instance
      */
-    public ImageSpecifier withRegistry(String registry) {
-        return Objects.equals(this.registry, registry) ? this : new ImageSpecifier(name, tag, repository, registry);
-    }
+    public abstract ImageSpecifier withRegistry(String registry);
 
     @Override
     public String toString() {
-        return stringification;
+        return stringify();
     }
+
+    /**
+     * Returns the string representation accepted by {@code docker pull}.
+     * @return string representation
+     */
+    protected abstract String stringify();
+
+    /**
+     * Returns the pin that narrows the specification of this image.
+     * This is either a tag or a digest.
+     * @return the pin
+     */
+    protected abstract Object pin();
 
     @Override
     public boolean equals(Object o) {
@@ -148,14 +165,14 @@ public class ImageSpecifier {
         if (!(o instanceof ImageSpecifier)) return false;
         ImageSpecifier that = (ImageSpecifier) o;
         return Objects.equals(name, that.name) &&
-                Objects.equals(tag, that.tag) &&
+                Objects.equals(pin(), that.pin()) &&
                 Objects.equals(repository, that.repository) &&
                 Objects.equals(registry, that.registry);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, tag, repository, registry);
+        return Objects.hash(name, pin(), repository, registry);
     }
 
     public static ImageSpecifier parseSpecifier(String token) {
@@ -177,10 +194,26 @@ public class ImageSpecifier {
         } else {
             throw new IllegalStateException("BUG: parsing image specifier");
         }
-        List<String> nameAndTagParts = Splitter.on(':').limit(2).splitToList(nameAndTag);
-        String tag = nameAndTagParts.size() > 1 ? nameAndTagParts.get(1) : null;
-        String name = nameAndTagParts.get(0);
-        return new ImageSpecifier(name, tag, repository, registry);
+        if (nameAndTag.contains("@")) {
+            List<String> nameAndTagParts = Splitter.on('@').limit(2).splitToList(nameAndTag);
+            String name = nameAndTagParts.get(0);
+            String digestStr = nameAndTagParts.get(1);
+            DigestImageSpecifier.Digest digest = DigestImageSpecifier.Digest.parseDigest(digestStr);
+            return new DigestImageSpecifier(name, digest, repository, registry);
+        } else {
+            List<String> nameAndTagParts = Splitter.on(':').limit(2).splitToList(nameAndTag);
+            String tag = nameAndTagParts.size() > 1 ? nameAndTagParts.get(1) : null;
+            String name = nameAndTagParts.get(0);
+            return new StandardImageSpecifier(name, tag, repository, registry);
+        }
     }
 
+    public String describe() {
+        return MoreObjects.toStringHelper(this)
+                .add("name", name)
+                .add("repository", repository)
+                .add("registry", registry)
+                .add("pin", pin())
+                .toString();
+    }
 }

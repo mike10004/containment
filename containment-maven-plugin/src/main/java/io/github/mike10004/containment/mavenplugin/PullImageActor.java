@@ -6,6 +6,7 @@ import com.github.dockerjava.api.command.TagImageCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.google.common.base.Preconditions;
+import io.github.mike10004.containment.StandardImageSpecifier;
 import io.github.mike10004.containment.dockerjava.BlockableCallback;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.ImageSpecifier;
@@ -42,10 +43,17 @@ class PullImageActor extends ClientAbsentImageActor {
             throw new MojoExecutionException("build completed unsuccessfully: " + callback.summarize());
         }
         if (!remoteImageName.equals(parametry.name)) {
-            ImageSpecifier localImageSpec = ImageSpecifier.parseSpecifier(parametry.name);
+            ImageSpecifier localImageSpec_ = ImageSpecifier.parseSpecifier(parametry.name);
+            if (!(localImageSpec_ instanceof StandardImageSpecifier)) {
+                throw new IllegalArgumentException("local image specification cannot include digest; only tag is allowed");
+            }
+            StandardImageSpecifier localImageSpec = (StandardImageSpecifier) localImageSpec_;
             //noinspection UnnecessaryLocalVariable
             String imageId = remoteImageName;
-            String tag = localImageSpec.withDefaultTag("").tag;
+            String tag = localImageSpec.tag;
+            if (tag == null) {
+                tag = "";
+            }
             String imageNameWithRepository = localImageSpec.toString();
             TagImageCmd tagCmd = client.tagImageCmd(
                     imageId,

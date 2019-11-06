@@ -22,7 +22,7 @@ public class PullImageActorTest {
     @Test
     public void perform_pullHelloWorld_untagged() throws Exception {
         Random random = new Random("PullImageActorTest_perform_pullHelloWorld_untagged".hashCode());
-        String name = new ImageSpecifier(Uuids.randomUuidString(random))
+        String name = ImageSpecifier.fromNameOnly(Uuids.randomUuidString(random))
                 .withRepository(TestCleanupRule.INCLUDE_REPOSITORY_VALUE)
                 .toString();
         test_perform_pullHelloWorld(name, null);
@@ -31,7 +31,7 @@ public class PullImageActorTest {
     @Test
     public void perform_pullHelloWorld_tag_linux() throws Exception {
         Random random = new Random("PullImageActorTest_perform_pullHelloWorld_tag_linux".hashCode());
-        String name = new ImageSpecifier(Uuids.randomUuidString(random))
+        String name = ImageSpecifier.fromNameOnly(Uuids.randomUuidString(random))
                 .withRepository(TestCleanupRule.INCLUDE_REPOSITORY_VALUE)
                 .toString();
         test_perform_pullHelloWorld(name, "linux");
@@ -40,7 +40,7 @@ public class PullImageActorTest {
     private void test_perform_pullHelloWorld(String name, String tag) throws Exception {
         Tests.assumeDestructiveModeEnabled();
         String bareImageName = Tests.getSetting("helloWorldImageName", "hello-world");
-        ImageSpecifier remoteImageSpec = new ImageSpecifier(bareImageName, tag);
+        ImageSpecifier remoteImageSpec = ImageSpecifier.fromNameAndTag(bareImageName, tag);
         String remoteImageName = remoteImageSpec.toString();
         DjDockerManager dockerManager = Tests.realDockerManager();
         Tests.enforceImageDoesNotExistLocally(dockerManager, remoteImageSpec.withDefaultTag("latest").toString());
