@@ -5,10 +5,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
@@ -48,9 +46,10 @@ public class DjContainerCreator implements ContainerCreator {
     }
 
     protected HostConfig createHostConfig(ContainerParametry parametry) {
-        List<PortBinding> bindings = parametry.bindablePorts().stream().map(portNumber -> {
-            return new PortBinding(Ports.Binding.empty(), new ExposedPort(portNumber));
-        }).collect(Collectors.toList());
+        List<PortBinding> bindings = parametry.bindablePorts().stream()
+                .map(ContainerParametry.PortBinding::toSerialForm)
+                .map(PortBinding::parse)
+                .collect(Collectors.toList());
         return HostConfig.newHostConfig()
                 .withAutoRemove(!parametry.disableAutoRemoveOnStop())
                 .withPortBindings(bindings);

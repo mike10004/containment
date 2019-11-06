@@ -38,7 +38,20 @@ public interface ContainerParametry {
      * Returns a list of ports within the container that are to be binded to ports on the container host.
      * @return list of ports
      */
-    List<Integer> bindablePorts();
+    List<PortBinding> bindablePorts();
+
+    interface PortBinding {
+
+        String toSerialForm();
+
+        static PortBinding toHostFromContainer(int hostPort, int containerPort) {
+            return () -> String.format("%d:%d", hostPort, containerPort);
+        }
+
+        static PortBinding containerOnly(int containerPort) {
+            return () -> String.valueOf(containerPort);
+        }
+    }
 
     /**
      * Returns a map of environment variables available to the container.
@@ -103,7 +116,7 @@ public interface ContainerParametry {
 
         private List<String> command = Collections.emptyList();
 
-        private List<Integer> bindablePorts = new ArrayList<>();
+        private List<PortBinding> bindablePorts = new ArrayList<>();
 
         private Map<String, String> env = new LinkedHashMap<>();
 
@@ -116,16 +129,33 @@ public interface ContainerParametry {
         }
 
         /**
-         * Adds a port to the list of bound ports.
-         * @param port
+         * Adds a container port to the list of bound ports. The port will be mapped to an unused port on the host.
+         * @param containerPort the port
          * @return this builder instance
          * @see ContainerParametry#bindablePorts()
          */
-        public Builder bindPort(int port) {
+        public Builder bindPort(int containerPort) {
+            checkPort(containerPort);
+            bindablePorts.add(PortBinding.containerOnly(containerPort));
+            return this;
+        }
+
+        private static void checkPort(int port) {
             if (port <= 0 || port > 65535) {
                 throw new IllegalArgumentException("invalid port value: " + port);
             }
-            bindablePorts.add(port);
+        }
+
+        /**
+         * Adds a container port to the list of bound ports. The port will be mapped to an unused port on the host.
+         * @param containerPort the port
+         * @return this builder instance
+         * @see ContainerParametry#bindablePorts()
+         */
+        public Builder bindPort(int containerPort, int hostPort) {
+            checkPort(containerPort);
+            checkPort(hostPort);
+            bindablePorts.add(PortBinding.toHostFromContainer(hostPort, containerPort));
             return this;
         }
 
@@ -248,7 +278,7 @@ public interface ContainerParametry {
             private final ImageSpecifier image;
             private final CommandType commandType;
             private final List<String> command;
-            private final List<Integer> exposedPorts;
+            private final List<PortBinding> exposedPorts;
             private final Map<String, String> env;
 
             private FrozenContainerParametry(Builder builder) {
@@ -275,7 +305,7 @@ public interface ContainerParametry {
             }
 
             @Override
-            public List<Integer> bindablePorts() {
+            public List<PortBinding> bindablePorts() {
                 return exposedPorts;
             }
 
