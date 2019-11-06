@@ -46,9 +46,9 @@ class PsOutputParser implements DockerPsContent {
                     String containerProtocol = containerParts[1];
                     if (hostPart != null) {
                         HostAndPort hap = HostAndPort.fromString(hostPart);
-                        return new ContainerPort(hap.getPort(), hap.getHost(), containerPort, containerProtocol);
+                        return ContainerPort.bound(containerPort, containerProtocol, hap.getPort(), hap.getHost());
                     } else {
-                        return new ContainerPort(containerPort, containerProtocol);
+                        return ContainerPort.unbound(containerPort, containerProtocol);
                     }
                 }).collect(Collectors.toList());
     }
