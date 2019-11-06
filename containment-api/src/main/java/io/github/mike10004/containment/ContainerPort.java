@@ -19,7 +19,7 @@ public class ContainerPort {
 
     /**
      * Returns true if this container port is bound to a host port.
-     * @return
+     * @return true if bound
      */
     public boolean isBound() {
         return hostBinding() != null;
@@ -32,20 +32,6 @@ public class ContainerPort {
      */
     public static ContainerPort unbound(int containerPort, String containerProtocol) {
         return new ContainerPort(0, null, containerPort, containerProtocol);
-    }
-
-
-    /**
-     * Constructs a new instance.
-     * @param number container port number
-     * @param protocol container port protocol
-     * @param hostPort container host port number
-     * @param hostAddress container host host
-     * @deprecated  use {@link #bound(int, String, FullSocketAddress)} instead
-     */
-    @Deprecated
-    public static ContainerPort bound(int number, String protocol, int hostPort, String hostAddress) {
-        return new ContainerPort(number, protocol, FullSocketAddress.define(hostAddress, hostPort));
     }
 
     /**

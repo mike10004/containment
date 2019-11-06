@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
 import io.github.mike10004.containment.ContainerPort;
+import io.github.mike10004.containment.FullSocketAddress;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -46,7 +47,8 @@ class PsOutputParser implements DockerPsContent {
                     String containerProtocol = containerParts[1];
                     if (hostPart != null) {
                         HostAndPort hap = HostAndPort.fromString(hostPart);
-                        return ContainerPort.bound(containerPort, containerProtocol, hap.getPort(), hap.getHost());
+                        FullSocketAddress address = FullSocketAddress.define(hap.getHost(), hap.getPort());
+                        return ContainerPort.bound(containerPort, containerProtocol, address);
                     } else {
                         return ContainerPort.unbound(containerPort, containerProtocol);
                     }
