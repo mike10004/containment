@@ -1,5 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
+import javax.annotation.Nullable;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,30 +19,40 @@ public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
     private final Lifecycle<D> lifecycle;
     private final ConcurrentCache concurrentCache;
     private final Consumer<? super LifecycleEvent> eventListener;
+    private final AtomicBoolean finishInvoked;
 
     /**
-     * Constructs an instance of the rule.
-     * @param lifecycle
+     * Constructs an instance.
+     * @param lifecycle the lifecycle
      */
     public LifecyclingCachingProvider(Lifecycle<D> lifecycle) {
         this(lifecycle, LifecycleEvent.inactiveConsumer());
     }
 
+    /**
+     * Constructs an instance.
+     * @param lifecycle lifecycle
+     * @param eventListener event listener
+     */
     public LifecyclingCachingProvider(Lifecycle<D> lifecycle, Consumer<? super LifecycleEvent> eventListener) {
         this.lifecycle = requireNonNull(lifecycle);
         concurrentCache = new ConcurrentCache();
         this.eventListener = requireNonNull(eventListener);
+        finishInvoked = new AtomicBoolean(false);
     }
 
+    private static class LifecycleFinishedException extends RuntimeException {}
+
     /**
-     * Invokes this instance's rule delegate setup method exactly once.
-     * The setup method is invoked only the first time this method is invoked,
-     * and on subsequent invocations of this method,
-     *
-     * @throws FirstProvisionFailedException
+     * Returns a provision, after computing or recalling the cached computation result.
+     * @return the provision
      */
     @Override
     public final Provision<D> provide() {
+        boolean alreadyInvoked = finishInvoked.get();
+        if (alreadyInvoked) {
+            return Provision.failed(new LifecycleFinishedException());
+        }
         notify(LifecycleEvent.Category.PROVIDE_STARTED);
         AtomicBoolean computed = new AtomicBoolean(false);
         Provision<D> invocation = concurrentCache.compute(new Supplier<Provision<D>>(){
@@ -73,7 +84,14 @@ public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
         }
     }
 
+    /**
+     * Finishes the lifecycle of the cached object.
+     */
     public void finishLifecycle() {
+        boolean firstInvocation = finishInvoked.compareAndSet(false, true);
+        if (!firstInvocation) {
+            return;
+        }
         notify(LifecycleEvent.of(LifecycleEvent.Category.FINISH_STARTED));
         try {
             lifecycle.decommission();
@@ -100,6 +118,17 @@ public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
         public String toString() {
             return String.format("ConcurrentCache[size=%d]", concurrencyManager.size());
         }
+
+        @Nullable
+        public Provision<D> getIfPresent() {
+            return concurrencyManager.get(computeKey);
+        }
+    }
+
+    @Nullable
+    protected Provision<D> getProvisionIfAvailable() {
+        @Nullable Provision<D> provision = concurrentCache.getIfPresent();
+        return provision;
     }
 
     protected void notify(LifecycleEvent.Category category, String message) {

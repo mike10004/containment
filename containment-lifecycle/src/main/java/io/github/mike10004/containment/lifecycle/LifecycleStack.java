@@ -1,14 +1,13 @@
 package io.github.mike10004.containment.lifecycle;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
 /**
- *
+ * Implementation of a lifecycle that composes multiple sequential lifecycles.
  * @param <T> type of top element of the stack (last created, first destroyed)
  */
 public class LifecycleStack<T> implements Lifecycle<T> {
@@ -17,6 +16,11 @@ public class LifecycleStack<T> implements Lifecycle<T> {
     private final Deque<Lifecycle<?>> commissioned;
     private transient final Lifecycle<T> top;
 
+    /**
+     * Constructs a new instance.
+     * @param others preliminary lifecycles
+     * @param top lifecycle that produces the instance that this stack commissions
+     */
     public LifecycleStack(Iterable<? extends Lifecycle<?>> others, Lifecycle<T> top) {
         commissioned = new ArrayDeque<>();
         this.top = top;
@@ -32,7 +36,7 @@ public class LifecycleStack<T> implements Lifecycle<T> {
                 .toString();
     }
 
-    private void unwind() {
+    private void unwind() throws LifecycleStackDecommissionException {
         Map<Lifecycle<?>, RuntimeException> exceptionsThrown = new LinkedHashMap<>();
         while (!commissioned.isEmpty()) {
             Lifecycle<?> lifecycle = commissioned.pop();
@@ -43,12 +47,20 @@ public class LifecycleStack<T> implements Lifecycle<T> {
             }
         }
         if (!exceptionsThrown.isEmpty()) {
-            throw new UnwindException(exceptionsThrown);
+            throw new LifecycleStackDecommissionException(exceptionsThrown);
         }
     }
 
+    /**
+     * Commissions each lifecycle in sequence.
+     * If commissioning any lifecycle in the sequence fails, then
+     * those already commissioned are decommissioned before throwing
+     * the exception that
+     * @return the final commissioned object
+     * @throws Exception on error
+     */
     @Override
-    public T commission() throws Exception {
+    public T commission() throws LifecycleStackCommissionException {
         Lifecycle<?> thrower = null;
         Exception throwable = null;
         for (Lifecycle<?> lifecycle : others) {
@@ -70,42 +82,26 @@ public class LifecycleStack<T> implements Lifecycle<T> {
                 throwable = e;
             }
         }
-        UnwindException unwindException = null;
+        LifecycleStackDecommissionException unwindException = null;
         try {
             unwind();
-        } catch (UnwindException e) {
+        } catch (LifecycleStackDecommissionException e) {
             unwindException = e;
         }
         if (unwindException == null) {
-            throw throwable;
+            throw new LifecycleStackCommissionException(throwable);
         } else {
-            throw new CommissionFailedAndUnwindFailedException(thrower, throwable, unwindException);
+            throw new LifecycleStackCommissionUnwindException(thrower, throwable, unwindException);
         }
     }
 
+    /**
+     * Decommissions each commissioned lifecycle, starting with the most recent and
+     * going back to the first.
+     */
     @Override
     public void decommission() {
         unwind();
     }
 
-    static class CommissionFailedAndUnwindFailedException extends Exception {
-        public final Lifecycle<?> commissionExceptionThrower;
-        public final Exception commissionException;
-        public final UnwindException unwindException;
-
-        public CommissionFailedAndUnwindFailedException(Lifecycle<?> commissionExceptionThrower, Exception commissionException, UnwindException unwindException) {
-            super(String.format("commission failed and %d exceptions were thrown while unwinding", unwindException.exceptionsThrown.size()));
-            this.commissionExceptionThrower = commissionExceptionThrower;
-            this.commissionException = commissionException;
-            this.unwindException = unwindException;
-        }
-    }
-
-    static class UnwindException extends RuntimeException {
-        public final Map<Lifecycle<?>, RuntimeException> exceptionsThrown;
-        public UnwindException(Map<Lifecycle<?>, RuntimeException> exceptionsThrown) {
-            super(String.format("%d lifecycle decommission methods threw exception(s): %s", exceptionsThrown.size(), exceptionsThrown.keySet()));
-            this.exceptionsThrown = Collections.unmodifiableMap(new LinkedHashMap<>(exceptionsThrown));
-        }
-    }
 }

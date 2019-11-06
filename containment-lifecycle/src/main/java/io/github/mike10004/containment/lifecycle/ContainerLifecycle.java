@@ -12,6 +12,26 @@ import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+/**
+ * Implementation of a lifecycle of a container. The container's lifecycle
+ * includes the following stages:
+ * <ul>
+ *     <li><b>Commission</b>
+ *       <ul>
+ *         <li>create</li>
+ *         <li>execute of pre-start actions</li>
+ *         <li>start</li>
+ *         <li>execute of post-start actions</li>
+ *       </ul>
+ *     </li>
+ *     <li><b>Decommission</b>
+ *       <ul>
+ *         <li>stop</li>
+ *         <li>remove</li>
+ *       </ul>
+ *     </li>
+ * </ul>
+ */
 public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
 
     private ContainerLifecycle(Iterable<? extends Lifecycle<?>> others, Lifecycle<StartedContainer> top) {
@@ -89,9 +109,9 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
     private static class PostStartActionExecutor implements Lifecycle<StartedContainer> {
 
         private final Supplier<? extends StartedContainer> containerSupplier;
-        private final List<? extends RunningContainerAction> postStartActions;
+        private final List<? extends StartedContainerAction> postStartActions;
 
-        public PostStartActionExecutor(Supplier<? extends StartedContainer> containerSupplier, List<? extends RunningContainerAction> postStartActions) {
+        public PostStartActionExecutor(Supplier<? extends StartedContainer> containerSupplier, List<? extends StartedContainerAction> postStartActions) {
             this.containerSupplier = containerSupplier;
             this.postStartActions = postStartActions;
         }
@@ -107,7 +127,7 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
         @Override
         public StartedContainer commission() throws Exception {
             StartedContainer container = containerSupplier.get();
-            for (RunningContainerAction action : postStartActions) {
+            for (StartedContainerAction action : postStartActions) {
                 if (container == null) {
                     container = containerSupplier.get();
                 }
@@ -122,7 +142,15 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
         }
     }
 
-    public static ContainerLifecycle create(ContainerRunnerConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions, List<? extends RunningContainerAction> postStartActions) {
+    /**
+     * Creates a container lifecycle instance.
+     * @param constructor constructor of the {@link ContainerCreator} instance
+     * @param parametry container creation parameters
+     * @param preStartActions actions to be executed after creation and before start
+     * @param postStartActions actions to be executed after start
+     * @return a new lifecycle instance
+     */
+    public static ContainerLifecycle create(ContainerCreatorConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions, List<? extends StartedContainerAction> postStartActions) {
         AtomicReference<ContainerCreator> runnerRef = new AtomicReference<>();
         Lifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
             ContainerCreator runner = constructor.instantiate();

@@ -1,5 +1,9 @@
 package io.github.mike10004.containment.lifecycle;
 
+/**
+ * Lifecycle implementation that employs delegates for commission and decommission.
+ * @param <D> lifecycle
+ */
 public class DecoupledLifecycle<D> implements Lifecycle<D> {
 
     private transient final Object lock = new Object();

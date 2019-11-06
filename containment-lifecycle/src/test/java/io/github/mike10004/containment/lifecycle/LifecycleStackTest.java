@@ -43,7 +43,7 @@ public class LifecycleStackTest {
         try {
             stack.commission();
             fail("should have excepted");
-        } catch (LifecycleStack.CommissionFailedAndUnwindFailedException e) {
+        } catch (LifecycleStackCommissionUnwindException e) {
             assertEquals(third, e.commissionExceptionThrower);
             assertTrue(e.commissionException.getClass() == CommissionException.class);
             assertEquals(1, e.unwindException.exceptionsThrown.size());
@@ -107,7 +107,7 @@ public class LifecycleStackTest {
         stack.commission();
         try {
             stack.decommission();
-        } catch (LifecycleStack.UnwindException e) {
+        } catch (LifecycleStackDecommissionException e) {
             assertEquals(1, e.exceptionsThrown.size());
             Map.Entry<Lifecycle<?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
             assertSame(third, entry.getKey());

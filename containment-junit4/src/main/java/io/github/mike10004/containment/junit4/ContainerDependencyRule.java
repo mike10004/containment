@@ -8,10 +8,18 @@ import org.junit.runners.model.Statement;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Rule that provides a lazily-started container that is stopped
+ * and removed on test teardown.
+ */
 public class ContainerDependencyRule implements TestRule {
 
     private final ContainerDependency containerDependency;
 
+    /**
+     * Constructs an instance of the rule.
+     * @param containerDependency the container dependency
+     */
     public ContainerDependencyRule(ContainerDependency containerDependency) {
         this.containerDependency = requireNonNull(containerDependency);
     }
@@ -36,7 +44,11 @@ public class ContainerDependencyRule implements TestRule {
         };
     }
 
-
+    /**
+     * Acquires the started container. If the container has not yet been started,
+     * invoking this method will start the container.
+     * @return the started container
+     */
     public StartedContainer container() {
         return containerDependency.container();
     }

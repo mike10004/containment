@@ -53,4 +53,14 @@ public interface Provision<D> {
     default Optional<D> asOptional() {
         return Optional.ofNullable(value());
     }
+
+    /**
+     * Returns a new instance representing a failure.
+     * @param t  error
+     * @param <D> value type
+     * @return a new instance
+     */
+    static <D> Provision<D> failed(Throwable t) {
+        return Computation.failed(t);
+    }
 }

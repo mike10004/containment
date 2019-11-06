@@ -26,24 +26,46 @@ import static java.util.Objects.requireNonNull;
  */
 public interface ContainerDependency {
 
+    /**
+     * Returns an already-started container or starts and returns
+     * a not-yet-started container.
+     * @return a started container
+     * @throws FirstProvisionFailedException if provisioning the container fails
+     */
     StartedContainer container() throws FirstProvisionFailedException;
 
+    /**
+     * Stops and removes the container, if it has been started.
+     */
     void finishLifecycle();
 
+    /**
+     * Creates an instance from a container provider.
+     * @param containerProvider the provider
+     * @return a new instance
+     */
     static ContainerDependency fromProvider(LifecyclingCachingProvider<StartedContainer> containerProvider) {
         return new ProviderDependency(containerProvider);
     }
 
+    /**
+     * Creates a new builder.
+     * @param parametry container parameters
+     * @return a new builder instance
+     */
     static Builder builder(ContainerParametry parametry) {
         return new Builder(parametry);
     }
 
+    /**
+     * Builder of container dependency instances.
+     */
     class Builder {
 
         private Consumer<? super LifecycleEvent> eventListener = LifecycleEvent.inactiveConsumer();
         private ContainerParametry containerParametry;
         private List<ContainerAction> preStartActions;
-        private List<RunningContainerAction> postStartActions;
+        private List<StartedContainerAction> postStartActions;
 
         private Builder(ContainerParametry containerParametry) {
             this.containerParametry = requireNonNull(containerParametry, "containerParametry");
@@ -51,22 +73,38 @@ public interface ContainerDependency {
             postStartActions = new ArrayList<>();
         }
 
+        /**
+         * Sets the container lifecycle event listener.
+         * @param eventListener listener
+         * @return this builder instance
+         */
         public Builder eventListener(Consumer<? super LifecycleEvent> eventListener) {
             this.eventListener = requireNonNull(eventListener);
             return this;
         }
 
-        public Builder addPostStartAction(RunningContainerAction containerAction) {
+        /**
+         * Adds an action that is to be executed after starting the container.
+         * @param containerAction container action
+         * @return this builder instance
+         */
+        public Builder addPostStartAction(StartedContainerAction containerAction) {
             postStartActions.add(containerAction);
             return this;
         }
 
+        /**
+         * Adds an action that is to be executed
+         * after creating and prior to starting the container.
+         * @param action the action
+         * @return this builder instance
+         */
         public Builder addPreStartAction(ContainerAction action) {
             preStartActions.add(action);
             return this;
         }
 
-        private static class GlobalRunnerConstructor implements ContainerRunnerConstructor {
+        private static class GlobalRunnerConstructor implements ContainerCreatorConstructor {
 
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
@@ -76,7 +114,7 @@ public interface ContainerDependency {
             }
         }
 
-        private static class LocalRunnerConstructor implements ContainerRunnerConstructor {
+        private static class LocalRunnerConstructor implements ContainerCreatorConstructor {
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
@@ -101,6 +139,12 @@ public interface ContainerDependency {
             }
         }
 
+        /**
+         * Builds a new local dependency instance. Local dependency instances
+         * must have their {@link ContainerDependency#finishLifecycle()} invoked
+         * explicitly to stop and remove the container, if it has been started.
+         * @return a new instance
+         */
         public ContainerDependency buildLocalDependency() {
             return buildDependencyFromProviderCreator(new LocalProviderCreator());
         }
@@ -109,7 +153,7 @@ public interface ContainerDependency {
          * Builds a global dependency instance. The instance's {@link ContainerDependency#finishLifecycle()}
          * method will not actually cause the end of the container's lifecycle to be executed; that will
          * only happen upon JVM termination.
-         * @return
+         * @return a new instance
          */
         public ContainerDependency buildGlobalDependency() {
             return buildDependencyFromProviderCreator(new GlobalProviderCreator());
