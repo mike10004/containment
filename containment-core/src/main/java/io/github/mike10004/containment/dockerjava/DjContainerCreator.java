@@ -48,11 +48,11 @@ public class DjContainerCreator implements ContainerCreator {
     }
 
     protected HostConfig createHostConfig(ContainerParametry parametry) {
-        List<PortBinding> bindings = parametry.bindablePort().stream().map(portNumber -> {
+        List<PortBinding> bindings = parametry.bindablePorts().stream().map(portNumber -> {
             return new PortBinding(Ports.Binding.empty(), new ExposedPort(portNumber));
         }).collect(Collectors.toList());
         return HostConfig.newHostConfig()
-                .withAutoRemove(!parametry.disableAutoRemove())
+                .withAutoRemove(!parametry.disableAutoRemoveOnStop())
                 .withPortBindings(bindings);
     }
 
@@ -81,7 +81,7 @@ public class DjContainerCreator implements ContainerCreator {
     }
 
     @Override
-    public DjRunnableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException {
+    public DjStartableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException {
         try {
             CreateContainerCmd createCmd = constructCreateCommand(parametry);
             CreateContainerResponse create = createCmd.exec();
@@ -91,7 +91,7 @@ public class DjContainerCreator implements ContainerCreator {
             }
             String containerId = create.getId();
             containerMonitor.created(containerId);
-            return new DjRunnableContainer(ContainerInfo.define(containerId, parametry), client, containerMonitor);
+            return new DjStartableContainer(ContainerInfo.define(containerId, parametry), client, containerMonitor);
         } catch (DockerException e) {
             throw new ContainmentException(e);
         }

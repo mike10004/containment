@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 /**
  * Interface of a container that has been started.
  */
-public interface RunningContainer extends ActionableContainer, AutoCloseable {
+public interface StartedContainer extends ActionableContainer, AutoCloseable {
 
     /**
      * Returns the container info.
@@ -22,7 +22,7 @@ public interface RunningContainer extends ActionableContainer, AutoCloseable {
     @Override
     void close() throws ContainmentException;
 
-    List<PortMapping> fetchPorts() throws ContainmentException;
+    List<ContainerPort> fetchPorts() throws ContainmentException;
 
     <C extends Consumer<? super byte[]>> C followStdout(C consumer) throws ContainmentException;
 

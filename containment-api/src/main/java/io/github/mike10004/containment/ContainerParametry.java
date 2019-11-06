@@ -38,7 +38,7 @@ public interface ContainerParametry {
      * Returns a list of ports within the container that are to be binded to ports on the container host.
      * @return list of ports
      */
-    List<Integer> bindablePort();
+    List<Integer> bindablePorts();
 
     /**
      * Returns a map of environment variables available to the container.
@@ -51,7 +51,7 @@ public interface ContainerParametry {
      * the container built from this parameter set.
      * @return flag specifying disabling of auto-remove
      */
-    default boolean disableAutoRemove() {
+    default boolean disableAutoRemoveOnStop() {
         return false;
     }
 
@@ -119,7 +119,7 @@ public interface ContainerParametry {
          * Adds a port to the list of bound ports.
          * @param port
          * @return this builder instance
-         * @see ContainerParametry#bindablePort()
+         * @see ContainerParametry#bindablePorts()
          */
         public Builder bindPort(int port) {
             if (port <= 0 || port > 65535) {
@@ -275,7 +275,7 @@ public interface ContainerParametry {
             }
 
             @Override
-            public List<Integer> bindablePort() {
+            public List<Integer> bindablePorts() {
                 return exposedPorts;
             }
 

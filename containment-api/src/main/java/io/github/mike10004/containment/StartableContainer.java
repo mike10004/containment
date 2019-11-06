@@ -4,7 +4,7 @@ package io.github.mike10004.containment;
  * Interface of a startable container that is not yet started but can be started.
  * To close a runnable container is to remove (destroy) it.
  */
-public interface RunnableContainer extends ActionableContainer, AutoCloseable {
+public interface StartableContainer extends ActionableContainer, AutoCloseable {
 
     /**
      * Gets the container info.
@@ -13,11 +13,11 @@ public interface RunnableContainer extends ActionableContainer, AutoCloseable {
     ContainerInfo info();
 
     /**
-     * Starts the container. Creates a new instance of {@link RunningContainer}.
+     * Starts the container. Creates a new instance of {@link StartedContainer}.
      * @return a running container instance
      * @throws ContainmentException on error
      */
-    RunningContainer start() throws ContainmentException;
+    StartedContainer start() throws ContainmentException;
 
     /**
      * Removes this container. If the container's auto-remove setting is enabled

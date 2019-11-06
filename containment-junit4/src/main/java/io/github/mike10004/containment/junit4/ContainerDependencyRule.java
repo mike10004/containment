@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.junit4;
 
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.lifecycle.ContainerDependency;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -37,7 +37,7 @@ public class ContainerDependencyRule implements TestRule {
     }
 
 
-    public RunningContainer container() {
+    public StartedContainer container() {
         return containerDependency.container();
     }
 

@@ -10,10 +10,10 @@ import io.github.mike10004.containment.DockerSubprocessResult;
 import io.github.mike10004.containment.Durations;
 import io.github.mike10004.containment.FullSocketAddress;
 import io.github.mike10004.containment.ImageSpecifier;
-import io.github.mike10004.containment.PortMapping;
+import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.ContainerAction;
-import io.github.mike10004.containment.RunnableContainer;
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.StartableContainer;
+import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.TestDockerManager;
 import io.github.mike10004.containment.Tests;
 import io.github.mike10004.containment.subprocess.DockerExecExecutor;
@@ -61,8 +61,8 @@ public class DjContainerCreatorTest {
 
         DockerSubprocessResult<String> result;
         try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
-             RunnableContainer runnable = runner.create(parametry)) {
-            try (RunningContainer container = runnable.start()) {
+             StartableContainer runnable = runner.create(parametry)) {
+            try (StartedContainer container = runnable.start()) {
                 DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
                 result = executor.execute("printenv");
             }
@@ -106,9 +106,9 @@ public class DjContainerCreatorTest {
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
         PreCopier copier = new PreCopier(client, file, copiedFileDestDir);
         try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
-             RunnableContainer runnableContainer = runner.create(parametry)) {
+             StartableContainer runnableContainer = runner.create(parametry)) {
             runnableContainer.execute(copier);
-            try (RunningContainer container = runnableContainer.start()) {
+            try (StartedContainer container = runnableContainer.start()) {
                 DockerExecutor executor = new DockerExecExecutor(container.info().id(), Collections.emptyMap(), UTF_8);
                 result = executor.execute("cat", pathnameOfFileInContainer);
             }
@@ -122,17 +122,17 @@ public class DjContainerCreatorTest {
     public void run_exposePorts() throws Exception {
         int httpdPort = 80;
         ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForHttpdTest())
-                .bindablePort(httpdPort)
+                .bindPort(httpdPort)
                 .build();
         String result;
         try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
-             RunnableContainer runnable = runner.create(parametry)) {
-            try (RunningContainer container = runnable.start()) {
-                List<PortMapping> ports = container.fetchPorts();
-                PortMapping httpdExposedPortMapping = ports.stream().filter(p -> p.containerPort == httpdPort).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
+             StartableContainer runnable = runner.create(parametry)) {
+            try (StartedContainer container = runnable.start()) {
+                List<ContainerPort> ports = container.fetchPorts();
+                ContainerPort httpdExposedPortMapping = ports.stream().filter(p -> p.number() == httpdPort).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
                 assertTrue("exposed", httpdExposedPortMapping.isBound());
-                assertNotNull(httpdExposedPortMapping.host);
-                URL url = new URL("http", "localhost", httpdExposedPortMapping.host.getPort(), "/");
+                assertNotNull(httpdExposedPortMapping.hostBinding());
+                URL url = new URL("http", "localhost", httpdExposedPortMapping.hostBinding().getPort(), "/");
                 byte[] content = new JreClient().fetchPageContent(url);
                 result = new String(content, UTF_8);
             }
@@ -160,7 +160,7 @@ public class DjContainerCreatorTest {
         String defaultBindAddress = "172.17.0.2";
         String bindAddress = Tests.Settings.getOpt("run_mysql.bindAddress").orElse(defaultBindAddress);
         ContainerParametry parametry = ContainerParametry.builder(getImageForMysqlTest())
-                .bindablePort(mysqlPort)
+                .bindPort(mysqlPort)
                 .env("MYSQL_ROOT_PASSWORD", password)
                 // entrypoint script supports just adding options as the command
                 .blockingCommand("--character-set-server=utf8mb4",
@@ -169,11 +169,11 @@ public class DjContainerCreatorTest {
                 .build();
         List<String> colors = new ArrayList<>();
         try (DjContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
-             RunnableContainer runnable = runner.create(parametry)) {
-            try (RunningContainer container = runnable.start()) {
+             StartableContainer runnable = runner.create(parametry)) {
+            try (StartedContainer container = runnable.start()) {
                 int hostPort = container.fetchPorts().stream()
-                        .filter(PortMapping::isBound)
-                        .map(pm -> pm.host)
+                        .filter(ContainerPort::isBound)
+                        .map(pm -> pm.hostBinding())
                         .filter(Objects::nonNull)
                         .mapToInt(FullSocketAddress::getPort)
                         .findFirst().orElseThrow(() -> new AssertionError("port not bound"));

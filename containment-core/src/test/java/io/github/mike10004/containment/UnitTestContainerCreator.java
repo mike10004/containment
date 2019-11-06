@@ -18,21 +18,21 @@ public class UnitTestContainerCreator implements ContainerCreator {
     }
 
     @Override
-    public RunnableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException {
+    public StartableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException {
         String id = Uuids.randomUuidString(random);
         monitor.created(id);
-        return new UnitTestRunnableContainer(ContainerInfo.define(id, ContainerInfo.Stickiness.MANUAL_REMOVE_REQUIRED, ContainerParametry.CommandType.BLOCKING));
+        return new UnitTestStartableContainer(ContainerInfo.define(id, ContainerInfo.Stickiness.MANUAL_REMOVE_REQUIRED, ContainerParametry.CommandType.BLOCKING));
     }
 
     @Override
     public void close() throws ContainmentException {
     }
 
-    class UnitTestRunnableContainer implements RunnableContainer {
+    class UnitTestStartableContainer implements StartableContainer {
 
         private final ContainerInfo info;
 
-        UnitTestRunnableContainer(ContainerInfo info) {
+        UnitTestStartableContainer(ContainerInfo info) {
             this.info = info;
         }
 
@@ -47,9 +47,9 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
 
         @Override
-        public RunningContainer start() throws ContainmentException {
+        public StartedContainer start() throws ContainmentException {
             monitor.started(info.id());
-            return new UnitTestRunningContainer(info);
+            return new UnitTestStartedContainer(info);
         }
 
         @Override
@@ -58,11 +58,11 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
     }
 
-    class UnitTestRunningContainer implements RunningContainer {
+    class UnitTestStartedContainer implements StartedContainer {
 
         private final ContainerInfo info;
 
-        public UnitTestRunningContainer(ContainerInfo info) {
+        public UnitTestStartedContainer(ContainerInfo info) {
             this.info = info;
         }
 
@@ -82,7 +82,7 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
 
         @Override
-        public List<PortMapping> fetchPorts() throws ContainmentException {
+        public List<ContainerPort> fetchPorts() throws ContainmentException {
             return Collections.emptyList();
         }
 

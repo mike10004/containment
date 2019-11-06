@@ -4,7 +4,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.DockerSubprocessResult;
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.Uuids;
 import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
@@ -33,7 +33,7 @@ public class ContainerLifecycleTest {
                 .commandToWaitIndefinitely()
                 .build();
         ContainerLifecycle lifecycle = ContainerLifecycle.create(() -> new DjContainerCreator(dockerManager), parametry, Collections.emptyList(), Collections.emptyList());
-        RunningContainer container = lifecycle.commission();
+        StartedContainer container = lifecycle.commission();
         DockerSubprocessResult<String> result;
         try {
             String text = Uuids.randomUuidString(random);

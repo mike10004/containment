@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.StartedContainer;
 
 import java.util.StringJoiner;
 
@@ -8,14 +8,14 @@ import static java.util.Objects.requireNonNull;
 
 class ProviderDependency implements ContainerDependency {
 
-    private final LifecyclingCachingProvider<RunningContainer> containerProvider;
+    private final LifecyclingCachingProvider<StartedContainer> containerProvider;
 
-    public ProviderDependency(LifecyclingCachingProvider<RunningContainer> containerProvider) {
+    public ProviderDependency(LifecyclingCachingProvider<StartedContainer> containerProvider) {
         this.containerProvider = requireNonNull(containerProvider, "containerProvider");
     }
 
     @Override
-    public RunningContainer container() throws FirstProvisionFailedException {
+    public StartedContainer container() throws FirstProvisionFailedException {
         return containerProvider.provide().require();
     }
 

@@ -4,8 +4,8 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.SyncDockerCmd;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.RunnableContainer;
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.StartableContainer;
+import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.UnitTestContainerCreator;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -26,7 +26,7 @@ public class DjManualContainerMonitorTest {
         UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor();
         Random random = new Random("ManualContainerMonitorTest.removeAll_hanging".hashCode());
         ContainerParametry p = ContainerParametry.builder("oogabooga:latest").build();
-        RunnableContainer c = new UnitTestContainerCreator(monitor, random).create(p);
+        StartableContainer c = new UnitTestContainerCreator(monitor, random).create(p);
         monitor.removeAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });
@@ -39,12 +39,12 @@ public class DjManualContainerMonitorTest {
         UnitTestManualContainerMonitor monitor = new UnitTestManualContainerMonitor();
         Random random = new Random("ManualContainerMonitorTest.removeAll_hanging".hashCode());
         ContainerParametry p = ContainerParametry.builder("oogabooga:latest").build();
-        RunnableContainer c = new UnitTestContainerCreator(monitor, random).create(p);
+        StartableContainer c = new UnitTestContainerCreator(monitor, random).create(p);
         monitor.stopAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });
         assertEquals(0, monitor.commandsExecuted.size());
-        RunningContainer running = c.start();
+        StartedContainer running = c.start();
         monitor.stopAll(client, (id, e) -> {
             Assert.fail(id + " " + e);
         });

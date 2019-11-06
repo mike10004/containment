@@ -3,8 +3,8 @@ package io.github.mike10004.containment.lifecycle;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerAction;
-import io.github.mike10004.containment.RunnableContainer;
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.StartableContainer;
+import io.github.mike10004.containment.StartedContainer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,9 +12,9 @@ import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
+public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
 
-    private ContainerLifecycle(Iterable<? extends Lifecycle<?>> others, Lifecycle<RunningContainer> top) {
+    private ContainerLifecycle(Iterable<? extends Lifecycle<?>> others, Lifecycle<StartedContainer> top) {
         super(others, top);
     }
 
@@ -29,9 +29,9 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         }
     }
 
-    private static class RunnableContainerLifecycle extends DecoupledLifecycle<RunnableContainer> {
+    private static class RunnableContainerLifecycle extends DecoupledLifecycle<StartableContainer> {
 
-        public RunnableContainerLifecycle(Commissioner<RunnableContainer> commissioner) {
+        public RunnableContainerLifecycle(Commissioner<StartableContainer> commissioner) {
             super(commissioner, new RuntimeExceptionWrapper<>());
         }
 
@@ -41,9 +41,9 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         }
     }
 
-    private static class RunningContainerLifecycle extends DecoupledLifecycle<RunningContainer> {
+    private static class RunningContainerLifecycle extends DecoupledLifecycle<StartedContainer> {
 
-        public RunningContainerLifecycle(Commissioner<RunningContainer> commissioner) {
+        public RunningContainerLifecycle(Commissioner<StartedContainer> commissioner) {
             super(commissioner, new RuntimeExceptionWrapper<>());
         }
 
@@ -55,10 +55,10 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
 
     private static class PreStartActionExecutor implements Lifecycle<Integer> {
 
-        private final Supplier<? extends RunnableContainer> containerSupplier;
+        private final Supplier<? extends StartableContainer> containerSupplier;
         private final List<? extends ContainerAction> preStartActions;
 
-        public PreStartActionExecutor(Supplier<? extends RunnableContainer> containerSupplier, List<? extends ContainerAction> preStartActions) {
+        public PreStartActionExecutor(Supplier<? extends StartableContainer> containerSupplier, List<? extends ContainerAction> preStartActions) {
             this.containerSupplier = containerSupplier;
             this.preStartActions = preStartActions;
         }
@@ -73,7 +73,7 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
 
         @Override
         public Integer commission() throws Exception {
-            RunnableContainer runnable = containerSupplier.get();
+            StartableContainer runnable = containerSupplier.get();
             for (ContainerAction action : preStartActions) {
                 runnable.execute(action);
             }
@@ -86,12 +86,12 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         }
     }
 
-    private static class PostStartActionExecutor implements Lifecycle<RunningContainer> {
+    private static class PostStartActionExecutor implements Lifecycle<StartedContainer> {
 
-        private final Supplier<? extends RunningContainer> containerSupplier;
+        private final Supplier<? extends StartedContainer> containerSupplier;
         private final List<? extends RunningContainerAction> postStartActions;
 
-        public PostStartActionExecutor(Supplier<? extends RunningContainer> containerSupplier, List<? extends RunningContainerAction> postStartActions) {
+        public PostStartActionExecutor(Supplier<? extends StartedContainer> containerSupplier, List<? extends RunningContainerAction> postStartActions) {
             this.containerSupplier = containerSupplier;
             this.postStartActions = postStartActions;
         }
@@ -105,8 +105,8 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
         }
 
         @Override
-        public RunningContainer commission() throws Exception {
-            RunningContainer container = containerSupplier.get();
+        public StartedContainer commission() throws Exception {
+            StartedContainer container = containerSupplier.get();
             for (RunningContainerAction action : postStartActions) {
                 if (container == null) {
                     container = containerSupplier.get();
@@ -129,22 +129,22 @@ public class ContainerLifecycle extends LifecycleStack<RunningContainer> {
             runnerRef.set(runner);
             return runner;
         });
-        AtomicReference<RunnableContainer> runnableRef = new AtomicReference<>();
-        Lifecycle<RunnableContainer> runnableLifecycle = new RunnableContainerLifecycle(() -> {
+        AtomicReference<StartableContainer> runnableRef = new AtomicReference<>();
+        Lifecycle<StartableContainer> runnableLifecycle = new RunnableContainerLifecycle(() -> {
             ContainerCreator runner = runnerRef.get();
-            RunnableContainer runnable = runner.create(parametry);
+            StartableContainer runnable = runner.create(parametry);
             runnableRef.set(runnable);
             return runnable;
         });
         Lifecycle<Integer> preStartActionLifecycle = new PreStartActionExecutor(runnableRef::get, preStartActions);
-        AtomicReference<RunningContainer> runningRef = new AtomicReference<>();
-        Lifecycle<RunningContainer> runningLifecycle = new RunningContainerLifecycle(() -> {
-            RunnableContainer runnable = runnableRef.get();
-            RunningContainer container = runnable.start();
+        AtomicReference<StartedContainer> runningRef = new AtomicReference<>();
+        Lifecycle<StartedContainer> runningLifecycle = new RunningContainerLifecycle(() -> {
+            StartableContainer runnable = runnableRef.get();
+            StartedContainer container = runnable.start();
             runningRef.set(container);
             return container;
         });
-        Lifecycle<RunningContainer> postStartActionsLifecycle = new PostStartActionExecutor(runningRef::get, postStartActions);
+        Lifecycle<StartedContainer> postStartActionsLifecycle = new PostStartActionExecutor(runningRef::get, postStartActions);
         return new ContainerLifecycle(Arrays.asList(runnerLifecycle, runnableLifecycle, preStartActionLifecycle, runningLifecycle), postStartActionsLifecycle);
     }
 

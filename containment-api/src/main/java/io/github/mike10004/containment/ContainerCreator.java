@@ -13,7 +13,7 @@ public interface ContainerCreator extends AutoCloseable {
      * @return the container
      * @throws ContainmentException on error
      */
-    default RunnableContainer create(ContainerParametry parametry) throws ContainmentException {
+    default StartableContainer create(ContainerParametry parametry) throws ContainmentException {
         return create(parametry, ignore -> {});
     }
 
@@ -24,7 +24,7 @@ public interface ContainerCreator extends AutoCloseable {
      * @return the container
      * @throws ContainmentException on error
      */
-    RunnableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException;
+    StartableContainer create(ContainerParametry parametry, Consumer<? super String> warningListener) throws ContainmentException;
 
     /**
      * Removes the container.

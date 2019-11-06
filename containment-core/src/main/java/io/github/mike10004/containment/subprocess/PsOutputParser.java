@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.net.HostAndPort;
-import io.github.mike10004.containment.PortMapping;
+import io.github.mike10004.containment.ContainerPort;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ class PsOutputParser implements DockerPsContent {
     }
 
     @Override
-    public List<PortMapping> parsePortMappings() {
+    public List<ContainerPort> parsePortMappings() {
         try {
             JsonNode root = new ObjectMapper().readTree(psOutput);
             String portsContent = root.get("Ports").asText();
@@ -31,7 +31,7 @@ class PsOutputParser implements DockerPsContent {
         }
     }
 
-    static List<PortMapping> parsePortsContent(String portsContent) {
+    static List<ContainerPort> parsePortsContent(String portsContent) {
         String[] tokens = portsContent.split(",\\s*");
         return Arrays.stream(tokens)
                 .map(token -> {
@@ -46,9 +46,9 @@ class PsOutputParser implements DockerPsContent {
                     String containerProtocol = containerParts[1];
                     if (hostPart != null) {
                         HostAndPort hap = HostAndPort.fromString(hostPart);
-                        return new PortMapping(hap.getPort(), hap.getHost(), containerPort, containerProtocol);
+                        return new ContainerPort(hap.getPort(), hap.getHost(), containerPort, containerProtocol);
                     } else {
-                        return new PortMapping(containerPort, containerProtocol);
+                        return new ContainerPort(containerPort, containerProtocol);
                     }
                 }).collect(Collectors.toList());
     }

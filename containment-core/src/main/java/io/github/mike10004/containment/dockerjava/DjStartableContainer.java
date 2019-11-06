@@ -5,8 +5,8 @@ import com.github.dockerjava.api.exception.DockerException;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.ContainerAction;
-import io.github.mike10004.containment.RunnableContainer;
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.StartableContainer;
+import io.github.mike10004.containment.StartedContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,14 +16,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Objects.requireNonNull;
 
-public class DjRunnableContainer implements RunnableContainer {
+public class DjStartableContainer implements StartableContainer {
 
     private final ContainerInfo info;
     private final DockerClient client;
     private final DjContainerMonitor containerMonitor;
     private final AtomicBoolean started;
 
-    public DjRunnableContainer(ContainerInfo info, DockerClient client, DjContainerMonitor containerMonitor) {
+    public DjStartableContainer(ContainerInfo info, DockerClient client, DjContainerMonitor containerMonitor) {
         this.info = requireNonNull(info, "info");
         this.client = requireNonNull(client);
         this.containerMonitor = requireNonNull(containerMonitor);
@@ -77,7 +77,7 @@ public class DjRunnableContainer implements RunnableContainer {
     }
 
     @Override
-    public synchronized RunningContainer start() throws ContainmentException {
+    public synchronized StartedContainer start() throws ContainmentException {
         ContainerInfo info = info();
         try {
             client.startContainerCmd(info.id()).exec();
@@ -86,7 +86,7 @@ public class DjRunnableContainer implements RunnableContainer {
         } catch (DockerException e) {
             throw new ContainmentException(e);
         }
-        return new DjRunningContainer(client, info, containerMonitor);
+        return new DjStartedContainer(client, info, containerMonitor);
     }
 
     private void copyFileToContainer(String containerId, File srcFile, String destinationPathname) throws ContainmentException {
@@ -148,7 +148,7 @@ public class DjRunnableContainer implements RunnableContainer {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", DjRunnableContainer.class.getSimpleName() + "[", "]")
+        return new StringJoiner(", ", DjStartableContainer.class.getSimpleName() + "[", "]")
                 .add("info=" + info)
                 .add("started=" + started)
                 .toString();

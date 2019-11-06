@@ -13,8 +13,8 @@ import com.google.common.cache.LoadingCache;
 import io.github.mike10004.containment.ContainerAction;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.PortMapping;
-import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.ContainerPort;
+import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.subprocess.DockerPsContent;
 import io.github.mike10004.containment.subprocess.DockerPsExecutor;
 import io.github.mike10004.containment.subprocess.DockerSubprocessExecutorBase;
@@ -26,14 +26,14 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
-public class DjRunningContainer implements RunningContainer {
+public class DjStartedContainer implements StartedContainer {
 
     private final DockerClient client;
     private final ContainerInfo info;
     private final LoadingCache<Datum, String> cache;
     private final DjContainerMonitor containerManager;
 
-    public DjRunningContainer(DockerClient client, ContainerInfo info, DjContainerMonitor containerManager) {
+    public DjStartedContainer(DockerClient client, ContainerInfo info, DjContainerMonitor containerManager) {
         this.client = client;
         this.info = info;
         this.containerManager = requireNonNull(containerManager);
@@ -56,7 +56,7 @@ public class DjRunningContainer implements RunningContainer {
     }
 
     @Override
-    public List<PortMapping> fetchPorts() throws ContainmentException {
+    public List<ContainerPort> fetchPorts() throws ContainmentException {
         try {
             String json = cache.get(Datum.PS);
             return DockerPsContent.of(json).parsePortMappings();
@@ -153,7 +153,7 @@ public class DjRunningContainer implements RunningContainer {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", DjRunningContainer.class.getSimpleName() + "[", "]")
+        return new StringJoiner(", ", DjStartedContainer.class.getSimpleName() + "[", "]")
                 .add("info=" + info)
                 .toString();
     }

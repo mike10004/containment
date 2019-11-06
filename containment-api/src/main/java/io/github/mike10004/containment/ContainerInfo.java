@@ -12,7 +12,7 @@ public interface ContainerInfo {
      * @return a new instance
      */
     static ContainerInfo define(String containerId, ContainerParametry parametry) {
-        Stickiness stickiness = parametry.disableAutoRemove() ? Stickiness.MANUAL_REMOVE_REQUIRED : Stickiness.AUTO_REMOVE_ENABLED;
+        Stickiness stickiness = parametry.disableAutoRemoveOnStop() ? Stickiness.MANUAL_REMOVE_REQUIRED : Stickiness.AUTO_REMOVE_ENABLED;
         return define(containerId, stickiness, parametry.commandType());
     }
 
