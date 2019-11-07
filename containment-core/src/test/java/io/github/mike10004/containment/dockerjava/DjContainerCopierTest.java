@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.charset.Charset;
 import java.util.UUID;
 
@@ -49,37 +50,6 @@ public class DjContainerCopierTest extends DjManagedTestBase {
     }
 
     @Test
-    public void run_copyFilesBeforeStart_mkdirs() throws Exception {
-        String content = UUID.randomUUID().toString();
-        File ancestor = tempdir.newFolder();
-        File intermediate1 = new File(ancestor, "sub1");
-        File intermediate2 = new File(intermediate1, "sub2");
-        File aFile = new File(intermediate2, "file.txt");
-        com.google.common.io.Files.createParentDirs(aFile);
-        java.nio.file.Files.write(aFile.toPath(), content.getBytes(UTF_8));
-        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
-                .commandToWaitIndefinitely()
-                .build();
-        ContainerSubprocessResult<String> result;
-        String copyDstPath = "/root/" + intermediate1.getName();
-        File copySrcPath = new File(intermediate1, ".");
-        String pathnameOfFileInContainer = String.format("/root/%s/%s/%s", intermediate1.getName(), intermediate2.getName(), aFile.getName());
-        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
-             StartableContainer runnableContainer = runner.create(parametry)) {
-            System.out.format("cp %s %s:%s%n", copySrcPath, runnableContainer.info().id(), copyDstPath);
-            runnableContainer.copier().copyToContainer(copySrcPath, copyDstPath);
-            try (StartedContainer container = runnableContainer.start()) {
-                ContainerExecutor executor = container.executor();
-                System.out.format("cat %s%n", pathnameOfFileInContainer);
-                result = executor.execute(UTF_8, "cat", pathnameOfFileInContainer);
-            }
-        }
-        assertEquals("process exit code", 0, result.exitCode());
-        System.out.format("contents of %s: %s%n", pathnameOfFileInContainer, result.stdout().trim());
-        assertEquals("text", content, result.stdout().trim());
-    }
-
-    @Test
     public void run_copyFilesFromContainer() throws Exception {
         String content = UUID.randomUUID().toString();
         File file = tempdir.newFile();
@@ -104,6 +74,37 @@ public class DjContainerCopierTest extends DjManagedTestBase {
         String pulledContent = new String(pulledBytes, charset);
         System.out.format("contents of %s: %s%n", pulledFile, pulledContent);
         assertEquals("text", content, pulledContent);
+    }
+
+    @Test
+    public void run_unpackArchiveToContainer() throws Exception {
+        String content = UUID.randomUUID().toString();
+        File ancestor = tempdir.newFolder();
+        File intermediate1 = new File(ancestor, "sub1");
+        File intermediate2 = new File(intermediate1, "sub2");
+        File aFile = new File(intermediate2, "file.txt");
+        com.google.common.io.Files.createParentDirs(aFile);
+        java.nio.file.Files.write(aFile.toPath(), content.getBytes(UTF_8));
+        File tarFile = File.createTempFile("goodthingstoeat", ".tar", tempdir.getRoot());
+        TarArchives.packDirectoryInTarArchiveFile(ancestor, tarFile);
+        String copyDstRoot = "/root/";
+        String pathnameOfFileInContainer = "/root/" + ancestor.toPath().relativize(aFile.toPath()).toString();
+        ContainerSubprocessResult<String> result;
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
+                .commandToWaitIndefinitely()
+                .build();
+        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
+             StartableContainer runnableContainer = runner.create(parametry)) {
+            runnableContainer.copier().unpackTarArchiveToContainer(() -> new FileInputStream(tarFile), copyDstRoot);
+            try (StartedContainer container = runnableContainer.start()) {
+                ContainerExecutor executor = container.executor();
+                System.out.format("cat %s%n", pathnameOfFileInContainer);
+                result = executor.execute(UTF_8, "cat", pathnameOfFileInContainer);
+            }
+        }
+        assertEquals("process exit code", 0, result.exitCode());
+        System.out.format("contents of %s: %s%n", pathnameOfFileInContainer, result.stdout().trim());
+        assertEquals("text", content, result.stdout().trim());
     }
 
 }

@@ -11,6 +11,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,4 +61,15 @@ class DjContainerCopier implements ContainerCopier {
         }
     }
 
+    @Override
+    public void unpackTarArchiveToContainer(TarSource source, String destination) throws IOException, ContainmentException {
+        try (InputStream tarInput = source.open()) {
+            client.copyArchiveToContainerCmd(containerInfo.id())
+                    .withRemotePath(destination)
+                    .withTarInputStream(tarInput)
+                    .exec();
+        } catch (DockerException e) {
+            throw new ContainmentException(e);
+        }
+    }
 }

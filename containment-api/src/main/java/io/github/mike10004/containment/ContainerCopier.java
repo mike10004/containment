@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 import java.util.Set;
@@ -37,6 +38,28 @@ public interface ContainerCopier {
      * @throws IOException
      */
     void copyToContainer(File sourceFile, String path) throws IOException, ContainmentException;
+
+    /**
+     * Interface that represents the source of an input stream supplying the bytes of a tar file.
+     */
+    interface TarSource {
+
+        /**
+         * Opens the stream.
+         * @return the open stream
+         * @throws IOException on I/O error
+         */
+        InputStream open() throws IOException;
+    }
+
+    /**
+     * Unpacks contents of a tar archive to a directory within the container filesystem.
+     * @param source tar archive data source
+     * @param destination directory that is to be the parent of the unpacked contents
+     * @throws IOException on I/O error
+     * @throws ContainmentException on container error
+     */
+    void unpackTarArchiveToContainer(TarSource source, String destination) throws IOException, ContainmentException;
 
     /**
      * Copies data to the container filesystem.

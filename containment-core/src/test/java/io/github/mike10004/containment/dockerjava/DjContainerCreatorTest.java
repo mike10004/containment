@@ -11,21 +11,17 @@ import io.github.mike10004.containment.ImageSpecifier;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.core.DjManagedTestBase;
-import io.github.mike10004.containment.core.TestDockerManager;
 import io.github.mike10004.containment.core.Tests;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -34,12 +30,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -97,7 +91,7 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
 
     @Test
     public void run_exposePorts_predefinedHostPort() throws Exception {
-        int containerPort = 80, hostPort = selectUnusedPort();
+        int containerPort = 80, hostPort = acquirePortForPredefinedHostPortTest();
         ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForHttpdTest())
                 .bindPort(containerPort, hostPort)
                 .build();
@@ -105,6 +99,9 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
         try (ContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
+                // it's not certain that httpd is ready to accept connections immediately, so we sleep a little here
+                // TODO maybe wait for httpd output line ending in something like "[core:notice] [pid 1:tid 140486139090048] AH00094: Command line: 'httpd -D FOREGROUND'"
+                Thread.sleep(500);
                 result = fetchPageContent(hostPort);
                 List<ContainerPort> ports = container.fetchPorts();
                 assertEquals("num ports", 1, ports.size());
@@ -119,7 +116,12 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
 
     private static final String HTTPD_DEFAULT_PAGE_CONTENT = "<html><body><h1>It works!</h1></body></html>";
 
-    private static int selectUnusedPort() throws IOException {
+    private static int acquirePortForPredefinedHostPortTest() throws IOException {
+        String portStr = System.getProperty("containment.tests.predefinedHostPort", "").trim();
+        System.out.format("using reserved port if nonempty: \"%s\"%n", portStr);
+        if (!portStr.isEmpty()) {
+            return Integer.parseInt(portStr);
+        }
         try (ServerSocket s = new ServerSocket(0)) {
             return s.getLocalPort();
         }

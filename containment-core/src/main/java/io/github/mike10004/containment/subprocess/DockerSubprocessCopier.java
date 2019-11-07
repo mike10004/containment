@@ -1,6 +1,7 @@
 package io.github.mike10004.containment.subprocess;
 
 import io.github.mike10004.containment.ContainerCopier;
+import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.subprocess.ProcessResult;
 import io.github.mike10004.subprocess.ScopedProcessTracker;
 import io.github.mike10004.subprocess.StreamContent;
@@ -108,4 +109,8 @@ public class DockerSubprocessCopier implements ContainerCopier {
         }
     }
 
+    @Override
+    public void unpackTarArchiveToContainer(TarSource source, String destination) throws IOException, ContainmentException {
+        throw new IOException("archive copy is not supported in this copier implementation");
+    }
 }
