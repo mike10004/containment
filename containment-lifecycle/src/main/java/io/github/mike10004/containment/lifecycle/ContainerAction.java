@@ -1,5 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
+import io.github.mike10004.containment.ActionableContainer;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
 
@@ -14,6 +15,6 @@ public interface ContainerAction {
      * @param container container info
      * @throws ContainmentException on error
      */
-    void perform(ContainerInfo container) throws ContainmentException;
+    void perform(ActionableContainer container) throws ContainmentException;
 
 }

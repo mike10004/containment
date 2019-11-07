@@ -7,12 +7,6 @@ package io.github.mike10004.containment;
 public interface StartableContainer extends ActionableContainer, AutoCloseable {
 
     /**
-     * Gets the container info.
-     * @return container info
-     */
-    ContainerInfo info();
-
-    /**
      * Starts the container. Creates a new instance of {@link StartedContainer}.
      * @return a running container instance
      * @throws ContainmentException on error

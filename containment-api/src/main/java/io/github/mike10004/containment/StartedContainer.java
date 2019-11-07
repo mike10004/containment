@@ -11,12 +11,6 @@ import java.util.function.Consumer;
 public interface StartedContainer extends ActionableContainer, AutoCloseable {
 
     /**
-     * Returns the container info.
-     * @return container info
-     */
-    ContainerInfo info();
-
-    /**
      * Stops this container. If this container's auto-remove setting is not enabled,
      * then the container is manually removed.
      * @throws ContainmentException

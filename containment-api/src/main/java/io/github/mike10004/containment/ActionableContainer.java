@@ -7,6 +7,12 @@ package io.github.mike10004.containment;
 public interface ActionableContainer {
 
     /**
+     * Returns the container info.
+     * @return container info
+     */
+    ContainerInfo info();
+
+    /**
      * Returns a service that can be used to copy files to and from the container.
      * @return a copier service
      */
