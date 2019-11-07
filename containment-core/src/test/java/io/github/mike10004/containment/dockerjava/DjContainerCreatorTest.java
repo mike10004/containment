@@ -10,6 +10,7 @@ import io.github.mike10004.containment.FullSocketAddress;
 import io.github.mike10004.containment.ImageSpecifier;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.core.DjManagedTestBase;
 import io.github.mike10004.containment.core.TestDockerManager;
 import io.github.mike10004.containment.core.Tests;
 import org.junit.Before;
@@ -42,17 +43,10 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class DjContainerCreatorTest {
+public class DjContainerCreatorTest extends DjManagedTestBase  {
 
     @ClassRule
     public static final TemporaryFolder tempdir = new TemporaryFolder();
-
-    private DjDockerManager dockerManager;
-
-    @Before
-    public void setUp() {
-        dockerManager = TestDockerManager.getInstance();
-    }
 
     @Test
     public void execute_setContainerEnvironmentVariables() throws Exception {
@@ -71,57 +65,6 @@ public class DjContainerCreatorTest {
         }
         assertEquals("process exit code", 0, result.exitCode());
         Tests.assertStdoutHasLine(result, "FOO=bar");
-    }
-
-    @Test
-    public void run_copyFilesBeforeStart() throws Exception {
-        String content = UUID.randomUUID().toString();
-        File file = tempdir.newFile();
-        java.nio.file.Files.write(file.toPath(), content.getBytes(UTF_8));
-        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
-                .commandToWaitIndefinitely()
-                .build();
-        ContainerSubprocessResult<String> result;
-        String copiedFileDestDir = "/root/";
-        String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
-        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
-             StartableContainer runnableContainer = runner.create(parametry)) {
-            runnableContainer.copier().copyToContainer(file, copiedFileDestDir);
-            try (StartedContainer container = runnableContainer.start()) {
-                ContainerExecutor executor = container.executor();
-                result = executor.execute(UTF_8, "cat", pathnameOfFileInContainer);
-            }
-        }
-        assertEquals("process exit code", 0, result.exitCode());
-        System.out.format("contents of %s: %s%n", pathnameOfFileInContainer, result.stdout().trim());
-        assertEquals("text", content, result.stdout().trim());
-    }
-
-    @Test
-    public void run_copyFilesFromContainer() throws Exception {
-        String content = UUID.randomUUID().toString();
-        File file = tempdir.newFile();
-        Charset charset = UTF_8;
-        java.nio.file.Files.write(file.toPath(), content.getBytes(charset));
-        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
-                .commandToWaitIndefinitely()
-                .build();
-        String copiedFileDestDir = "/root/";
-        String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
-        File pulledFile = tempdir.newFile();
-        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
-             StartableContainer runnableContainer = runner.create(parametry)) {
-            runnableContainer.copier().copyToContainer(file, copiedFileDestDir);
-            try (StartedContainer container = runnableContainer.start()) {
-                container.copier().copyFromContainer(pathnameOfFileInContainer, pulledFile);
-            }
-        }
-        assertNotEquals("expect file nonempty", 0, pulledFile.length());
-        byte[] pulledBytes = java.nio.file.Files.readAllBytes(pulledFile.toPath());
-        assertEquals("pulled bytes", file.length(), pulledBytes.length);
-        String pulledContent = new String(pulledBytes, charset);
-        System.out.format("contents of %s: %s%n", pulledFile, pulledContent);
-        assertEquals("text", content, pulledContent);
     }
 
     @Test
