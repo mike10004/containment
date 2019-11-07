@@ -1,6 +1,8 @@
 package io.github.mike10004.containment;
 
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -28,6 +30,15 @@ public interface StartedContainer extends ActionableContainer, AutoCloseable {
      * @throws ContainmentException if port list could not be fetched
      */
     List<ContainerPort> fetchPorts() throws ContainmentException;
+
+    @Nullable
+    default FullSocketAddress fetchHostPortBinding(int containerPort) throws ContainmentException {
+        return fetchPorts().stream()
+                .filter(c -> c.number() == containerPort)
+                .map(ContainerPort::hostBinding)
+                .filter(Objects::nonNull)
+                .findFirst().orElse(null);
+    }
 
     /**
      * Starts following the standard output stream of the container process.

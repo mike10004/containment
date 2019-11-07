@@ -2,18 +2,17 @@ package io.github.mike10004.containment.dockerjava;
 
 import com.google.common.io.ByteSource;
 import io.github.mike10004.containment.ContainerCreator;
+import io.github.mike10004.containment.ContainerExecutor;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerPort;
-import io.github.mike10004.containment.ContainerExecutor;
 import io.github.mike10004.containment.ContainerSubprocessResult;
-import io.github.mike10004.containment.Durations;
 import io.github.mike10004.containment.FullSocketAddress;
 import io.github.mike10004.containment.ImageSpecifier;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.core.TestDockerManager;
 import io.github.mike10004.containment.core.Tests;
-import io.github.mike10004.containment.subprocess.DockerExecExecutor;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -23,22 +22,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.ServerSocket;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -51,6 +47,13 @@ public class DjContainerCreatorTest {
     @ClassRule
     public static final TemporaryFolder tempdir = new TemporaryFolder();
 
+    private DjDockerManager dockerManager;
+
+    @Before
+    public void setUp() {
+        dockerManager = TestDockerManager.getInstance();
+    }
+
     @Test
     public void execute_setContainerEnvironmentVariables() throws Exception {
         ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForPrintenvTest())
@@ -59,7 +62,7 @@ public class DjContainerCreatorTest {
                 .build();
 
         ContainerSubprocessResult<String> result;
-        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
                 ContainerExecutor executor = container.executor();
@@ -81,7 +84,7 @@ public class DjContainerCreatorTest {
         ContainerSubprocessResult<String> result;
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
-        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnableContainer = runner.create(parametry)) {
             runnableContainer.copier().copyToContainer(file, copiedFileDestDir);
             try (StartedContainer container = runnableContainer.start()) {
@@ -106,7 +109,7 @@ public class DjContainerCreatorTest {
         String copiedFileDestDir = "/root/";
         String pathnameOfFileInContainer = copiedFileDestDir + file.getName();
         File pulledFile = tempdir.newFile();
-        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnableContainer = runner.create(parametry)) {
             runnableContainer.copier().copyToContainer(file, copiedFileDestDir);
             try (StartedContainer container = runnableContainer.start()) {
@@ -128,7 +131,7 @@ public class DjContainerCreatorTest {
                 .bindPort(httpdPort)
                 .build();
         String result;
-        try (ContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
+        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
                 List<ContainerPort> ports = container.fetchPorts();
@@ -136,13 +139,47 @@ public class DjContainerCreatorTest {
                 assertTrue("exposed", httpdExposedPortMapping.isBound());
                 FullSocketAddress hostBinding = httpdExposedPortMapping.hostBinding();
                 assertNotNull(hostBinding);
-                URL url = new URL("http", "localhost", hostBinding.getPort(), "/");
-                byte[] content = new JreClient().fetchPageContent(url);
-                result = new String(content, UTF_8);
+                result = fetchPageContent(hostBinding.getPort());
             }
         }
         System.out.println(result);
-        assertEquals("page text", "<html><body><h1>It works!</h1></body></html>", result.trim());
+        assertEquals("page text", HTTPD_DEFAULT_PAGE_CONTENT, result.trim());
+    }
+
+    private String fetchPageContent(int port) throws IOException {
+        URL url = new URL("http", "localhost", port, "/");
+        byte[] content = new JreClient().fetchPageContent(url);
+        return new String(content, UTF_8);
+    }
+
+    @Test
+    public void run_exposePorts_predefinedHostPort() throws Exception {
+        int containerPort = 80, hostPort = selectUnusedPort();
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForHttpdTest())
+                .bindPort(containerPort, hostPort)
+                .build();
+        String result;
+        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
+             StartableContainer runnable = runner.create(parametry)) {
+            try (StartedContainer container = runnable.start()) {
+                result = fetchPageContent(hostPort);
+                List<ContainerPort> ports = container.fetchPorts();
+                assertEquals("num ports", 1, ports.size());
+                FullSocketAddress hostBinding = ports.get(0).hostBinding();
+                assertNotNull(hostBinding);
+                assertEquals(hostPort, hostBinding.getPort());
+            }
+        }
+        System.out.println(result);
+        assertEquals("page text", HTTPD_DEFAULT_PAGE_CONTENT, result.trim());
+    }
+
+    private static final String HTTPD_DEFAULT_PAGE_CONTENT = "<html><body><h1>It works!</h1></body></html>";
+
+    private static int selectUnusedPort() throws IOException {
+        try (ServerSocket s = new ServerSocket(0)) {
+            return s.getLocalPort();
+        }
     }
 
     private static ImageSpecifier getImageForMysqlTest() {
@@ -166,7 +203,7 @@ public class DjContainerCreatorTest {
                         "--bind-address=" + bindAddress)
                 .build();
         List<String> colors = new ArrayList<>();
-        try (DjContainerCreator runner = new DjContainerCreator(TestDockerManager.getInstance());
+        try (DjContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
                 int hostPort = container.fetchPorts().stream()
@@ -182,7 +219,7 @@ public class DjContainerCreatorTest {
                 Duration mysqlStartupTimeout = Tests.Settings.timeouts().get("run_mysql.startup", Duration.ofMinutes(5));
                 AtomicBoolean doneWaiting = new AtomicBoolean(false);
                 if (verboseWait) {
-                    timer(Duration.ofSeconds(1), elapsed -> System.out.format("waited %s seconds for mysql up-ness%n", elapsed.getSeconds()), doneWaiting::get);
+                    Tests.startTimer(Duration.ofSeconds(1), elapsed -> System.out.format("waited %s seconds for mysql up-ness%n", elapsed.getSeconds()), doneWaiting::get);
                 }
                 boolean logMessageAppeared = container.followStderr(BlockableLogFollower.untilLine(line -> line.contains(requiredLineSubstring), UTF_8, System.err))
                         .await(mysqlStartupTimeout);
@@ -216,26 +253,6 @@ public class DjContainerCreatorTest {
         }
         System.out.format("fetched widgets: %s%n", colors);
         assertEquals(Arrays.asList("red", "blue", "green"), colors);
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    private static Thread timer(Duration interval, Consumer<? super Duration> action, BooleanSupplier until) {
-        Instant start = Instant.now();
-        Thread thread = new Thread(() -> {
-            while (!until.getAsBoolean()) {
-                Duration elapsed = Duration.ofMillis(Instant.now().toEpochMilli() - start.toEpochMilli());
-                action.accept(elapsed);
-                try {
-                    Thread.sleep(Durations.saturatedMilliseconds(interval));
-                } catch (InterruptedException e) {
-                    System.err.println("timer: " + e.toString());
-                    return;
-                }
-            }
-        });
-        thread.setDaemon(true);
-        thread.start();
-        return thread;
     }
 
     private static class JreClient {
