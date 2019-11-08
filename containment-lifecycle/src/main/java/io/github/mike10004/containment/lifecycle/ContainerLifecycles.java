@@ -36,7 +36,9 @@ import static java.util.Objects.requireNonNull;
  *     </li>
  * </ul>
  */
-public class ContainerLifecycle {
+public class ContainerLifecycles {
+
+    private ContainerLifecycles() {}
 
     private static class ContainerRunnerLifecycle extends DecoupledLifecycle<ContainerCreator> {
         public ContainerRunnerLifecycle(Commissioner<ContainerCreator> commissioner) {
@@ -172,6 +174,7 @@ public class ContainerLifecycle {
          * @param action action
          * @return this builder instance
          */
+        @SuppressWarnings("UnusedReturnValue")
         public Builder preStart(ContainerAction action) {
             preStartActions.add(action);
             return this;
@@ -182,6 +185,7 @@ public class ContainerLifecycle {
          * @param action action
          * @return this builder instance
          */
+        @SuppressWarnings("UnusedReturnValue")
         public Builder postStart(StartedContainerAction action) {
             postStartActions.add(action);
             return this;

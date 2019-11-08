@@ -19,7 +19,7 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
-public class ContainerLifecycleTest {
+public class ContainerLifecyclesTest {
 
     @Test
     public void create() throws Exception {
@@ -31,7 +31,7 @@ public class ContainerLifecycleTest {
                 .commandToWaitIndefinitely()
                 .build();
         ContainerCreatorConstructor ctor = () -> new DjContainerCreator(dockerManager);
-        Lifecycle<StartedContainer> lifecycle = ContainerLifecycle.builder(parametry).build(ctor);
+        Lifecycle<StartedContainer> lifecycle = ContainerLifecycles.builder(parametry).build(ctor);
         StartedContainer container = lifecycle.commission();
         ContainerSubprocessResult<String> result;
         try {

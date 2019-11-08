@@ -60,7 +60,7 @@ public interface ContainerDependency {
     class Builder {
 
         private Consumer<? super LifecycleEvent> eventListener = LifecycleEvent.inactiveConsumer();
-        private final ContainerLifecycle.Builder lifecycleBuilder;
+        private final ContainerLifecycles.Builder lifecycleBuilder;
         private final Function<? super DjDockerManager, ? extends ContainerCreator> djCreatorConstructor;
 
         protected Builder(ContainerParametry containerParametry) {
@@ -68,7 +68,7 @@ public interface ContainerDependency {
         }
 
         protected Builder(ContainerParametry containerParametry, Function<? super DjDockerManager, ? extends ContainerCreator> djCreatorConstructor) {
-            this.lifecycleBuilder = ContainerLifecycle.builder(containerParametry);
+            this.lifecycleBuilder = ContainerLifecycles.builder(containerParametry);
             this.djCreatorConstructor = requireNonNull(djCreatorConstructor);
         }
 
