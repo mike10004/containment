@@ -1,27 +1,31 @@
 package io.github.mike10004.containment.lifecycle;
 
-import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerCreator;
+import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import static java.util.Objects.requireNonNull;
+
 /**
- * Implementation of a lifecycle of a container. The container's lifecycle
+ * Class that contains utility methods for building container lifecycles.
+ *
+ * A container's lifecycle
  * includes the following stages:
  * <ul>
  *     <li><b>Commission</b>
  *       <ul>
  *         <li>create</li>
- *         <li>execute of pre-start actions</li>
+ *         <li>execute pre-start actions</li>
  *         <li>start</li>
- *         <li>execute of post-start actions</li>
+ *         <li>execute post-start actions</li>
  *       </ul>
  *     </li>
  *     <li><b>Decommission</b>
@@ -32,11 +36,7 @@ import java.util.function.Supplier;
  *     </li>
  * </ul>
  */
-public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
-
-    private ContainerLifecycle(Iterable<? extends Lifecycle<?>> others, Lifecycle<StartedContainer> top) {
-        super(others, top);
-    }
+public class ContainerLifecycle {
 
     private static class ContainerRunnerLifecycle extends DecoupledLifecycle<ContainerCreator> {
         public ContainerRunnerLifecycle(Commissioner<ContainerCreator> commissioner) {
@@ -143,14 +143,60 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
     }
 
     /**
-     * Creates a container lifecycle instance.
+     * Creates a new builder of container lifecycle instances.
      * @param constructor constructor of the {@link ContainerCreator} instance
      * @param parametry container creation parameters
-     * @param preStartActions actions to be executed after creation and before start
-     * @param postStartActions actions to be executed after start
-     * @return a new lifecycle instance
+     * @return a new builder
      */
-    public static ContainerLifecycle create(ContainerCreatorConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions, List<? extends StartedContainerAction> postStartActions) {
+    public static Builder builder(ContainerParametry parametry) {
+        return new Builder(parametry);
+    }
+
+    /**
+     * Builder of container lifecycle instances.
+     */
+    public static class Builder {
+
+        private final ContainerParametry parametry;
+        private final List<ContainerAction> preStartActions;
+        private final List<StartedContainerAction> postStartActions;
+
+        private Builder(ContainerParametry parametry) {
+            this.parametry = requireNonNull(parametry);
+            preStartActions = new ArrayList<>();
+            postStartActions = new ArrayList<>();
+        }
+
+        /**
+         * Adds a pre-start action.
+         * @param action action
+         * @return this builder instance
+         */
+        public Builder preStart(ContainerAction action) {
+            preStartActions.add(action);
+            return this;
+        }
+
+        /**
+         * Adds a post-start action.
+         * @param action action
+         * @return this builder instance
+         */
+        public Builder postStart(StartedContainerAction action) {
+            postStartActions.add(action);
+            return this;
+        }
+
+        /**
+         * Creates a container lifecycle instance.
+         * @return a new lifecycle instance
+         */
+        public Lifecycle<StartedContainer> build(ContainerCreatorConstructor constructor) {
+            return create(constructor, parametry, preStartActions, postStartActions);
+        }
+    }
+
+    private static Lifecycle<StartedContainer> create(ContainerCreatorConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions, List<? extends StartedContainerAction> postStartActions) {
         AtomicReference<ContainerCreator> runnerRef = new AtomicReference<>();
         Lifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
             ContainerCreator runner = constructor.instantiate();
@@ -173,7 +219,12 @@ public class ContainerLifecycle extends LifecycleStack<StartedContainer> {
             return container;
         });
         Lifecycle<StartedContainer> postStartActionsLifecycle = new PostStartActionExecutor(runningRef::get, postStartActions);
-        return new ContainerLifecycle(Arrays.asList(runnerLifecycle, runnableLifecycle, preStartActionLifecycle, runningLifecycle), postStartActionsLifecycle);
+        return LifecycleStack.builder()
+                .addStage(runnerLifecycle)
+                .addStage(runnableLifecycle)
+                .addStage(preStartActionLifecycle)
+                .addStage(runningLifecycle)
+                .finish(postStartActionsLifecycle);
     }
 
     private static class AutoCloseableDecommissioner<T extends AutoCloseable> implements DecoupledLifecycle.Decommissioner<T> {

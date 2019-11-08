@@ -13,10 +13,8 @@ import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
@@ -62,14 +60,16 @@ public interface ContainerDependency {
     class Builder {
 
         private Consumer<? super LifecycleEvent> eventListener = LifecycleEvent.inactiveConsumer();
-        private ContainerParametry containerParametry;
-        private List<ContainerAction> preStartActions;
-        private List<StartedContainerAction> postStartActions;
+        private final ContainerLifecycle.Builder lifecycleBuilder;
+        private final Function<? super DjDockerManager, ? extends ContainerCreator> djCreatorConstructor;
 
-        private Builder(ContainerParametry containerParametry) {
-            this.containerParametry = requireNonNull(containerParametry, "containerParametry");
-            preStartActions = new ArrayList<>();
-            postStartActions = new ArrayList<>();
+        protected Builder(ContainerParametry containerParametry) {
+            this(containerParametry, DjContainerCreator::new);
+        }
+
+        protected Builder(ContainerParametry containerParametry, Function<? super DjDockerManager, ? extends ContainerCreator> djCreatorConstructor) {
+            this.lifecycleBuilder = ContainerLifecycle.builder(containerParametry);
+            this.djCreatorConstructor = requireNonNull(djCreatorConstructor);
         }
 
         /**
@@ -88,7 +88,7 @@ public interface ContainerDependency {
          * @return this builder instance
          */
         public Builder addPostStartAction(StartedContainerAction containerAction) {
-            postStartActions.add(containerAction);
+            lifecycleBuilder.postStart(containerAction);
             return this;
         }
 
@@ -99,42 +99,48 @@ public interface ContainerDependency {
          * @return this builder instance
          */
         public Builder addPreStartAction(ContainerAction action) {
-            preStartActions.add(action);
+            lifecycleBuilder.preStart(action);
             return this;
         }
 
-        private static class GlobalRunnerConstructor implements ContainerCreatorConstructor {
+        /**
+         * Constructor of creators for global containers. Cleanup of these containers is
+         * managed by a {@link GlobalLifecyclingCachingProvider}, so they use
+         * manual container monitors.
+         */
+        private static class GlobalContainerCreatorConstructor implements ContainerCreatorConstructor {
+
+            private final Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor;
+
+            public GlobalContainerCreatorConstructor(Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor) {
+                this.djConstructor = djConstructor;
+            }
 
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
                 DjDockerManager manager = new DefaultDjDockerManager(config, new DjManualContainerMonitor());
-                return new DjContainerCreator(manager);
+                return djConstructor.apply(manager);
             }
         }
 
-        private static class LocalRunnerConstructor implements ContainerCreatorConstructor {
+        /**
+         * Constructor of creators for local containers. Cleanup of these containers is managed
+         * by the caller, but a global monitor adds a shutdown hook to clean up ones the caller forgot.
+         */
+        private static class LocalContainerCreatorConstructor implements ContainerCreatorConstructor {
+
+            private final Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor;
+
+            public LocalContainerCreatorConstructor(Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor) {
+                this.djConstructor = djConstructor;
+            }
+
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
                 DjDockerManager manager = new DefaultDjDockerManager(config, new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build()));
-                return new DjContainerCreator(manager);
-            }
-        }
-
-        private class LocalProviderCreator implements Supplier<LifecyclingCachingProvider<StartedContainer>> {
-
-            @Override
-            public LifecyclingCachingProvider<StartedContainer> get() {
-                return new LifecyclingCachingProvider<>(ContainerLifecycle.create(new LocalRunnerConstructor(), containerParametry, preStartActions, postStartActions), eventListener);
-            }
-        }
-
-        private class GlobalProviderCreator implements Supplier<GlobalLifecyclingCachingProvider<StartedContainer>> {
-
-            @Override
-            public GlobalLifecyclingCachingProvider<StartedContainer> get() {
-                return new GlobalLifecyclingCachingProvider<>(ContainerLifecycle.create(new GlobalRunnerConstructor(), containerParametry, preStartActions, postStartActions));
+                return djConstructor.apply(manager);
             }
         }
 
@@ -145,7 +151,7 @@ public interface ContainerDependency {
          * @return a new instance
          */
         public ContainerDependency buildLocalDependency() {
-            return buildDependencyFromProviderCreator(new LocalProviderCreator());
+            return buildDependencyFromProvider(new LifecyclingCachingProvider<>(lifecycleBuilder.build(new LocalContainerCreatorConstructor(djCreatorConstructor)), eventListener));
         }
 
         /**
@@ -155,11 +161,11 @@ public interface ContainerDependency {
          * @return a new instance
          */
         public ContainerDependency buildGlobalDependency() {
-            return buildDependencyFromProviderCreator(new GlobalProviderCreator());
+            return buildDependencyFromProvider(new GlobalLifecyclingCachingProvider<>(lifecycleBuilder.build(new GlobalContainerCreatorConstructor(djCreatorConstructor)), eventListener));
         }
 
-        private ContainerDependency buildDependencyFromProviderCreator(Supplier<? extends LifecyclingCachingProvider<StartedContainer>> dependencyCreator) {
-            return ContainerDependency.fromProvider(dependencyCreator.get());
+        private ContainerDependency buildDependencyFromProvider(LifecyclingCachingProvider<StartedContainer> provider) {
+            return ContainerDependency.fromProvider(provider);
         }
 
     }

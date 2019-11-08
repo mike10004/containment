@@ -6,17 +6,15 @@ import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.Uuids;
-import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjContainerCreator;
+import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
-import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
-import io.github.mike10004.containment.subprocess.DockerExecExecutor;
+import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -32,7 +30,8 @@ public class ContainerLifecycleTest {
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()
                 .build();
-        ContainerLifecycle lifecycle = ContainerLifecycle.create(() -> new DjContainerCreator(dockerManager), parametry, Collections.emptyList(), Collections.emptyList());
+        ContainerCreatorConstructor ctor = () -> new DjContainerCreator(dockerManager);
+        Lifecycle<StartedContainer> lifecycle = ContainerLifecycle.builder(parametry).build(ctor);
         StartedContainer container = lifecycle.commission();
         ContainerSubprocessResult<String> result;
         try {

@@ -1,8 +1,10 @@
 package io.github.mike10004.containment.lifecycle;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
@@ -14,27 +16,49 @@ import static java.util.Objects.requireNonNull;
  */
 public class LifecycleStack<T> implements Lifecycle<T> {
 
-    private final Iterable<? extends Lifecycle<?>> others;
-    private final Deque<Lifecycle<?>> commissioned;
-    private transient final Lifecycle<T> top;
+    private final Iterable<? extends Lifecycle<?>> preliminaryStages;
+    private final Lifecycle<T> finalStage;
+    private transient final Deque<Lifecycle<?>> commissioned;
 
     /**
      * Constructs a new instance.
-     * @param others preliminary lifecycles
-     * @param top lifecycle that produces the instance that this stack commissions
+     * @param preliminaryStages preliminary lifecycles
+     * @param finalStage lifecycle that produces the instance that this stack commissions
      */
-    public LifecycleStack(Iterable<? extends Lifecycle<?>> others, Lifecycle<T> top) {
+    public LifecycleStack(Iterable<? extends Lifecycle<?>> preliminaryStages, Lifecycle<T> finalStage) {
         commissioned = new ArrayDeque<>();
-        this.top = requireNonNull(top);
-        this.others = requireNonNull(others);
+        this.finalStage = requireNonNull(finalStage);
+        this.preliminaryStages = requireNonNull(preliminaryStages);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private final List<Lifecycle<?>> preliminaries;
+
+        private Builder() {
+            preliminaries = new ArrayList<>();
+        }
+
+        public <T> LifecycleStack<T> finish(Lifecycle<T> finalStage) {
+            return new LifecycleStack<>(preliminaries, finalStage);
+        }
+
+        public Builder addStage(Lifecycle<?> stage) {
+            preliminaries.add(stage);
+            return this;
+        }
     }
 
 
     @Override
     public String toString() {
         return new StringJoiner(", ", LifecycleStack.class.getSimpleName() + "[", "]")
-                .add("others=" + others)
-                .add("top=" + top)
+                .add("others=" + preliminaryStages)
+                .add("top=" + finalStage)
                 .add("commissioned.size=" + commissioned.size())
                 .toString();
     }
@@ -66,7 +90,7 @@ public class LifecycleStack<T> implements Lifecycle<T> {
     public T commission() throws LifecycleStackCommissionException {
         Lifecycle<?> thrower = null;
         Exception throwable = null;
-        for (Lifecycle<?> lifecycle : others) {
+        for (Lifecycle<?> lifecycle : preliminaryStages) {
             try {
                 lifecycle.commission();
                 commissioned.push(lifecycle);
@@ -77,11 +101,11 @@ public class LifecycleStack<T> implements Lifecycle<T> {
         }
         if (throwable == null) {
             try {
-                T top = this.top.commission();
-                commissioned.push(this.top);
+                T top = this.finalStage.commission();
+                commissioned.push(this.finalStage);
                 return top;
             } catch (Exception e) {
-                thrower = top;
+                thrower = finalStage;
                 throwable = e;
             }
         }
