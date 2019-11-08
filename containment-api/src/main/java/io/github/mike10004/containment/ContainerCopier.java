@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -60,29 +59,6 @@ public interface ContainerCopier {
      * @throws ContainmentException on container error
      */
     void unpackTarArchiveToContainer(TarSource source, String destination) throws IOException, ContainmentException;
-
-    /**
-     * Copies data to the container filesystem.
-     * @param sourceBytes data to copy
-     * @param tmpDir a temp dir on the host local filesystem
-     * @param destination destination within the container filesystem
-     * @throws IOException on I/O error
-     * @throws ContainmentException on container error
-     */
-    default void copyToContainer(byte[] sourceBytes, File tmpDir, String destination)  throws IOException, ContainmentException {
-        File tempFile = null;
-        try {
-            tempFile = File.createTempFile("pre-start-action", ".tmp", tmpDir);
-            java.nio.file.Files.write(tempFile.toPath(), sourceBytes, StandardOpenOption.WRITE);
-            copyToContainer(tempFile, destination);
-        } finally {
-            if (tempFile != null) {
-                //noinspection ResultOfMethodCallIgnored
-                tempFile.delete();
-            }
-        }
-
-    }
 
     /**
      * Copies a file from the container filesystem to the local filesystem.
