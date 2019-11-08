@@ -3,15 +3,14 @@ package io.github.mike10004.containment.dockerjava;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
 import com.google.common.io.ByteStreams;
+import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainmentException;
-import io.github.mike10004.containment.ContainerCopier;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +35,7 @@ class DjContainerCopier implements ContainerCopier {
             client.copyArchiveToContainerCmd(containerInfo.id())
                     .withHostResource(srcFile.getAbsolutePath())
                     .withRemotePath(destinationPathname)
+                    .withNoOverwriteDirNonDir(true)
                     .exec();
         } catch (DockerException e) {
             throw new ContainmentException(e);
