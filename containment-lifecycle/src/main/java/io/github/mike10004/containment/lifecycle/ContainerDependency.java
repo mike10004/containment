@@ -43,7 +43,7 @@ public interface ContainerDependency {
      * @return a new instance
      */
     static ContainerDependency fromProvider(LifecyclingCachingProvider<StartedContainer> containerProvider) {
-        return new ProviderDependency(containerProvider);
+        return new CachableDependency(containerProvider);
     }
 
     /**

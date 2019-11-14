@@ -6,11 +6,11 @@ import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
-class ProviderDependency implements ContainerDependency {
+class CachableDependency implements ContainerDependency {
 
     private final LifecyclingCachingProvider<StartedContainer> containerProvider;
 
-    public ProviderDependency(LifecyclingCachingProvider<StartedContainer> containerProvider) {
+    public CachableDependency(LifecyclingCachingProvider<StartedContainer> containerProvider) {
         this.containerProvider = requireNonNull(containerProvider, "containerProvider");
     }
 
@@ -26,7 +26,7 @@ class ProviderDependency implements ContainerDependency {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", ProviderDependency.class.getSimpleName() + "[", "]")
+        return new StringJoiner(", ", CachableDependency.class.getSimpleName() + "[", "]")
                 .add("containerProvider=" + containerProvider)
                 .toString();
     }
