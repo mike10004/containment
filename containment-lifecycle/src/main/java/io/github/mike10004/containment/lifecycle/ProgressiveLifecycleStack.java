@@ -14,23 +14,21 @@ import java.util.StringJoiner;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Implementation of a lifecycle that is made up of multiple sequential component lifecycles.
- * To commission a lifecycle stack is to commission each component lifecycle
- * in order, and to decommission a lifecycle is to decommission each component
- * lifecycle in the reverse order.
+ * Implementation of a lifecycle that is made up of multiple stages,
+ * where each stage is provided the resource commissioned by the previous
+ * stage.
+ * To commission a progressive lifecycle stack is to commission each stage
+ * in order, and to decommission a lifecycle is to decommission each stage
+ * in reverse order.
  *
  * @param <T> type of last commissioned element
+ * @see ProgressiveContainerLifecycles
  */
 public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
 
     private final List<? extends LifecycleStage<?, ?>> stages;
     private transient final Deque<LifecycleStage<?, ?>> commissioned;
 
-    /**
-     * Constructs a new instance.
-     * @param preliminaryStages preliminary lifecycles
-     * @param finalStage lifecycle that produces the instance that this stack commissions
-     */
     private ProgressiveLifecycleStack(List<? extends LifecycleStage<?, ?>> stages) {
         this.stages = Collections.unmodifiableList(requireNonNull(stages));
         commissioned = new ArrayDeque<>();
