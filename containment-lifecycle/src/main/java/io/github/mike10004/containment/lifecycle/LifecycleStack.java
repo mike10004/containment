@@ -11,8 +11,12 @@ import java.util.StringJoiner;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Implementation of a lifecycle that composes multiple sequential lifecycles.
- * @param <T> type of top element of the stack (last created, first destroyed)
+ * Implementation of a lifecycle that is made up of multiple sequential component lifecycles.
+ * To commission a lifecycle stack is to commission each component lifecycle
+ * in order, and to decommission a lifecycle is to decommission each component
+ * lifecycle in the reverse order.
+ *
+ * @param <T> type of last commissioned element
  */
 public class LifecycleStack<T> implements Lifecycle<T> {
 
@@ -31,10 +35,17 @@ public class LifecycleStack<T> implements Lifecycle<T> {
         this.preliminaryStages = requireNonNull(preliminaryStages);
     }
 
+    /**
+     * Creates a new lifecycle stack builder.
+     * @return
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Builder of lifecycle stacks.
+     */
     public static class Builder {
 
         private final List<Lifecycle<?>> preliminaries;
@@ -43,10 +54,21 @@ public class LifecycleStack<T> implements Lifecycle<T> {
             preliminaries = new ArrayList<>();
         }
 
+        /**
+         * Builds a lifecycle stack.
+         * @param finalStage the final component lifecycle in the stack
+         * @param <T> the type of object commissioned by the component lifecycle
+         * @return a new lifecycle stack instance
+         */
         public <T> LifecycleStack<T> finish(Lifecycle<T> finalStage) {
             return new LifecycleStack<>(preliminaries, finalStage);
         }
 
+        /**
+         * Adds a component lifecycle.
+         * @param stage
+         * @return
+         */
         public Builder addStage(Lifecycle<?> stage) {
             preliminaries.add(stage);
             return this;
