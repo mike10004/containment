@@ -31,4 +31,8 @@ public class ContainmentException extends Exception {
     public ContainmentException(Throwable cause) {
         super(cause);
     }
+
+    protected ContainmentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }
