@@ -6,7 +6,7 @@ import io.github.mike10004.containment.dockerjava.DjDockerManager;
 
 import java.util.function.Function;
 
-public class DjContainerDependencyBuilder extends ContainerDependency.Builder {
+public class DjContainerDependencyBuilder extends ContainerDependencyBuilder {
 
     public DjContainerDependencyBuilder(ContainerParametry containerParametry, Function<? super DjDockerManager, ? extends ContainerCreator> djCreatorConstructor) {
         super(containerParametry, djCreatorConstructor);

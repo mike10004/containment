@@ -6,16 +6,16 @@ import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
-class CachableDependency implements ContainerDependency {
+class CacheableProgressiveDependency<T> implements ProgressiveDependency<T> {
 
-    private final LifecyclingCachingProvider<StartedContainer> containerProvider;
+    private final LifecyclingCachingProvider<T> containerProvider;
 
-    public CachableDependency(LifecyclingCachingProvider<StartedContainer> containerProvider) {
+    public CacheableProgressiveDependency(LifecyclingCachingProvider<T> containerProvider) {
         this.containerProvider = requireNonNull(containerProvider, "containerProvider");
     }
 
     @Override
-    public StartedContainer container() throws FirstProvisionFailedException {
+    public T container() throws FirstProvisionFailedException {
         return containerProvider.provide().require();
     }
 
@@ -26,8 +26,15 @@ class CachableDependency implements ContainerDependency {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", CachableDependency.class.getSimpleName() + "[", "]")
+        return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
                 .add("containerProvider=" + containerProvider)
                 .toString();
+    }
+}
+
+class CachableDependency extends CacheableProgressiveDependency<StartedContainer> implements ContainerDependency {
+
+    public CachableDependency(LifecyclingCachingProvider<StartedContainer> containerProvider) {
+        super(containerProvider);
     }
 }

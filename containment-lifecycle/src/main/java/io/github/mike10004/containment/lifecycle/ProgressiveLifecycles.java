@@ -4,6 +4,10 @@ import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.dockerjava.DjContainerCreator;
+import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 
 import java.util.StringJoiner;
 
@@ -151,6 +155,16 @@ public class ProgressiveLifecycles {
      * @return a new builder
      */
     public static Builder1 builder(ContainerCreatorConstructor ctor) {
+        return new Builder1Impl(ctor);
+    }
+
+    public static Builder1 buildGlobal() {
+        ContainerCreatorConstructor ctor = new GlobalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
+        return new Builder1Impl(ctor);
+    }
+
+    public static Builder1 buildLocal() {
+        ContainerCreatorConstructor ctor = new LocalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(clientConfig).build()));
         return new Builder1Impl(ctor);
     }
 

@@ -3,7 +3,7 @@ package io.github.mike10004.containment.junit4;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.lifecycle.ContainerDependency;
 
-public class Globals {
+class Globals {
 
     private Globals() {}
 
