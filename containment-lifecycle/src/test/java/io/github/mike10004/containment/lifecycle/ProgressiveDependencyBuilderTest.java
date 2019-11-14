@@ -33,9 +33,9 @@ public class ProgressiveDependencyBuilderTest {
         ContainerParametry parametry = ContainerParametry.builder(Tests.getAlpineImage())
                 .commandToWaitIndefinitely()
                 .build();
-        LifecycleStageStack<ContainerPlus<String>> stack = ProgressiveLifecycles.buildLocal()
+        ProgressiveLifecycleStack<ContainerPlus<String>> stack = ProgressiveContainerLifecycles.buildLocal()
                 .startedWith(parametry)
-                .pre(new PreStartContainerStageOne<String>() {
+                .pre(new ProgressivePreStartContainerAction.IndependentPreStartAction<String>() {
                     @Override
                     public String perform(ActionableContainer container) throws Exception {
                         return "A";

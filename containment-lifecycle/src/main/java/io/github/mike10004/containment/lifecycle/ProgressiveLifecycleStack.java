@@ -21,7 +21,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> type of last commissioned element
  */
-public class LifecycleStageStack<T> implements Lifecycle<T> {
+public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
 
     private final List<? extends LifecycleStage<?, ?>> stages;
     private transient final Deque<LifecycleStage<?, ?>> commissioned;
@@ -31,7 +31,7 @@ public class LifecycleStageStack<T> implements Lifecycle<T> {
      * @param preliminaryStages preliminary lifecycles
      * @param finalStage lifecycle that produces the instance that this stack commissions
      */
-    private LifecycleStageStack(List<? extends LifecycleStage<?, ?>> stages) {
+    private ProgressiveLifecycleStack(List<? extends LifecycleStage<?, ?>> stages) {
         this.stages = Collections.unmodifiableList(requireNonNull(stages));
         commissioned = new ArrayDeque<>();
     }
@@ -82,8 +82,8 @@ public class LifecycleStageStack<T> implements Lifecycle<T> {
          * @param <T> the type of object commissioned by the component lifecycle
          * @return a new lifecycle stack instance
          */
-        public LifecycleStageStack<U> build() {
-            return new LifecycleStageStack<>(toSequence(new ArrayList<>()));
+        public ProgressiveLifecycleStack<U> build() {
+            return new ProgressiveLifecycleStack<>(toSequence(new ArrayList<>()));
         }
 
         /**
@@ -107,7 +107,7 @@ public class LifecycleStageStack<T> implements Lifecycle<T> {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", LifecycleStageStack.class.getSimpleName() + "[", "]")
+        return new StringJoiner(", ", ProgressiveLifecycleStack.class.getSimpleName() + "[", "]")
                 .add("stages=" + stages)
                 .add("commissioned.size=" + commissioned.size())
                 .toString();
@@ -124,7 +124,7 @@ public class LifecycleStageStack<T> implements Lifecycle<T> {
             }
         }
         if (!exceptionsThrown.isEmpty()) {
-            throw new LifecycleStageStackDecommissionException(exceptionsThrown);
+            throw new ProgressiveLifecycleStackDecommissionException(exceptionsThrown);
         }
     }
 
@@ -134,10 +134,10 @@ public class LifecycleStageStack<T> implements Lifecycle<T> {
      * those already commissioned are decommissioned before throwing
      * the exception that caused the commissioning failure.
      * @return the final commissioned resource
-     * @throws LifecycleStageStackCommissionException on error
+     * @throws ProgressiveLifestyleStackCommissionException on error
      */
     @Override
-    public T commission() throws LifecycleStageStackCommissionException {
+    public T commission() throws ProgressiveLifestyleStackCommissionException {
         LifecycleStage<?, ?> thrower = null;
         Exception throwable = null;
         Object lastCommissioned = null;
@@ -158,16 +158,16 @@ public class LifecycleStageStack<T> implements Lifecycle<T> {
             //noinspection unchecked
             return (T) lastCommissioned;
         } else {
-            LifecycleStageStackDecommissionException unwindException = null;
+            ProgressiveLifecycleStackDecommissionException unwindException = null;
             try {
                 unwind();
-            } catch (LifecycleStageStackDecommissionException e) {
+            } catch (ProgressiveLifecycleStackDecommissionException e) {
                 unwindException = e;
             }
             if (unwindException == null) {
-                throw new LifecycleStageStackCommissionException(throwable);
+                throw new ProgressiveLifestyleStackCommissionException(throwable);
             } else {
-                throw new LifecycleStageStackCommissionUnwindException(thrower, throwable, unwindException);
+                throw new ProgressiveLifestyleStackCommissionUnwindException(thrower, throwable, unwindException);
             }
         }
     }

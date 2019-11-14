@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Exception class for errors that occur during the decommission stage of a lifecycle stage stack.
  */
-public class LifecycleStageStackDecommissionException extends RuntimeException {
+public class ProgressiveLifecycleStackDecommissionException extends RuntimeException {
 
     /**
      * Map of exceptions thrown during the decommissioning.
@@ -19,7 +19,7 @@ public class LifecycleStageStackDecommissionException extends RuntimeException {
      * Constructs a new instance
      * @param exceptionsThrown exceptions
      */
-    public LifecycleStageStackDecommissionException(Map<LifecycleStage<?, ?>, RuntimeException> exceptionsThrown) {
+    public ProgressiveLifecycleStackDecommissionException(Map<LifecycleStage<?, ?>, RuntimeException> exceptionsThrown) {
         super(String.format("%d lifecycle decommission methods threw exception(s): %s", exceptionsThrown.size(), exceptionsThrown.keySet()));
         this.exceptionsThrown = Collections.unmodifiableMap(new LinkedHashMap<>(exceptionsThrown));
     }

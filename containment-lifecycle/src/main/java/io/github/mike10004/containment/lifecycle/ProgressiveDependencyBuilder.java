@@ -46,7 +46,7 @@ public class ProgressiveDependencyBuilder {
      * explicitly to stop and remove the container, if it has been started.
      * @return a new instance
      */
-    public <T> ProgressiveDependency<T> buildLocalDependency(LifecycleStageStack<T> stack) {
+    public <T> ProgressiveDependency<T> buildLocalDependency(ProgressiveLifecycleStack<T> stack) {
         return buildDependencyFromProvider(new LifecyclingCachingProvider<>(stack, eventListener));
     }
 
@@ -56,7 +56,7 @@ public class ProgressiveDependencyBuilder {
      * only happen upon JVM termination.
      * @return a new instance
      */
-    public <T> ProgressiveDependency<T> buildGlobalDependency(LifecycleStageStack<T> stack) {
+    public <T> ProgressiveDependency<T> buildGlobalDependency(ProgressiveLifecycleStack<T> stack) {
         return buildDependencyFromProvider(new GlobalLifecyclingCachingProvider<>(stack, eventListener));
     }
 
