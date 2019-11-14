@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -193,4 +194,72 @@ public class LifecycleStackTest {
 
     private static final class TestRuntimeDecommissionException extends RuntimeException {}
 
+
+    private static class IntStage implements Lifecycle<Integer> {
+
+        private final List<Integer> collection;
+        private Integer value;
+
+        public IntStage(List<Integer> collection) {
+            this.collection = collection;
+        }
+
+        @Override
+        public Integer commission() {
+            if (collection.isEmpty()) {
+                value = 1;
+            } else {
+                value = collection.get(collection.size() - 1) + 1;
+            }
+            collection.add(value);
+            return value;
+        }
+
+        @Override
+        public void decommission() {
+            collection.add(value);
+        }
+    }
+
+    @Test
+    public void testExecute() throws Exception {
+        List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
+        LifecycleStack<Integer> stack = LifecycleStack.builder()
+                .addStage(new IntStage(sequence))
+                .addStage(new IntStage(sequence))
+                .addStage(new IntStage(sequence))
+                .addStage(new IntStage(sequence))
+                .finish(new IntStage(sequence));
+        Integer commissioned = stack.commission();
+        assertEquals("commissioned", 5, commissioned.intValue());
+        assertEquals("sequence", Arrays.asList(1, 2, 3, 4, 5), sequence);
+        stack.decommission();
+        assertEquals("sequence", Arrays.asList(1, 2, 3, 4, 5, 5, 4, 3, 2, 1), sequence);
+    }
+
+    private static class IntStageCommissionException extends RuntimeException {}
+
+    @Test
+    public void testExecute_interrupted() throws Exception {
+        List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
+        LifecycleStack<Integer> stack = LifecycleStack.builder()
+                .addStage(new IntStage(sequence))
+                .addStage(new IntStage(sequence))
+                .addStage(new IntStage(sequence) {
+                    @Override
+                    public Integer commission() {
+                        throw new IntStageCommissionException();
+                    }
+                })
+                .addStage(new IntStage(sequence))
+                .finish(new IntStage(sequence));
+        try {
+            stack.commission();
+            fail("should have thrown LifecycleStackCommissionException");
+        } catch (LifecycleStackCommissionException e) {
+            assertTrue(e.getCause() instanceof IntStageCommissionException);
+        }
+        assertEquals("sequence", Arrays.asList(1, 2, 2, 1), sequence);
+
+    }
 }

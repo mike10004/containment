@@ -115,11 +115,12 @@ public class LifecycleStack<T> implements Lifecycle<T> {
         for (Lifecycle<?> lifecycle : preliminaryStages) {
             try {
                 lifecycle.commission();
-                commissioned.push(lifecycle);
             } catch (Exception e) {
                 thrower = lifecycle;
                 throwable = e;
+                break;
             }
+            commissioned.push(lifecycle);
         }
         if (throwable == null) {
             try {
