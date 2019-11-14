@@ -8,6 +8,7 @@ import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjContainerCreator;
+import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
 import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
@@ -108,7 +109,7 @@ public interface ContainerDependency {
          * managed by a {@link GlobalLifecyclingCachingProvider}, so they use
          * manual container monitors.
          */
-        private static class GlobalContainerCreatorConstructor implements ContainerCreatorConstructor {
+        private class GlobalContainerCreatorConstructor implements ContainerCreatorConstructor {
 
             private final Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor;
 
@@ -119,7 +120,7 @@ public interface ContainerDependency {
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-                DjDockerManager manager = new DefaultDjDockerManager(config, new DjManualContainerMonitor());
+                DjDockerManager manager = new DefaultDjDockerManager(config, createManualContainerMonitor(config));
                 return djConstructor.apply(manager);
             }
         }
@@ -128,7 +129,7 @@ public interface ContainerDependency {
          * Constructor of creators for local containers. Cleanup of these containers is managed
          * by the caller, but a global monitor adds a shutdown hook to clean up ones the caller forgot.
          */
-        private static class LocalContainerCreatorConstructor implements ContainerCreatorConstructor {
+        private class LocalContainerCreatorConstructor implements ContainerCreatorConstructor {
 
             private final Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor;
 
@@ -139,9 +140,17 @@ public interface ContainerDependency {
             @Override
             public ContainerCreator instantiate() throws ContainmentException {
                 DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-                DjDockerManager manager = new DefaultDjDockerManager(config, new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build()));
+                DjDockerManager manager = new DefaultDjDockerManager(config, createShutdownHookContainerMonitor(config));
                 return djConstructor.apply(manager);
             }
+        }
+
+        protected DjContainerMonitor createManualContainerMonitor(DockerClientConfig config) {
+            return new DjManualContainerMonitor();
+        }
+
+        protected DjContainerMonitor createShutdownHookContainerMonitor(DockerClientConfig config) {
+            return new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(config).build());
         }
 
         /**
