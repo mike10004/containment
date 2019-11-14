@@ -6,7 +6,10 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.PortBinding;
+import io.github.mike10004.containment.BindMount;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
@@ -50,9 +53,18 @@ public class DjContainerCreator implements ContainerCreator {
                 .map(ContainerParametry.PortBinding::toSerialForm)
                 .map(PortBinding::parse)
                 .collect(Collectors.toList());
+        List<Mount> mounts = parametry.bindMounts().stream().map(DjContainerCreator::transformMount).collect(Collectors.toList());
         return HostConfig.newHostConfig()
                 .withAutoRemove(!parametry.disableAutoRemoveOnStop())
+                .withMounts(mounts)
                 .withPortBindings(bindings);
+    }
+
+    private static Mount transformMount(BindMount apiMount) {
+        return new Mount().withType(MountType.BIND)
+                .withSource(apiMount.hostDirectory)
+                .withTarget(apiMount.containerDirectory)
+                .withReadOnly(apiMount.permission == BindMount.Permission.READ_ONLY);
     }
 
     /**

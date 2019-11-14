@@ -1,5 +1,6 @@
 package io.github.mike10004.containment;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +40,8 @@ public interface ContainerParametry {
      * @return list of ports
      */
     List<PortBinding> bindablePorts();
+
+    List<BindMount> bindMounts();
 
     interface PortBinding {
 
@@ -118,6 +121,8 @@ public interface ContainerParametry {
 
         private List<PortBinding> bindablePorts = new ArrayList<>();
 
+        private List<BindMount> bindMounts = new ArrayList<>();
+
         private Map<String, String> env = new LinkedHashMap<>();
 
         private Builder(String image) {
@@ -126,6 +131,23 @@ public interface ContainerParametry {
 
         private Builder(ImageSpecifier image) {
             this.image = requireNonNull(image);
+        }
+
+        public Builder mount(BindMount mount) {
+            bindMounts.add(requireNonNull(mount));
+            return this;
+        }
+
+        public Builder bindMount(File hostDirectory, String containerDirectory, BindMount.Permission permission) {
+            return mount(new BindMount(hostDirectory.getAbsolutePath(), containerDirectory, permission));
+        }
+
+        public Builder bindMountReadOnly(File hostDirectory, String containerDirectory) {
+            return bindMount(hostDirectory, containerDirectory, BindMount.Permission.READ_ONLY);
+        }
+
+        public Builder bindMountWriteAndRead(File hostDirectory, String containerDirectory) {
+            return bindMount(hostDirectory, containerDirectory, BindMount.Permission.WRITE_AND_READ);
         }
 
         /**
@@ -279,14 +301,21 @@ public interface ContainerParametry {
             private final CommandType commandType;
             private final List<String> command;
             private final List<PortBinding> exposedPorts;
+            private final List<BindMount> bindMounts;
             private final Map<String, String> env;
 
             private FrozenContainerParametry(Builder builder) {
                 image = builder.image;
                 command = builder.command;
-                exposedPorts = new ArrayList<>(builder.bindablePorts);
-                env = new LinkedHashMap<>(builder.env);
+                exposedPorts = Collections.unmodifiableList(new ArrayList<>(builder.bindablePorts));
+                env = Collections.unmodifiableMap(new LinkedHashMap<>(builder.env));
                 this.commandType = requireNonNull(builder.commandType);
+                bindMounts = Collections.unmodifiableList(new ArrayList<>(requireNonNull(builder.bindMounts)));
+            }
+
+            @Override
+            public List<BindMount> bindMounts() {
+                return bindMounts;
             }
 
             @Override
@@ -321,6 +350,7 @@ public interface ContainerParametry {
                         .add("command=" + command)
                         .add("exposedPorts=" + exposedPorts)
                         .add("env=" + env)
+                        .add("bindMounts=" + bindMounts)
                         .toString();
             }
         }

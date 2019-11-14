@@ -34,6 +34,10 @@ public class Tests {
         return getImageForTest("printenvTest.image", "alpine:3.10.3");
     }
 
+    public static ImageSpecifier getImageForBindMountTest() {
+        return getImageForTest("bindMountTest.image", "alpine:3.10.3");
+    }
+
     public static ImageSpecifier getImageForTest(String identifier, String defaultValue) {
         String value = Settings.get(identifier);
         if (value == null) {

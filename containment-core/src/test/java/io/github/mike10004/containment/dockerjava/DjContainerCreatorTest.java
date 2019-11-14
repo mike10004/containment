@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -59,6 +60,31 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
         }
         assertEquals("process exit code", 0, result.exitCode());
         Tests.assertStdoutHasLine(result, "FOO=bar");
+    }
+
+    @Test
+    public void bindMounts()  throws Exception {
+        File hostDir = tempdir.newFolder();
+        File hostFile = File.createTempFile("hello", ".tmp", hostDir);
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForBindMountTest())
+                .commandToWaitIndefinitely()
+                .bindMountWriteAndRead(hostDir, "/mnt")
+                .build();
+        ContainerSubprocessResult<String> touchResult, lsResult;
+        try (ContainerCreator runner = new DjContainerCreator(dockerManager);
+             StartableContainer runnable = runner.create(parametry)) {
+            try (StartedContainer container = runnable.start()) {
+                ContainerExecutor executor = container.executor();
+                touchResult = executor.execute(UTF_8, "touch", "/mnt/hello.tmp");
+                lsResult = executor.execute(UTF_8, "ls", "-l", "/mnt/" + hostFile.getName());
+            }
+        }
+        System.out.format("touch result: %s%n", touchResult);
+        System.out.format("ls result: %s%n", lsResult);
+        assertEquals("process exit code", 0, touchResult.exitCode());
+        assertEquals("process exit code", 0, lsResult.exitCode());
+        File touchedFile = new File(hostDir, "hello.tmp");
+        assertTrue("touched file exists", touchedFile.isFile());
     }
 
     @Test
