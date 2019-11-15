@@ -10,28 +10,33 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>containment-junit4</artifactId>
+    <profiles>
+        <profile>
+            <id>ctmt-plugin-already-installed</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>${project.groupId}</groupId>
+                        <artifactId>containment-maven-plugin</artifactId>
+                        <version>${project.version}</version>
+                        <executions>
+                            <execution>
+                                <id>ensure-busybox</id>
+                                <phase>process-test-resources</phase>
+                                <goals>
+                                    <goal>require-image</goal>
+                                </goals>
+                                <configuration>
+                                    <imageName>busybox:latest</imageName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>containment-maven-plugin</artifactId>
-                <version>${project.version}</version>
-                <executions>
-                    <execution>
-                        <id>ensure-busybox</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>require-image</goal>
-                        </goals>
-                        <configuration>
-                            <imageName>busybox:latest</imageName>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencies>
         <dependency>
