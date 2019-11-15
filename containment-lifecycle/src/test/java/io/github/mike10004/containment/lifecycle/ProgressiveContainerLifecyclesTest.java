@@ -89,7 +89,7 @@ public class ProgressiveContainerLifecyclesTest {
         }
     }
 
-    private void checkStack(ProgressiveLifecycleStack<StartedContainer> stack, UnitTestContainerMonitor monitor) throws Exception {
+    private void checkStack(Lifecycle<StartedContainer> stack, UnitTestContainerMonitor monitor) throws Exception {
         checkStack(stack, new CheckValidate<StartedContainer>(){
             @Override
             public void assertValid(StartedContainer thing) {
@@ -98,11 +98,11 @@ public class ProgressiveContainerLifecyclesTest {
         }, monitor);
     }
 
-    private <X extends Validatable> void checkStack(ProgressiveLifecycleStack<X> stack, Class<X> expectedClass, UnitTestContainerMonitor monitor) throws Exception {
+    private <X extends Validatable> void checkStack(Lifecycle<X> stack, Class<X> expectedClass, UnitTestContainerMonitor monitor) throws Exception {
         checkStack(stack, CheckValidate.of(expectedClass), monitor);
     }
 
-    private <X> void checkStack(ProgressiveLifecycleStack<X> stack, CheckValidate<X> validator, UnitTestContainerMonitor monitor) throws Exception {
+    private <X> void checkStack(Lifecycle<X> stack, CheckValidate<X> validator, UnitTestContainerMonitor monitor) throws Exception {
         assertNotNull("stack", stack);
         X produced = stack.commission();
         validator.assertValid(produced);
@@ -116,7 +116,7 @@ public class ProgressiveContainerLifecyclesTest {
     @Test
     public void example_1_full() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
-        ProgressiveLifecycleStack<TypeD> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
+        Lifecycle<TypeD> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
                 .startedWith(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .pre((container, a) -> new TypeB(a))
@@ -129,7 +129,7 @@ public class ProgressiveContainerLifecyclesTest {
     @Test
     public void example_2() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
-        ProgressiveLifecycleStack<TypeC> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
+        Lifecycle<TypeC> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
                 .startedWith(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .pre((container, a) -> new TypeB(a))
@@ -168,7 +168,7 @@ public class ProgressiveContainerLifecyclesTest {
     @Test
     public void example_3() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
-        ProgressiveLifecycleStack<TypeB> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
+        Lifecycle<TypeB> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
                 .startedWith(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .pre((container, a) -> new TypeB(a))
@@ -179,7 +179,7 @@ public class ProgressiveContainerLifecyclesTest {
     @Test
     public void example_4() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
-        ProgressiveLifecycleStack<TypeA> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
+        Lifecycle<TypeA> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
                 .startedWith(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .finish();
@@ -189,7 +189,7 @@ public class ProgressiveContainerLifecyclesTest {
     @Test
     public void example_6() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
-        ProgressiveLifecycleStack<TypeA> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
+        Lifecycle<TypeA> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
                 .startedWith(EXAMPLE_PARAMETRY)
                 .post(container -> new TypeA())
                 .finish();
@@ -199,7 +199,7 @@ public class ProgressiveContainerLifecyclesTest {
     @Test
     public void example_5() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
-        ProgressiveLifecycleStack<StartedContainer> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
+        Lifecycle<StartedContainer> stack = ProgressiveContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
                 .startedWith(EXAMPLE_PARAMETRY)
                 .finish();
         checkStack(stack, m);

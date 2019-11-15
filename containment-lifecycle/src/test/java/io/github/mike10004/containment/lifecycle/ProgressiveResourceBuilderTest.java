@@ -33,7 +33,7 @@ public class ProgressiveResourceBuilderTest {
         ContainerParametry parametry = ContainerParametry.builder(Tests.getAlpineImage())
                 .commandToWaitIndefinitely()
                 .build();
-        ProgressiveLifecycleStack<ContainerPlus<String>> stack = ProgressiveContainerLifecycles.buildLocal()
+        Lifecycle<ContainerPlus<String>> stack = ProgressiveContainerLifecycles.buildLocal()
                 .startedWith(parametry)
                 .pre(new ProgressivePreStartContainerAction.IndependentPreStartAction<String>() {
                     @Override

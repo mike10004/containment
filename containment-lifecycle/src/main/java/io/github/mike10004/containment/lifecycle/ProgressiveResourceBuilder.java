@@ -22,7 +22,7 @@ public class ProgressiveResourceBuilder {
      * explicitly to stop and remove the container, if it has been started.
      * @return a new instance
      */
-    public <T> ProgressiveResource<T> buildLocalResource(ProgressiveLifecycleStack<T> stack) {
+    public <T> ProgressiveResource<T> buildLocalResource(Lifecycle<T> stack) {
         return buildResourceFromProvider(new LifecyclingCachingProvider<>(stack, eventListener));
     }
 
@@ -32,7 +32,7 @@ public class ProgressiveResourceBuilder {
      * only happen upon JVM termination.
      * @return a new instance
      */
-    public <T> ProgressiveResource<T> buildGlobalResource(ProgressiveLifecycleStack<T> stack) {
+    public <T> ProgressiveResource<T> buildGlobalResource(Lifecycle<T> stack) {
         return buildResourceFromProvider(new GlobalLifecyclingCachingProvider<>(stack, eventListener));
     }
 

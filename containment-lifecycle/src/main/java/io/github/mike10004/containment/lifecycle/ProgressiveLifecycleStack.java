@@ -79,7 +79,7 @@ public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
          * Builds a progressive lifecycle stack.
          * @return a new progressive lifecycle stack instance
          */
-        public ProgressiveLifecycleStack<U> build() {
+        public Lifecycle<U> toSequence() {
             return new ProgressiveLifecycleStack<>(toSequence(new ArrayList<>()));
         }
 
@@ -109,7 +109,7 @@ public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
                 .toString();
     }
 
-    private void unwind() throws LifecycleStackDecommissionException {
+    private void unwind() throws ProgressiveLifecycleStackDecommissionException {
         Map<LifecycleStage<?, ?>, RuntimeException> exceptionsThrown = new LinkedHashMap<>();
         while (!commissioned.isEmpty()) {
             LifecycleStage<?, ?> lifecycle = commissioned.pop();
@@ -130,10 +130,10 @@ public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
      * those already commissioned are decommissioned before throwing
      * the exception that caused the commissioning failure.
      * @return the final commissioned resource
-     * @throws ProgressiveLifestyleStackCommissionException on error
+     * @throws ProgressiveLifecycleStackCommissionException on error
      */
     @Override
-    public T commission() throws ProgressiveLifestyleStackCommissionException {
+    public T commission() throws ProgressiveLifecycleStackCommissionException {
         LifecycleStage<?, ?> thrower = null;
         Exception throwable = null;
         Object lastCommissioned = null;
@@ -161,9 +161,9 @@ public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
                 unwindException = e;
             }
             if (unwindException == null) {
-                throw new ProgressiveLifestyleStackCommissionException(throwable);
+                throw new ProgressiveLifecycleStackCommissionException(throwable);
             } else {
-                throw new ProgressiveLifestyleStackCommissionUnwindException(thrower, throwable, unwindException);
+                throw new ProgressiveLifecycleStackCommissionUnwindException(thrower, throwable, unwindException);
             }
         }
     }

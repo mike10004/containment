@@ -150,7 +150,7 @@ public class ProgressiveContainerLifecycles {
     }
 
     public interface FinishableLifecycleBuilder<P> {
-        ProgressiveLifecycleStack<P> finish();
+        Lifecycle<P> finish();
     }
 
     public interface ProgressiveContainerLifecycleBuilder {
@@ -236,8 +236,8 @@ public class ProgressiveContainerLifecycles {
         }
 
         @Override
-        public ProgressiveLifecycleStack<StartedContainer> finish() {
-            return stacker.andThen(new SimpleStartedContainerStage()).build();
+        public Lifecycle<StartedContainer> finish() {
+            return stacker.andThen(new SimpleStartedContainerStage()).toSequence();
         }
 
         @Override
@@ -265,9 +265,9 @@ public class ProgressiveContainerLifecycles {
         }
 
         @Override
-        public ProgressiveLifecycleStack<T> finish() {
+        public Lifecycle<T> finish() {
             return stacker.andThen(transitionPreToPost())
-                          .andThen(transitionFinishing()).build();
+                          .andThen(transitionFinishing()).toSequence();
         }
 
         @Override
@@ -290,8 +290,8 @@ public class ProgressiveContainerLifecycles {
         }
 
         @Override
-        public ProgressiveLifecycleStack<T> finish() {
-            return stacker.andThen(BuilderBase.transitionFinishing()).build();
+        public Lifecycle<T> finish() {
+            return stacker.andThen(BuilderBase.transitionFinishing()).toSequence();
         }
 
         @Override

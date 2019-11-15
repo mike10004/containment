@@ -16,7 +16,15 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-public class LifecycleStackTest {
+public class SimpleLifecycleStackBuilderTest {
+
+    private static Lifecycle<Widget> createStack(List<WidgetLifecycle> others, WidgetLifecycle finalStage) {
+        SimpleLifecycleStackBuilder b = SimpleLifecycleStackBuilder.create();
+        for (WidgetLifecycle lifecycle : others) {
+            b = b.addStage(lifecycle);
+        }
+        return b.finish(finalStage);
+    }
 
     @Test
     public void gardenPath() throws Exception {
@@ -24,7 +32,7 @@ public class LifecycleStackTest {
         WidgetLifecycle first = new WidgetLifecycle(tracker), second = new WidgetLifecycle(tracker);
         List<WidgetLifecycle> others = Arrays.asList(first, second);
         WidgetLifecycle third = new WidgetLifecycle(tracker);
-        LifecycleStack<Widget> stack = new LifecycleStack<>(others, third);
+        Lifecycle<Widget> stack = createStack(others, third);
         Widget topWidget = stack.commission();
         assertNotNull(topWidget);
         stack.decommission();
@@ -42,16 +50,16 @@ public class LifecycleStackTest {
         WidgetLifecycle first = new WidgetLifecycle(tracker), second = new ErrorOnDecommission(tracker);
         List<WidgetLifecycle> others = Arrays.asList(first, second);
         WidgetLifecycle third = new ErrorOnCommission(tracker);
-        LifecycleStack<Widget> stack = new LifecycleStack<>(others, third);
+        Lifecycle<Widget> stack = createStack(others, third);
         try {
             stack.commission();
             fail("should have excepted");
-        } catch (LifecycleStackCommissionUnwindException e) {
-            assertEquals(third, e.commissionExceptionThrower);
-            assertTrue(e.commissionException.getClass() == TestCommissionException.class);
+        } catch (ProgressiveLifecycleStackCommissionUnwindException e) {
+            assertTrue(e.commissionExceptionThrower.isEquivalent(third));
+            assertSame(e.commissionException.getClass(), TestCommissionException.class);
             assertEquals(1, e.unwindException.exceptionsThrown.size());
-            Map.Entry<Lifecycle<?>, RuntimeException> entry = e.unwindException.exceptionsThrown.entrySet().iterator().next();
-            assertEquals(entry.getKey(), second);
+            Map.Entry<LifecycleStage<?, ?>, RuntimeException> entry = e.unwindException.exceptionsThrown.entrySet().iterator().next();
+            assertTrue(entry.getKey().isEquivalent(second));
             assertEquals(entry.getValue().getClass(), TestRuntimeDecommissionException.class);
         }
         assertEquals(1, first.commissioned);
@@ -68,11 +76,11 @@ public class LifecycleStackTest {
         WidgetLifecycle first = new WidgetLifecycle(tracker), second = new WidgetLifecycle(tracker);
         List<WidgetLifecycle> others = Arrays.asList(first, second);
         WidgetLifecycle third = new ErrorOnCommission(tracker);
-        LifecycleStack<Widget> stack = new LifecycleStack<>(others, third);
+        Lifecycle<Widget> stack = createStack(others, third);
         try {
             stack.commission();
             fail("should have excepted");
-        } catch (LifecycleStackCommissionException e) {
+        } catch (ProgressiveLifecycleStackCommissionException e) {
             assertTrue(e.getCause() instanceof TestCommissionException);
         }
         assertEquals(1, first.commissioned);
@@ -89,11 +97,11 @@ public class LifecycleStackTest {
         WidgetLifecycle first = new ErrorOnCommission(tracker);
         List<WidgetLifecycle> others = Arrays.asList(first);
         WidgetLifecycle top = new WidgetLifecycle(tracker);
-        LifecycleStack<Widget> stack = new LifecycleStack<>(others, top);
+        Lifecycle<Widget> stack = createStack(others, top);
         try {
             stack.commission();
             fail("should have thrown commissionexception");
-        } catch (LifecycleStackCommissionException e) {
+        } catch (ProgressiveLifecycleStackCommissionException e) {
             assertTrue(e.getCause() instanceof TestCommissionException);
         }
         assertEquals(0, first.commissioned);
@@ -108,14 +116,14 @@ public class LifecycleStackTest {
         WidgetLifecycle first = new WidgetLifecycle(tracker), second = new WidgetLifecycle(tracker);
         List<WidgetLifecycle> others = Arrays.asList(first, second);
         WidgetLifecycle third = new ErrorOnDecommission(tracker);
-        LifecycleStack<Widget> stack = new LifecycleStack<>(others, third);
+        Lifecycle<Widget> stack = createStack(others, third);
         stack.commission();
         try {
             stack.decommission();
-        } catch (LifecycleStackDecommissionException e) {
+        } catch (ProgressiveLifecycleStackDecommissionException e) {
             assertEquals(1, e.exceptionsThrown.size());
-            Map.Entry<Lifecycle<?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
-            assertSame(third, entry.getKey());
+            Map.Entry<LifecycleStage<?, ?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
+            assertTrue(entry.getKey().isEquivalent(third));
             assertSame(TestRuntimeDecommissionException.class, entry.getValue().getClass());
         }
         assertEquals(1, first.commissioned);
@@ -222,9 +230,9 @@ public class LifecycleStackTest {
     }
 
     @Test
-    public void testExecute() throws Exception {
+    public void testExecute_long() throws Exception {
         List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
-        LifecycleStack<Integer> stack = LifecycleStack.builder()
+        Lifecycle<Integer> stack = SimpleLifecycleStackBuilder.create()
                 .addStage(new IntStage(sequence))
                 .addStage(new IntStage(sequence))
                 .addStage(new IntStage(sequence))
@@ -237,12 +245,37 @@ public class LifecycleStackTest {
         assertEquals("sequence", Arrays.asList(1, 2, 3, 4, 5, 5, 4, 3, 2, 1), sequence);
     }
 
+    @Test
+    public void testExecute_twoStages() throws Exception {
+        List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
+        Lifecycle<Integer> stack = SimpleLifecycleStackBuilder.create()
+                .addStage(new IntStage(sequence))
+                .finish(new IntStage(sequence));
+        Integer commissioned = stack.commission();
+        assertEquals("commissioned", 2, commissioned.intValue());
+        assertEquals("sequence", Arrays.asList(1, 2), sequence);
+        stack.decommission();
+        assertEquals("sequence", Arrays.asList(1, 2, 2, 1), sequence);
+    }
+
+    @Test
+    public void testExecute_one() throws Exception {
+        List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
+        Lifecycle<Integer> stack = SimpleLifecycleStackBuilder.create()
+                .finish(new IntStage(sequence));
+        Integer commissioned = stack.commission();
+        assertEquals("commissioned", 1, commissioned.intValue());
+        assertEquals("sequence", Arrays.asList(1), sequence);
+        stack.decommission();
+        assertEquals("sequence", Arrays.asList(1, 1), sequence);
+    }
+
     private static class IntStageCommissionException extends RuntimeException {}
 
     @Test
     public void testExecute_interrupted() throws Exception {
         List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
-        LifecycleStack<Integer> stack = LifecycleStack.builder()
+        Lifecycle<Integer> stack = SimpleLifecycleStackBuilder.create()
                 .addStage(new IntStage(sequence))
                 .addStage(new IntStage(sequence))
                 .addStage(new IntStage(sequence) {
@@ -256,7 +289,7 @@ public class LifecycleStackTest {
         try {
             stack.commission();
             fail("should have thrown LifecycleStackCommissionException");
-        } catch (LifecycleStackCommissionException e) {
+        } catch (ProgressiveLifecycleStackCommissionException e) {
             assertTrue(e.getCause() instanceof IntStageCommissionException);
         }
         assertEquals("sequence", Arrays.asList(1, 2, 2, 1), sequence);

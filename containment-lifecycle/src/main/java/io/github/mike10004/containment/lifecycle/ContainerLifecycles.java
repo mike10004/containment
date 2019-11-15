@@ -223,7 +223,7 @@ public class ContainerLifecycles {
             return container;
         });
         Lifecycle<StartedContainer> postStartActionsLifecycle = new PostStartActionExecutor(runningRef::get, postStartActions);
-        return LifecycleStack.builder()
+        return SimpleLifecycleStackBuilder.create()
                 .addStage(runnerLifecycle)
                 .addStage(runnableLifecycle)
                 .addStage(preStartActionLifecycle)
