@@ -45,9 +45,9 @@ public class ProgressiveResourceBuilderTest {
                 .post((container, input) -> input + "D")
                 .post(ContainerPlus::new)
                 .finish();
-        ProgressiveResource<ContainerPlus<String>> dependency = new ProgressiveDependencyBuilder()
+        ProgressiveResource<ContainerPlus<String>> dependency = new ProgressiveResourceBuilder()
                 .eventListener(events::add)
-                .buildLocalDependency(stack);
+                .buildLocalResource(stack);
         ContainerPlus<String> containerPlus = dependency.container();
         try {
             StartedContainer container = containerPlus.container;

@@ -42,7 +42,7 @@ public class ContainerResourceBuilderTest {
                 }).addPostStartAction(container -> {
                     container.executor().execute("touch", "/tmp/file2.tmp");
                 }).eventListener(events::add)
-                .buildLocalDependency();
+                .buildLocalResource();
         StartedContainer container = dependency.container();
         try {
             ContainerSubprocessResult<String> result1 = container.executor().execute("ls", "-l", expectedFile1Pathname);

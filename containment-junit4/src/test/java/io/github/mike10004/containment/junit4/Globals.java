@@ -18,5 +18,5 @@ class Globals {
     public static final ContainerResource GLOBAL_BUSYBOX_RULE = ContainerResource
             .builder(busyboxParametry())
             .eventListener(GLOBAL_BUSYBOX_RULE_COLLECTOR)
-            .buildGlobalDependency();
+            .buildGlobalResource();
 }

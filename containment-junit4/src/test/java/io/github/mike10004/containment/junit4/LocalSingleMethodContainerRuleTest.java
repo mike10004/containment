@@ -27,7 +27,7 @@ public class LocalSingleMethodContainerRuleTest {
 
     public LocalSingleMethodContainerRuleTest() {
         listener = new EventCollector();
-        containerRule = new ContainerDependencyRule(ContainerResource.builder(parametry()).eventListener(this.listener).buildLocalDependency());
+        containerRule = new ContainerDependencyRule(ContainerResource.builder(parametry()).eventListener(this.listener).buildLocalResource());
         TestRule eventCheckRule = new ExternalResource() {
 
             @Override

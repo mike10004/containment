@@ -1,18 +1,9 @@
 package io.github.mike10004.containment.lifecycle;
 
-import com.github.dockerjava.core.DockerClientConfig;
-import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.StartedContainer;
-import io.github.mike10004.containment.dockerjava.DjContainerCreator;
-import io.github.mike10004.containment.dockerjava.DjContainerMonitor;
-import io.github.mike10004.containment.dockerjava.DjDockerManager;
-import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
-import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
-import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
@@ -65,8 +56,8 @@ public abstract class ContainerResourceBuilder {
      * explicitly to stop and remove the container, if it has been started.
      * @return a new instance
      */
-    public ContainerResource buildLocalDependency() {
-        return buildDependencyFromProvider(new LifecyclingCachingProvider<>(lifecycleBuilder.build(buildLocalContainerCreatorConstructor()), eventListener));
+    public ContainerResource buildLocalResource() {
+        return buildResourceFromProvider(new LifecyclingCachingProvider<>(lifecycleBuilder.build(buildLocalContainerCreatorConstructor()), eventListener));
     }
 
     /**
@@ -75,19 +66,18 @@ public abstract class ContainerResourceBuilder {
      * only happen upon JVM termination.
      * @return a new instance
      */
-    public ContainerResource buildGlobalDependency() {
+    public ContainerResource buildGlobalResource() {
 
-        return buildDependencyFromProvider(new GlobalLifecyclingCachingProvider<>(
+        return buildResourceFromProvider(new GlobalLifecyclingCachingProvider<>(
                 lifecycleBuilder.build(
                         buildGlobalContainerCreatorConstructor()), eventListener));
     }
 
     protected abstract ContainerCreatorConstructor buildGlobalContainerCreatorConstructor();
+
     protected abstract ContainerCreatorConstructor buildLocalContainerCreatorConstructor();
 
-
-
-    private ContainerResource buildDependencyFromProvider(LifecyclingCachingProvider<StartedContainer> provider) {
+    private ContainerResource buildResourceFromProvider(LifecyclingCachingProvider<StartedContainer> provider) {
         return ContainerResource.fromProvider(provider);
     }
 

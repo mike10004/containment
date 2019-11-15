@@ -27,7 +27,7 @@ public class LocalClassContainerRuleTest {
     static {
         listener = new EventCollector();
         containerRule = new ContainerDependencyRule(ContainerResource.builder(parametry())
-                .eventListener(listener).buildLocalDependency());
+                .eventListener(listener).buildLocalResource());
         TestRule eventCheckRule = new ExternalResource() {
 
             @Override

@@ -24,7 +24,7 @@ public interface ProgressiveResource<T> {
         return new CacheableProgressiveResource<>(containerProvider);
     }
 
-    static ProgressiveDependencyBuilder builder() {
-        return new ProgressiveDependencyBuilder();
+    static ProgressiveResourceBuilder builder() {
+        return new ProgressiveResourceBuilder();
     }
 }
