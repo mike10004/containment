@@ -85,10 +85,14 @@ public class ContainerLifecycles {
 
     private static class ContainerPreStartStage<U, V> implements LifecycleStage<PreStartResult<U>, PreStartResult<V>> {
 
-        private final ProgressivePreStartContainerAction<U, V> innerStage;
+        private final ContainerPreStartAction<U, V> innerStage;
 
-        private ContainerPreStartStage(ProgressivePreStartContainerAction<U, V> innerStage) {
+        public ContainerPreStartStage(ContainerPreStartAction<U, V> innerStage) {
             this.innerStage = requireNonNull(innerStage);
+        }
+
+        public ContainerPreStartStage(ContainerInitialPreStartAction<V> innerStage) {
+            this((container, requirement) -> innerStage.perform(container));
         }
 
         @Override
@@ -111,10 +115,14 @@ public class ContainerLifecycles {
 
     private static class ContainerPostStartStage<U, V> implements LifecycleStage<PostStartResult<U>, PostStartResult<V>> {
 
-        private final ProgressivePostStartContainerAction<U, V> action;
+        private final ContainerPostStartAction<U, V> action;
 
-        private ContainerPostStartStage(ProgressivePostStartContainerAction<U, V> action) {
+        public ContainerPostStartStage(ContainerPostStartAction<U, V> action) {
             this.action = action;
+        }
+
+        public ContainerPostStartStage(ContainerInitialPostStartAction<V> action) {
+            this((container, requirement) -> action.perform(container));
         }
 
         @Override
@@ -131,54 +139,74 @@ public class ContainerLifecycles {
 
     /**
      * Creates a new builder of container lifecycle instances.
-     * @param constructor constructor of the {@link ContainerCreator} instance
-     * @param parametry container creation parameters
+     * @param ctor constructor of the {@link ContainerCreator} instance
      * @return a new builder
      */
-    public static ProgressiveContainerLifecycleBuilder builder(ContainerCreatorConstructor ctor) {
-        return new ProgressiveContainerLifecycleBuilderImpl(ctor);
+    public static PreCreate builder(ContainerCreatorConstructor ctor) {
+        return new PreCreateImpl(ctor);
     }
 
-    public static ProgressiveContainerLifecycleBuilder buildGlobal() {
+    public static PreCreate buildGlobal() {
         ContainerCreatorConstructor ctor = new GlobalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
-        return new ProgressiveContainerLifecycleBuilderImpl(ctor);
+        return new PreCreateImpl(ctor);
     }
 
-    public static ProgressiveContainerLifecycleBuilder buildLocal() {
+    public static PreCreate buildLocal() {
         ContainerCreatorConstructor ctor = new LocalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(clientConfig).build()));
-        return new ProgressiveContainerLifecycleBuilderImpl(ctor);
+        return new PreCreateImpl(ctor);
     }
 
-    public interface FinishableLifecycleBuilder<P> {
+    /**
+     * Parent interface for services that can produce complete lifecycle instances.
+     * @param <P> resource type
+     */
+    public interface LifecycleFinisher<P> {
         Lifecycle<P> finish();
     }
 
-    public interface ProgressiveContainerLifecycleBuilder {
-        IndependentContainerActionAccumulator startedWith(ContainerParametry containerParametry);
+    /**
+     * Interface of a service that allows definition of container parametry
+     * when building a container lifecycle.
+     */
+    public interface PreCreate {
+        PreStartInitial creating(ContainerParametry containerParametry);
     }
 
-    public interface IndependentContainerActionAccumulator extends FinishableLifecycleBuilder<StartedContainer> {
-
-        <P> ContainerActionAccumulator<P> pre(ProgressivePreStartContainerAction.IndependentPreStartAction<P> stage);
-        <P> PostStartActionAccumulator<P> post(ProgressivePostStartContainerAction.IndependentPostStartAction<P> stage);
+    /**
+     * Interface of a service that supports defining actions that can be defined
+     * in the pre-start stage before any other actions have been defined.
+     */
+    public interface PreStartInitial extends LifecycleFinisher<StartedContainer> {
+        <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> stage);
+        <P> PostStart<P> post(ContainerInitialPostStartAction<P> stage);
     }
 
-    public interface ContainerActionAccumulator<P> extends FinishableLifecycleBuilder<P>, PostStartActionAccumulator<P> {
-        <Q> ContainerActionAccumulator<Q> pre(ProgressivePreStartContainerAction<P, Q> stage);
+    /**
+     * Interface of a service that supports defining actions that can be defined
+     * in the pre-start stage
+     * @param <P> resource type produced if lifecycle were finished now
+     */
+    public interface PreStartSubsequent<P> extends LifecycleFinisher<P> {
+        <Q> PreStartSubsequent<Q> pre(ContainerPreStartAction<P, Q> stage);
+        <Q> PostStart<Q> post(ContainerPostStartAction<P, Q> stage);
     }
 
-    public interface PostStartActionAccumulator<P> extends FinishableLifecycleBuilder<P> { // post
-        <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<P, Q> stage);
+    /**
+     * Interface of a service that supports defining post-start actions.
+     * @param <P> resource type produced if lifecycle were finished now
+     */
+    public interface PostStart<P> extends LifecycleFinisher<P> { // post
+        <Q> PostStart<Q> post(ContainerPostStartAction<P, Q> stage);
     }
 
-    private static class ProgressiveContainerLifecycleBuilderImpl extends BuilderBase<ContainerCreator> implements ProgressiveContainerLifecycleBuilder {
+    private static class PreCreateImpl extends BuilderBase<ContainerCreator> implements PreCreate {
 
-        public ProgressiveContainerLifecycleBuilderImpl(ContainerCreatorConstructor ctor) {
+        public PreCreateImpl(ContainerCreatorConstructor ctor) {
             super(LifecycleStack.startingAt(new ContainerCreatorStage(ctor::instantiate)));
         }
 
         @Override
-        public IndependentContainerActionAccumulator startedWith(ContainerParametry containerParametry) {
+        public PreStartInitial creating(ContainerParametry containerParametry) {
             return new Builder2Impl(stacker.andThen(new StartableContainerStage(containerParametry)));
         }
     }
@@ -230,7 +258,7 @@ public class ContainerLifecycles {
         }
     }
 
-    private static class Builder2Impl extends BuilderBase<StartableContainer> implements IndependentContainerActionAccumulator {
+    private static class Builder2Impl extends BuilderBase<StartableContainer> implements PreStartInitial {
 
         public Builder2Impl(LifecycleStack.Stacker<StartableContainer> stacker) {
             super(stacker);
@@ -242,7 +270,7 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public <P> ContainerActionAccumulator<P> pre(ProgressivePreStartContainerAction.IndependentPreStartAction<P> stage) {
+        public <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> stage) {
             LifecycleStack.Stacker<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
             LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(stage);
             LifecycleStack.Stacker<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
@@ -250,7 +278,7 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public <P> PostStartActionAccumulator<P> post(ProgressivePostStartContainerAction.IndependentPostStartAction<P> stage) {
+        public <P> PostStart<P> post(ContainerInitialPostStartAction<P> stage) {
             return new Builder4Impl<>(stacker
                 .andThen(transitionStartableToPre())
                 .andThen(transitionPreToPost())
@@ -259,7 +287,7 @@ public class ContainerLifecycles {
         }
     }
 
-    private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements ContainerActionAccumulator<T> {
+    private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements PreStartSubsequent<T> {
 
         public Builder3Impl(LifecycleStack.Stacker<PreStartResult<T>> stacker) {
             super(stacker);
@@ -272,19 +300,19 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public <Q> ContainerActionAccumulator<Q> pre(ProgressivePreStartContainerAction<T, Q> stage) {
+        public <Q> PreStartSubsequent<Q> pre(ContainerPreStartAction<T, Q> stage) {
             return new Builder3Impl<>(stacker.andThen(new ContainerPreStartStage<>(stage)));
         }
 
         @Override
-        public <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<T, Q> stage) {
+        public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> stage) {
             return new Builder4Impl<>(stacker
                     .andThen(transitionPreToPost())
                     .andThen(new ContainerPostStartStage<>(stage)));
         }
     }
 
-    private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStartActionAccumulator<T> {
+    private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStart<T> {
 
         public Builder4Impl(LifecycleStack.Stacker<PostStartResult<T>> b) {
             super(b);
@@ -296,7 +324,7 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<T, Q> stage) {
+        public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> stage) {
             return new Builder4Impl<>(stacker.andThen(new ContainerPostStartStage<>(stage)));
         }
     }

@@ -4,14 +4,14 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
-public class ProgressiveResourceBuilder {
+public class LifecycledResourceBuilder {
 
     private Consumer<? super LifecycleEvent> eventListener = LifecycleEvent.inactiveConsumer();
 
-    protected ProgressiveResourceBuilder() {
+    protected LifecycledResourceBuilder() {
     }
 
-    public ProgressiveResourceBuilder eventListener(Consumer<? super LifecycleEvent> eventListener) {
+    public LifecycledResourceBuilder eventListener(Consumer<? super LifecycleEvent> eventListener) {
         this.eventListener = requireNonNull(eventListener);
         return this;
     }
@@ -22,7 +22,7 @@ public class ProgressiveResourceBuilder {
      * explicitly to stop and remove the container, if it has been started.
      * @return a new instance
      */
-    public <T> ProgressiveResource<T> buildLocalResource(Lifecycle<T> stack) {
+    public <T> LifecycledResource<T> buildLocalResource(Lifecycle<T> stack) {
         return buildResourceFromProvider(new LifecyclingCachingProvider<>(stack, eventListener));
     }
 
@@ -32,12 +32,12 @@ public class ProgressiveResourceBuilder {
      * only happen upon JVM termination.
      * @return a new instance
      */
-    public <T> ProgressiveResource<T> buildGlobalResource(Lifecycle<T> stack) {
+    public <T> LifecycledResource<T> buildGlobalResource(Lifecycle<T> stack) {
         return buildResourceFromProvider(new GlobalLifecyclingCachingProvider<>(stack, eventListener));
     }
 
-    private <T> ProgressiveResource<T> buildResourceFromProvider(LifecyclingCachingProvider<T> provider) {
-        return ProgressiveResource.fromProvider(provider);
+    private <T> LifecycledResource<T> buildResourceFromProvider(LifecyclingCachingProvider<T> provider) {
+        return LifecycledResource.fromProvider(provider);
     }
 
 }

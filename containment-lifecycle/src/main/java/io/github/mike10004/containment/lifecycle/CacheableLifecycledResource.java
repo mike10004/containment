@@ -1,16 +1,14 @@
 package io.github.mike10004.containment.lifecycle;
 
-import io.github.mike10004.containment.StartedContainer;
-
 import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
-class CacheableProgressiveResource<T> implements ProgressiveResource<T> {
+class CacheableLifecycledResource<T> implements LifecycledResource<T> {
 
     private final LifecyclingCachingProvider<T> containerProvider;
 
-    public CacheableProgressiveResource(LifecyclingCachingProvider<T> containerProvider) {
+    public CacheableLifecycledResource(LifecyclingCachingProvider<T> containerProvider) {
         this.containerProvider = requireNonNull(containerProvider, "containerProvider");
     }
 

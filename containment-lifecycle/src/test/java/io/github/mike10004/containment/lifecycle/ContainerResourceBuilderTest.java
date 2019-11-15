@@ -1,16 +1,13 @@
 package io.github.mike10004.containment.lifecycle;
 
-import io.github.mike10004.containment.ActionableContainer;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
-import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.StartedContainer;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -34,11 +31,11 @@ public class ContainerResourceBuilderTest {
         File preStartActionFile = File.createTempFile("ContainerDependencyBuilderTest", ".tmp", temporaryFolder.getRoot());
         String expectedFile1Pathname = "/tmp/" + preStartActionFile.getName();
         Lifecycle<StartedContainer> stack = ContainerLifecycles.buildLocal()
-                .startedWith(parametry)
+                .creating(parametry)
                 .pre(container -> {
                     container.copier().copyToContainer(preStartActionFile, "/tmp/");
                     return (Void) null;
-                }).post(new ProgressivePostStartContainerAction<Void, StartedContainer>() {
+                }).post(new ContainerPostStartAction<Void, StartedContainer>() {
                     @Override
                     public StartedContainer perform(StartedContainer container, Void requirement) throws Exception {
                         container.executor().execute("touch", "/tmp/file2.tmp");
@@ -46,7 +43,7 @@ public class ContainerResourceBuilderTest {
                     }
                 })
                 .finish();
-        ProgressiveResource<StartedContainer> dependency = ProgressiveResource.builder()
+        LifecycledResource<StartedContainer> dependency = LifecycledResource.builder()
                 .eventListener(events::add)
                 .buildLocalResource(stack);
         StartedContainer container = dependency.container();

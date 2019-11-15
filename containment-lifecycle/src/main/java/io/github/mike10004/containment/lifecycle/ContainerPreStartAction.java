@@ -1,20 +1,18 @@
 package io.github.mike10004.containment.lifecycle;
 
 import io.github.mike10004.containment.ActionableContainer;
-import io.github.mike10004.containment.ContainerInfo;
-import io.github.mike10004.containment.ContainmentException;
 
 /**
  * Interface of an action that targets a container. The container
  * may not be started when the action is performed.
  */
-public interface ContainerAction {
+public interface ContainerPreStartAction<R, P> {
 
     /**
      * Performs the action. Note that the container may not be started.
      * @param container container info
-     * @throws ContainmentException on error
+     * @throws Exception on error
      */
-    void perform(ActionableContainer container) throws ContainmentException;
+    P perform(ActionableContainer container, R requirement) throws Exception;
 
 }

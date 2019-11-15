@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
-public class ProgressiveResourceBuilderTest {
+public class LifecycledResourceBuilderTest {
 
     private static class ContainerPlus<T> {
         public final StartedContainer container;
@@ -34,8 +34,8 @@ public class ProgressiveResourceBuilderTest {
                 .commandToWaitIndefinitely()
                 .build();
         Lifecycle<ContainerPlus<String>> stack = ContainerLifecycles.buildLocal()
-                .startedWith(parametry)
-                .pre(new ProgressivePreStartContainerAction.IndependentPreStartAction<String>() {
+                .creating(parametry)
+                .pre(new ContainerInitialPreStartAction<String>() {
                     @Override
                     public String perform(ActionableContainer container) throws Exception {
                         return "A";
@@ -45,7 +45,7 @@ public class ProgressiveResourceBuilderTest {
                 .post((container, input) -> input + "D")
                 .post(ContainerPlus::new)
                 .finish();
-        ProgressiveResource<ContainerPlus<String>> dependency = new ProgressiveResourceBuilder()
+        LifecycledResource<ContainerPlus<String>> dependency = new LifecycledResourceBuilder()
                 .eventListener(events::add)
                 .buildLocalResource(stack);
         ContainerPlus<String> containerPlus = dependency.container();

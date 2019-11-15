@@ -127,7 +127,7 @@ public class ContainerLifecyclesTest {
     public void example_1_full() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
         Lifecycle<TypeD> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
-                .startedWith(EXAMPLE_PARAMETRY)
+                .creating(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .pre((container, a) -> new TypeB(a))
                 .post((container, b) -> new TypeC(b))
@@ -140,7 +140,7 @@ public class ContainerLifecyclesTest {
     public void example_2() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
         Lifecycle<TypeC> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
-                .startedWith(EXAMPLE_PARAMETRY)
+                .creating(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .pre((container, a) -> new TypeB(a))
                 .post((container, b) -> new TypeC(b))
@@ -179,7 +179,7 @@ public class ContainerLifecyclesTest {
     public void example_3() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
         Lifecycle<TypeB> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
-                .startedWith(EXAMPLE_PARAMETRY)
+                .creating(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .pre((container, a) -> new TypeB(a))
                 .finish();
@@ -190,7 +190,7 @@ public class ContainerLifecyclesTest {
     public void example_4() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
         Lifecycle<TypeA> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
-                .startedWith(EXAMPLE_PARAMETRY)
+                .creating(EXAMPLE_PARAMETRY)
                 .pre(container -> new TypeA())
                 .finish();
         checkStack(stack, TypeA.class, m);
@@ -200,7 +200,7 @@ public class ContainerLifecyclesTest {
     public void example_6() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
         Lifecycle<TypeA> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
-                .startedWith(EXAMPLE_PARAMETRY)
+                .creating(EXAMPLE_PARAMETRY)
                 .post(container -> new TypeA())
                 .finish();
         checkStack(stack, TypeA.class, m);
@@ -210,7 +210,7 @@ public class ContainerLifecyclesTest {
     public void example_5() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
         Lifecycle<StartedContainer> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
-                .startedWith(EXAMPLE_PARAMETRY)
+                .creating(EXAMPLE_PARAMETRY)
                 .finish();
         checkStack(stack, m);
     }
@@ -226,7 +226,7 @@ public class ContainerLifecyclesTest {
                 .build();
         ContainerCreatorConstructor ctor = () -> new DjContainerCreator(dockerManager);
         Lifecycle<StartedContainer> lifecycle = ContainerLifecycles.builder(ctor)
-                .startedWith(parametry)
+                .creating(parametry)
                 .finish();
         StartedContainer container = lifecycle.commission();
         ContainerSubprocessResult<String> result;
