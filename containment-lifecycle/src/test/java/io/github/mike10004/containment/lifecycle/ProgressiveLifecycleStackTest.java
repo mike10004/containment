@@ -19,9 +19,9 @@ public class ProgressiveLifecycleStackTest {
         LifecycleStage<Void, TypeA> stage1 = stage(x -> new TypeA());
         LifecycleStage<TypeA, TypeB> stage2 = stage(x -> new TypeB());
         LifecycleStage<TypeB, TypeC> stage3 = stage(x -> new TypeC());
-        ProgressiveLifecycleStack<TypeC> stack = ProgressiveLifecycleStack.<TypeA>builder(stage1)
-                .addStage(stage2)
-                .addStage(stage3)
+        ProgressiveLifecycleStack<TypeC> stack = ProgressiveLifecycleStack.<TypeA>startingAt(stage1)
+                .andThen(stage2)
+                .andThen(stage3)
                 .build();
         assertEquals("stage sequence", Arrays.asList(stage1, stage2, stage3), stack.getStages());
     }
@@ -84,12 +84,12 @@ public class ProgressiveLifecycleStackTest {
     @Test
     public void testExecute() throws Exception {
         List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
-        ProgressiveLifecycleStack<Integer> stack = ProgressiveLifecycleStack.builder(new FirstIntStage())
-                .addStage(new IntStage(sequence))
-                .addStage(new IntStage(sequence))
-                .addStage(new IntStage(sequence))
-                .addStage(new IntStage(sequence))
-                .addStage(new IntStage(sequence))
+        ProgressiveLifecycleStack<Integer> stack = ProgressiveLifecycleStack.startingAt(new FirstIntStage())
+                .andThen(new IntStage(sequence))
+                .andThen(new IntStage(sequence))
+                .andThen(new IntStage(sequence))
+                .andThen(new IntStage(sequence))
+                .andThen(new IntStage(sequence))
                 .build();
         Integer commissioned = stack.commission();
         assertEquals("commissioned", 5, commissioned.intValue());
@@ -103,17 +103,17 @@ public class ProgressiveLifecycleStackTest {
     @Test
     public void testExecute_interrupted() throws Exception {
         List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
-        ProgressiveLifecycleStack<Integer> stack = ProgressiveLifecycleStack.builder(new FirstIntStage())
-                .addStage(new IntStage(sequence))
-                .addStage(new IntStage(sequence))
-                .addStage(new IntStage(sequence) {
+        ProgressiveLifecycleStack<Integer> stack = ProgressiveLifecycleStack.startingAt(new FirstIntStage())
+                .andThen(new IntStage(sequence))
+                .andThen(new IntStage(sequence))
+                .andThen(new IntStage(sequence) {
                     @Override
                     public Integer commission(Integer requirement) {
                         throw new IntStageCommissionException();
                     }
                 })
-                .addStage(new IntStage(sequence))
-                .addStage(new IntStage(sequence))
+                .andThen(new IntStage(sequence))
+                .andThen(new IntStage(sequence))
                 .build();
         try {
             stack.commission();

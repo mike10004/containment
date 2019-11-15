@@ -40,57 +40,56 @@ public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
     }
 
     /**
-     * Creates a new lifecycle stack builder.
+     * Creates a new lifecycle stacker.
      * @return new builder
      */
-    public static <T> Builder<T> builder(Lifecycle<T> firstStage) {
-        return new Builder<>(LifecycleStage.independent(firstStage));
+    public static <T> Stacker<T> startingAt(Lifecycle<T> firstStage) {
+        return new Stacker<>(LifecycleStage.independent(firstStage));
     }
 
     /**
      * Creates a new lifecycle stack builder.
      * @return new builder
      */
-    public static <T> Builder<T> builder(LifecycleStage<Void, T> firstStage) {
-        return new Builder<>(firstStage);
+    public static <T> Stacker<T> startingAt(LifecycleStage<Void, T> firstStage) {
+        return new Stacker<>(firstStage);
     }
 
     /**
-     * Builder of lifecycle stacks.
+     * Progressive lifecycle stage stacker. A stacker instance is an element of a
+     * linked list rooted at the first stage.
      */
-    public static class Builder<U> {
+    public static class Stacker<U> {
 
-        private final Builder<?> parent;
+        private final Stacker<?> parent;
         private final LifecycleStage<?, ?> content;
 
-        protected Builder(Builder<?> parent, LifecycleStage<?, ?> content) {
+        protected Stacker(Stacker<?> parent, LifecycleStage<?, ?> content) {
             this.parent = requireNonNull(parent);
             this.content = requireNonNull(content);
         }
 
         // root
-        protected Builder(LifecycleStage<?, ?> content) {
+        protected Stacker(LifecycleStage<?, ?> content) {
             this.parent = null;
             this.content = requireNonNull(content);
         }
 
         /**
-         * Builds a lifecycle stack.
-         * @param finalStage the final component lifecycle in the stack
-         * @param <T> the type of object commissioned by the component lifecycle
-         * @return a new lifecycle stack instance
+         * Builds a progressive lifecycle stack.
+         * @return a new progressive lifecycle stack instance
          */
         public ProgressiveLifecycleStack<U> build() {
             return new ProgressiveLifecycleStack<>(toSequence(new ArrayList<>()));
         }
 
         /**
-         * Adds a component lifecycle.
-         * @param stage
-         * @return
+         * Adds a stage, creating a new stacker object..
+         * @param stage stage
+         * @return a new stacker containing argument stage and all previously-added stage
          */
-        public <V> Builder<V> addStage(LifecycleStage<U, V> stage) {
-            return new Builder<>(this, stage);
+        public <V> Stacker<V> andThen(LifecycleStage<U, V> stage) {
+            return new Stacker<>(this, stage);
         }
 
         private List<LifecycleStage<?, ?>> toSequence(List<LifecycleStage<?, ?>> list) {
@@ -101,7 +100,6 @@ public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
             return list;
         }
     }
-
 
     @Override
     public String toString() {

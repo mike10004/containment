@@ -173,21 +173,21 @@ public class ProgressiveContainerLifecycles {
     private static class ProgressiveContainerLifecycleBuilderImpl extends BuilderBase<ContainerCreator> implements ProgressiveContainerLifecycleBuilder {
 
         public ProgressiveContainerLifecycleBuilderImpl(ContainerCreatorConstructor ctor) {
-            super(ProgressiveLifecycleStack.builder(new ContainerCreatorStage(ctor::instantiate)));
+            super(ProgressiveLifecycleStack.startingAt(new ContainerCreatorStage(ctor::instantiate)));
         }
 
         @Override
         public IndependentContainerActionAccumulator startedWith(ContainerParametry containerParametry) {
-            return new Builder2Impl(builder.addStage(new StartableContainerStage(containerParametry)));
+            return new Builder2Impl(stacker.andThen(new StartableContainerStage(containerParametry)));
         }
     }
 
     private static abstract class BuilderBase<T> {
 
-        protected final ProgressiveLifecycleStack.Builder<T> builder;
+        protected final ProgressiveLifecycleStack.Stacker<T> stacker;
 
-        protected BuilderBase(ProgressiveLifecycleStack.Builder<T> builder) {
-            this.builder = requireNonNull(builder);
+        protected BuilderBase(ProgressiveLifecycleStack.Stacker<T> stacker) {
+            this.stacker = requireNonNull(stacker);
         }
 
         protected static <T> LifecycleStage<PreStartResult<T>, PostStartResult<T>> transitionPreToPost() {
@@ -231,72 +231,72 @@ public class ProgressiveContainerLifecycles {
 
     private static class Builder2Impl extends BuilderBase<StartableContainer> implements IndependentContainerActionAccumulator {
 
-        public Builder2Impl(ProgressiveLifecycleStack.Builder<StartableContainer> builder) {
-            super(builder);
+        public Builder2Impl(ProgressiveLifecycleStack.Stacker<StartableContainer> stacker) {
+            super(stacker);
         }
 
         @Override
         public ProgressiveLifecycleStack<StartedContainer> finish() {
-            return builder.addStage(new SimpleStartedContainerStage()).build();
+            return stacker.andThen(new SimpleStartedContainerStage()).build();
         }
 
         @Override
         public <P> ContainerActionAccumulator<P> pre(ProgressivePreStartContainerAction.IndependentPreStartAction<P> stage) {
-            ProgressiveLifecycleStack.Builder<PreStartResult<Void>> transition = builder.addStage(transitionStartableToPre());
+            ProgressiveLifecycleStack.Stacker<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
             LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(stage);
-            ProgressiveLifecycleStack.Builder<PreStartResult<P>> pBuilder = transition.addStage(stageWrapper);
-            return new Builder3Impl<>(pBuilder);
+            ProgressiveLifecycleStack.Stacker<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
+            return new Builder3Impl<>(pStacker);
         }
 
         @Override
         public <P> PostStartActionAccumulator<P> post(ProgressivePostStartContainerAction.IndependentPostStartAction<P> stage) {
-            return new Builder4Impl<>(builder
-                .addStage(transitionStartableToPre())
-                .addStage(transitionPreToPost())
-                .addStage(new ContainerPostStartStage<>(stage))
+            return new Builder4Impl<>(stacker
+                .andThen(transitionStartableToPre())
+                .andThen(transitionPreToPost())
+                .andThen(new ContainerPostStartStage<>(stage))
             );
         }
     }
 
     private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements ContainerActionAccumulator<T> {
 
-        public Builder3Impl(ProgressiveLifecycleStack.Builder<PreStartResult<T>> builder) {
-            super(builder);
+        public Builder3Impl(ProgressiveLifecycleStack.Stacker<PreStartResult<T>> stacker) {
+            super(stacker);
         }
 
         @Override
         public ProgressiveLifecycleStack<T> finish() {
-            return builder.addStage(transitionPreToPost())
-                          .addStage(transitionFinishing()).build();
+            return stacker.andThen(transitionPreToPost())
+                          .andThen(transitionFinishing()).build();
         }
 
         @Override
         public <Q> ContainerActionAccumulator<Q> pre(ProgressivePreStartContainerAction<T, Q> stage) {
-            return new Builder3Impl<>(builder.addStage(new ContainerPreStartStage<>(stage)));
+            return new Builder3Impl<>(stacker.andThen(new ContainerPreStartStage<>(stage)));
         }
 
         @Override
         public <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<T, Q> stage) {
-            return new Builder4Impl<>(builder
-                    .addStage(transitionPreToPost())
-                    .addStage(new ContainerPostStartStage<>(stage)));
+            return new Builder4Impl<>(stacker
+                    .andThen(transitionPreToPost())
+                    .andThen(new ContainerPostStartStage<>(stage)));
         }
     }
 
     private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStartActionAccumulator<T> {
 
-        public Builder4Impl(ProgressiveLifecycleStack.Builder<PostStartResult<T>> b) {
+        public Builder4Impl(ProgressiveLifecycleStack.Stacker<PostStartResult<T>> b) {
             super(b);
         }
 
         @Override
         public ProgressiveLifecycleStack<T> finish() {
-            return builder.addStage(BuilderBase.transitionFinishing()).build();
+            return stacker.andThen(BuilderBase.transitionFinishing()).build();
         }
 
         @Override
         public <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<T, Q> stage) {
-            return new Builder4Impl<>(builder.addStage(new ContainerPostStartStage<>(stage)));
+            return new Builder4Impl<>(stacker.andThen(new ContainerPostStartStage<>(stage)));
         }
     }
 
