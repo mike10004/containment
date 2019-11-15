@@ -11,6 +11,26 @@
 
     <artifactId>containment-core</artifactId>
 
+    <profiles>
+        <profile>
+            <id>tests-mysql-disabled</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <systemPropertyVariables>
+                                    <containment-core.tests.run_mysql.disabled>true</containment-core.tests.run_mysql.disabled>
+                                </systemPropertyVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>

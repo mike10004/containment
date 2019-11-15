@@ -12,6 +12,7 @@ import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.core.DjManagedTestBase;
 import io.github.mike10004.containment.core.Tests;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -157,9 +158,14 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
         return Tests.getImageForTest("run_mysql.image", "mariadb:10.4");
     }
 
+    private static boolean isMysqlTestDisabled() {
+        return Tests.Settings.get("run_mysql.disabled", false);
+    }
+
     @SuppressWarnings("SqlDialectInspection")
     @Test
     public void run_mysql() throws Exception {
+        Assume.assumeFalse("assume mysql tests are not disabled", isMysqlTestDisabled());
         boolean verboseWait = Tests.Settings.get("run_mysql.verboseWait", false);
         int mysqlPort = 3306;
         String password = "sUpers3cret";
