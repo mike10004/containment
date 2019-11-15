@@ -3,7 +3,6 @@ package io.github.mike10004.containment.lifecycle;
 import com.google.common.annotations.VisibleForTesting;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -29,7 +28,7 @@ public class LifecycleStack<T> implements Lifecycle<T> {
     private final List<? extends LifecycleStage<?, ?>> stages;
     private transient final Deque<LifecycleStage<?, ?>> commissioned;
 
-    private LifecycleStack(List<? extends LifecycleStage<?, ?>> stages) {
+    LifecycleStack(List<? extends LifecycleStage<?, ?>> stages) {
         this.stages = Collections.unmodifiableList(requireNonNull(stages));
         commissioned = new ArrayDeque<>();
     }
@@ -43,62 +42,16 @@ public class LifecycleStack<T> implements Lifecycle<T> {
      * Creates a new lifecycle stacker.
      * @return new builder
      */
-    public static <T> Stacker<T> startingAt(Lifecycle<T> firstStage) {
-        return new Stacker<>(LifecycleStage.independent(firstStage));
+    public static <T> LifecycleStackLink<T> startingAt(Lifecycle<T> firstStage) {
+        return LifecycleStackLink.root(LifecycleStage.independent(firstStage));
     }
 
     /**
      * Creates a new lifecycle stack builder.
      * @return new builder
      */
-    public static <T> Stacker<T> startingAt(LifecycleStage<Void, T> firstStage) {
-        return new Stacker<>(firstStage);
-    }
-
-    /**
-     * Progressive lifecycle stage stacker. A stacker instance is an element of a
-     * linked list rooted at the first stage.
-     */
-    public static class Stacker<U> {
-
-        private final Stacker<?> parent;
-        private final LifecycleStage<?, ?> content;
-
-        protected Stacker(Stacker<?> parent, LifecycleStage<?, ?> content) {
-            this.parent = requireNonNull(parent);
-            this.content = requireNonNull(content);
-        }
-
-        // root
-        protected Stacker(LifecycleStage<?, ?> content) {
-            this.parent = null;
-            this.content = requireNonNull(content);
-        }
-
-        /**
-         * Builds a progressive lifecycle stack.
-         * @return a new progressive lifecycle stack instance
-         */
-        public Lifecycle<U> toSequence() {
-            return new LifecycleStack<>(toSequence(new ArrayList<>()));
-        }
-
-        /**
-         * Adds a stage, creating a new stacker object..
-         * @param stage stage
-         * @return a new stacker containing argument stage and all previously-added stage
-         */
-        public <V> Stacker<V> andThen(LifecycleStage<U, V> stage) {
-            return new Stacker<>(this, stage);
-        }
-
-        private List<LifecycleStage<?, ?>> toSequence(List<LifecycleStage<?, ?>> list) {
-            if (parent != null) {
-                parent.toSequence(list);
-            }
-            list.add(content);
-            return list;
-        }
+    public static <T> LifecycleStackLink<T> startingAt(LifecycleStage<Void, T> firstStage) {
+        return  LifecycleStackLink.root(firstStage);
     }
 
     @Override

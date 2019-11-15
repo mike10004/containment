@@ -32,17 +32,9 @@ public class ContainerResourceBuilderTest {
         String expectedFile1Pathname = "/tmp/" + preStartActionFile.getName();
         Lifecycle<StartedContainer> stack = ContainerLifecycles.buildLocal()
                 .creating(parametry)
-                .pre(container -> {
-                    container.copier().copyToContainer(preStartActionFile, "/tmp/");
-                    return (Void) null;
-                }).post(new ContainerPostStartAction<Void, StartedContainer>() {
-                    @Override
-                    public StartedContainer perform(StartedContainer container, Void requirement) throws Exception {
-                        container.executor().execute("touch", "/tmp/file2.tmp");
-                        return container;
-                    }
-                })
-                .finish();
+                .runPre(container -> container.copier().copyToContainer(preStartActionFile, "/tmp/"))
+                .runPost(container -> container.executor().execute("touch", "/tmp/file2.tmp"))
+                .finishWithContainer();
         LifecycledResource<StartedContainer> dependency = LifecycledResource.builder()
                 .eventListener(events::add)
                 .buildLocalResource(stack);

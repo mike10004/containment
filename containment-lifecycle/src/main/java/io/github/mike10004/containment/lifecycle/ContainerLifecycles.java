@@ -1,5 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
+import io.github.mike10004.containment.ActionableContainer;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.StartableContainer;
@@ -162,6 +163,7 @@ public class ContainerLifecycles {
      */
     public interface LifecycleFinisher<P> {
         Lifecycle<P> finish();
+        Lifecycle<StartedContainer> finishWithContainer();
     }
 
     /**
@@ -177,8 +179,10 @@ public class ContainerLifecycles {
      * in the pre-start stage before any other actions have been defined.
      */
     public interface PreStartInitial extends LifecycleFinisher<StartedContainer> {
-        <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> stage);
-        <P> PostStart<P> post(ContainerInitialPostStartAction<P> stage);
+        <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> action);
+        PreStartSubsequent<Void> runPre(ContainerPreStartRunnable runnable);
+        <P> PostStart<P> post(ContainerInitialPostStartAction<P> action);
+        PostStart<Void> runPost(ContainerPostStartRunnable runnable);
     }
 
     /**
@@ -187,8 +191,10 @@ public class ContainerLifecycles {
      * @param <P> resource type produced if lifecycle were finished now
      */
     public interface PreStartSubsequent<P> extends LifecycleFinisher<P> {
-        <Q> PreStartSubsequent<Q> pre(ContainerPreStartAction<P, Q> stage);
-        <Q> PostStart<Q> post(ContainerPostStartAction<P, Q> stage);
+        <Q> PreStartSubsequent<Q> pre(ContainerPreStartAction<P, Q> action);
+        PreStartSubsequent<P> runPre(ContainerPreStartRunnable runnable);
+        <Q> PostStart<Q> post(ContainerPostStartAction<P, Q> action);
+        PostStart<P> runPost(ContainerPostStartRunnable runnable);
     }
 
     /**
@@ -196,7 +202,8 @@ public class ContainerLifecycles {
      * @param <P> resource type produced if lifecycle were finished now
      */
     public interface PostStart<P> extends LifecycleFinisher<P> { // post
-        <Q> PostStart<Q> post(ContainerPostStartAction<P, Q> stage);
+        <Q> PostStart<Q> post(ContainerPostStartAction<P, Q> action);
+        PostStart<P> runPost(ContainerPostStartRunnable runnable);
     }
 
     private static class PreCreateImpl extends BuilderBase<ContainerCreator> implements PreCreate {
@@ -213,9 +220,9 @@ public class ContainerLifecycles {
 
     private static abstract class BuilderBase<T> {
 
-        protected final LifecycleStack.Stacker<T> stacker;
+        protected final LifecycleStackLink<T> stacker;
 
-        protected BuilderBase(LifecycleStack.Stacker<T> stacker) {
+        protected BuilderBase(LifecycleStackLink<T> stacker) {
             this.stacker = requireNonNull(stacker);
         }
 
@@ -260,36 +267,51 @@ public class ContainerLifecycles {
 
     private static class Builder2Impl extends BuilderBase<StartableContainer> implements PreStartInitial {
 
-        public Builder2Impl(LifecycleStack.Stacker<StartableContainer> stacker) {
+        public Builder2Impl(LifecycleStackLink<StartableContainer> stacker) {
             super(stacker);
         }
 
         @Override
         public Lifecycle<StartedContainer> finish() {
-            return stacker.andThen(new SimpleStartedContainerStage()).toSequence();
+            return finishWithContainer();
         }
 
         @Override
-        public <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> stage) {
-            LifecycleStack.Stacker<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
-            LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(stage);
-            LifecycleStack.Stacker<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
+        public PreStartSubsequent<Void> runPre(ContainerPreStartRunnable runnable) {
+            return pre(runnable.asInitialAction());
+        }
+
+        @Override
+        public PostStart<Void> runPost(ContainerPostStartRunnable runnable) {
+            return post(runnable.asInitialAction());
+        }
+
+        @Override
+        public <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> action) {
+            LifecycleStackLink<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
+            LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(action);
+            LifecycleStackLink<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
             return new Builder3Impl<>(pStacker);
         }
 
         @Override
-        public <P> PostStart<P> post(ContainerInitialPostStartAction<P> stage) {
+        public <P> PostStart<P> post(ContainerInitialPostStartAction<P> action) {
             return new Builder4Impl<>(stacker
                 .andThen(transitionStartableToPre())
                 .andThen(transitionPreToPost())
-                .andThen(new ContainerPostStartStage<>(stage))
+                .andThen(new ContainerPostStartStage<>(action))
             );
+        }
+
+        @Override
+        public Lifecycle<StartedContainer> finishWithContainer() {
+            return stacker.andThen(new SimpleStartedContainerStage()).toSequence();
         }
     }
 
     private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements PreStartSubsequent<T> {
 
-        public Builder3Impl(LifecycleStack.Stacker<PreStartResult<T>> stacker) {
+        public Builder3Impl(LifecycleStackLink<PreStartResult<T>> stacker) {
             super(stacker);
         }
 
@@ -300,21 +322,36 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public <Q> PreStartSubsequent<Q> pre(ContainerPreStartAction<T, Q> stage) {
-            return new Builder3Impl<>(stacker.andThen(new ContainerPreStartStage<>(stage)));
+        public Lifecycle<StartedContainer> finishWithContainer() {
+            return post((container, x) -> container).finish();
         }
 
         @Override
-        public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> stage) {
+        public PostStart<T> runPost(ContainerPostStartRunnable runnable) {
+            return post(runnable.asPassThru());
+        }
+
+        @Override
+        public PreStartSubsequent<T> runPre(ContainerPreStartRunnable runnable) {
+            return pre(runnable.asPassThru());
+        }
+
+        @Override
+        public <Q> PreStartSubsequent<Q> pre(ContainerPreStartAction<T, Q> action) {
+            return new Builder3Impl<>(stacker.andThen(new ContainerPreStartStage<>(action)));
+        }
+
+        @Override
+        public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> action) {
             return new Builder4Impl<>(stacker
                     .andThen(transitionPreToPost())
-                    .andThen(new ContainerPostStartStage<>(stage)));
+                    .andThen(new ContainerPostStartStage<>(action)));
         }
     }
 
     private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStart<T> {
 
-        public Builder4Impl(LifecycleStack.Stacker<PostStartResult<T>> b) {
+        public Builder4Impl(LifecycleStackLink<PostStartResult<T>> b) {
             super(b);
         }
 
@@ -324,8 +361,18 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> stage) {
-            return new Builder4Impl<>(stacker.andThen(new ContainerPostStartStage<>(stage)));
+        public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> action) {
+            return new Builder4Impl<>(stacker.andThen(new ContainerPostStartStage<>(action)));
+        }
+
+        @Override
+        public PostStart<T> runPost(ContainerPostStartRunnable runnable) {
+            return post(runnable.asPassThru());
+        }
+
+        @Override
+        public Lifecycle<StartedContainer> finishWithContainer() {
+            return post((container, requirement) -> container).finish();
         }
     }
 
