@@ -13,8 +13,8 @@ class CacheableLifecycledResource<T> implements LifecycledResource<T> {
     }
 
     @Override
-    public T container() throws FirstProvisionFailedException {
-        return containerProvider.provide().require();
+    public Provision<T> request() {
+        return containerProvider.provide();
     }
 
     @Override

@@ -3,17 +3,20 @@ package io.github.mike10004.containment.lifecycle;
 public interface LifecycledResource<T> {
 
     /**
-     * Returns an already-started container or starts and returns
-     * a not-yet-started container.
-     * @return a started container
-     * @throws FirstProvisionFailedException if provisioning the container fails
+     * Requests a resource, commissioning it if not yet commissioned.
+     * @return a resource provision
      */
-    T container() throws FirstProvisionFailedException;
+    Provision<T> request();
 
     /**
-     * Stops and removes the container, if it has been started.
+     * Decommissions a resource if it has been commissioned. Does nothing
+     * if resource has not been commissioned.
      */
     void finishLifecycle();
+
+    default ScopedResource<T> inScope() {
+        return new ScopedLifecycledResource<>(this);
+    }
 
     /**
      * Creates an instance from a container provider.

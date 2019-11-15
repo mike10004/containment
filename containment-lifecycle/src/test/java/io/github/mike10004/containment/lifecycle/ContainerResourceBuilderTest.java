@@ -38,7 +38,7 @@ public class ContainerResourceBuilderTest {
         LifecycledResource<StartedContainer> dependency = LifecycledResource.builder()
                 .eventListener(events::add)
                 .buildLocalResource(stack);
-        StartedContainer container = dependency.container();
+        StartedContainer container = dependency.request().require();
         try {
             ContainerSubprocessResult<String> result1 = container.executor().execute("ls", "-l", expectedFile1Pathname);
             ContainerSubprocessResult<String> result2 = container.executor().execute("ls", "-l", "/tmp/file2.tmp");

@@ -48,7 +48,7 @@ public class LifecycledResourceBuilderTest {
         LifecycledResource<ContainerPlus<String>> dependency = new LifecycledResourceBuilder()
                 .eventListener(events::add)
                 .buildLocalResource(stack);
-        ContainerPlus<String> containerPlus = dependency.container();
+        ContainerPlus<String> containerPlus = dependency.request().require();
         try {
             StartedContainer container = containerPlus.container;
             ContainerSubprocessResult<String> result1 = container.executor().execute("echo", "hello, world");
