@@ -54,7 +54,7 @@ public class SimpleLifecycleStackBuilderTest {
         try {
             stack.commission();
             fail("should have excepted");
-        } catch (ProgressiveLifecycleStackCommissionUnwindException e) {
+        } catch (LifecycleStackCommissionUnwindException e) {
             assertTrue(e.commissionExceptionThrower.isEquivalent(third));
             assertSame(e.commissionException.getClass(), TestCommissionException.class);
             assertEquals(1, e.unwindException.exceptionsThrown.size());
@@ -80,7 +80,7 @@ public class SimpleLifecycleStackBuilderTest {
         try {
             stack.commission();
             fail("should have excepted");
-        } catch (ProgressiveLifecycleStackCommissionException e) {
+        } catch (LifecycleStackCommissionException e) {
             assertTrue(e.getCause() instanceof TestCommissionException);
         }
         assertEquals(1, first.commissioned);
@@ -101,7 +101,7 @@ public class SimpleLifecycleStackBuilderTest {
         try {
             stack.commission();
             fail("should have thrown commissionexception");
-        } catch (ProgressiveLifecycleStackCommissionException e) {
+        } catch (LifecycleStackCommissionException e) {
             assertTrue(e.getCause() instanceof TestCommissionException);
         }
         assertEquals(0, first.commissioned);
@@ -120,7 +120,7 @@ public class SimpleLifecycleStackBuilderTest {
         stack.commission();
         try {
             stack.decommission();
-        } catch (ProgressiveLifecycleStackDecommissionException e) {
+        } catch (LifecycleStackDecommissionException e) {
             assertEquals(1, e.exceptionsThrown.size());
             Map.Entry<LifecycleStage<?, ?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
             assertTrue(entry.getKey().isEquivalent(third));
@@ -289,7 +289,7 @@ public class SimpleLifecycleStackBuilderTest {
         try {
             stack.commission();
             fail("should have thrown LifecycleStackCommissionException");
-        } catch (ProgressiveLifecycleStackCommissionException e) {
+        } catch (LifecycleStackCommissionException e) {
             assertTrue(e.getCause() instanceof IntStageCommissionException);
         }
         assertEquals("sequence", Arrays.asList(1, 2, 2, 1), sequence);

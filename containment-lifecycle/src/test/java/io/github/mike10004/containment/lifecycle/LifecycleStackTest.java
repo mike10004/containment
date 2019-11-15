@@ -12,18 +12,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class ProgressiveLifecycleStackTest {
+public class LifecycleStackTest {
 
     @Test
     public void builder_toSequence() {
         LifecycleStage<Void, TypeA> stage1 = stage(x -> new TypeA());
         LifecycleStage<TypeA, TypeB> stage2 = stage(x -> new TypeB());
         LifecycleStage<TypeB, TypeC> stage3 = stage(x -> new TypeC());
-        Lifecycle<TypeC> lifecycle = ProgressiveLifecycleStack.<TypeA>startingAt(stage1)
+        Lifecycle<TypeC> lifecycle = LifecycleStack.<TypeA>startingAt(stage1)
                 .andThen(stage2)
                 .andThen(stage3)
                 .toSequence();
-        ProgressiveLifecycleStack<TypeC> stack = (ProgressiveLifecycleStack<TypeC>) lifecycle;
+        LifecycleStack<TypeC> stack = (LifecycleStack<TypeC>) lifecycle;
         assertEquals("stage sequence", Arrays.asList(stage1, stage2, stage3), stack.getStages());
     }
 
@@ -85,7 +85,7 @@ public class ProgressiveLifecycleStackTest {
     @Test
     public void testExecute() throws Exception {
         List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
-        Lifecycle<Integer> stack = ProgressiveLifecycleStack.startingAt(new FirstIntStage())
+        Lifecycle<Integer> stack = LifecycleStack.startingAt(new FirstIntStage())
                 .andThen(new IntStage(sequence))
                 .andThen(new IntStage(sequence))
                 .andThen(new IntStage(sequence))
@@ -104,7 +104,7 @@ public class ProgressiveLifecycleStackTest {
     @Test
     public void testExecute_interrupted() throws Exception {
         List<Integer> sequence = Collections.synchronizedList(new ArrayList<>());
-        Lifecycle<Integer> stack = ProgressiveLifecycleStack.startingAt(new FirstIntStage())
+        Lifecycle<Integer> stack = LifecycleStack.startingAt(new FirstIntStage())
                 .andThen(new IntStage(sequence))
                 .andThen(new IntStage(sequence))
                 .andThen(new IntStage(sequence) {
@@ -119,7 +119,7 @@ public class ProgressiveLifecycleStackTest {
         try {
             stack.commission();
             fail("should have thrown LifecycleStageStackCommissionException");
-        } catch (ProgressiveLifecycleStackCommissionException e) {
+        } catch (LifecycleStackCommissionException e) {
             assertTrue(e.getCause() instanceof IntStageCommissionException);
         }
         assertEquals("sequence", Arrays.asList(1, 2, 2, 1), sequence);

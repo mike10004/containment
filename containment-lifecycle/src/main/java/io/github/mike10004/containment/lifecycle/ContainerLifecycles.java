@@ -158,6 +158,7 @@ public class ContainerLifecycles {
     }
 
     public interface IndependentContainerActionAccumulator extends FinishableLifecycleBuilder<StartedContainer> {
+
         <P> ContainerActionAccumulator<P> pre(ProgressivePreStartContainerAction.IndependentPreStartAction<P> stage);
         <P> PostStartActionAccumulator<P> post(ProgressivePostStartContainerAction.IndependentPostStartAction<P> stage);
     }
@@ -173,7 +174,7 @@ public class ContainerLifecycles {
     private static class ProgressiveContainerLifecycleBuilderImpl extends BuilderBase<ContainerCreator> implements ProgressiveContainerLifecycleBuilder {
 
         public ProgressiveContainerLifecycleBuilderImpl(ContainerCreatorConstructor ctor) {
-            super(ProgressiveLifecycleStack.startingAt(new ContainerCreatorStage(ctor::instantiate)));
+            super(LifecycleStack.startingAt(new ContainerCreatorStage(ctor::instantiate)));
         }
 
         @Override
@@ -184,9 +185,9 @@ public class ContainerLifecycles {
 
     private static abstract class BuilderBase<T> {
 
-        protected final ProgressiveLifecycleStack.Stacker<T> stacker;
+        protected final LifecycleStack.Stacker<T> stacker;
 
-        protected BuilderBase(ProgressiveLifecycleStack.Stacker<T> stacker) {
+        protected BuilderBase(LifecycleStack.Stacker<T> stacker) {
             this.stacker = requireNonNull(stacker);
         }
 
@@ -231,7 +232,7 @@ public class ContainerLifecycles {
 
     private static class Builder2Impl extends BuilderBase<StartableContainer> implements IndependentContainerActionAccumulator {
 
-        public Builder2Impl(ProgressiveLifecycleStack.Stacker<StartableContainer> stacker) {
+        public Builder2Impl(LifecycleStack.Stacker<StartableContainer> stacker) {
             super(stacker);
         }
 
@@ -242,9 +243,9 @@ public class ContainerLifecycles {
 
         @Override
         public <P> ContainerActionAccumulator<P> pre(ProgressivePreStartContainerAction.IndependentPreStartAction<P> stage) {
-            ProgressiveLifecycleStack.Stacker<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
+            LifecycleStack.Stacker<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
             LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(stage);
-            ProgressiveLifecycleStack.Stacker<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
+            LifecycleStack.Stacker<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
             return new Builder3Impl<>(pStacker);
         }
 
@@ -260,7 +261,7 @@ public class ContainerLifecycles {
 
     private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements ContainerActionAccumulator<T> {
 
-        public Builder3Impl(ProgressiveLifecycleStack.Stacker<PreStartResult<T>> stacker) {
+        public Builder3Impl(LifecycleStack.Stacker<PreStartResult<T>> stacker) {
             super(stacker);
         }
 
@@ -285,7 +286,7 @@ public class ContainerLifecycles {
 
     private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStartActionAccumulator<T> {
 
-        public Builder4Impl(ProgressiveLifecycleStack.Stacker<PostStartResult<T>> b) {
+        public Builder4Impl(LifecycleStack.Stacker<PostStartResult<T>> b) {
             super(b);
         }
 

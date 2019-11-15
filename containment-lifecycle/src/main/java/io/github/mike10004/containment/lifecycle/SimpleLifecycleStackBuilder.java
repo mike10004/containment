@@ -4,7 +4,7 @@ package io.github.mike10004.containment.lifecycle;
  * Builder of simple lifecycle stacks. A simple lifecycle stack
  * is a sequence of independent lifecycles.
  * This acts more like a traditional builder than the
- * {@link io.github.mike10004.containment.lifecycle.ProgressiveLifecycleStack.Stacker}
+ * {@link LifecycleStack.Stacker}
  * instances do, in that the {@link #addStage(Lifecycle)} method
  * returns the same builder instance. The difference between
  * lifecycle stacks built by this builder and those built with
@@ -14,7 +14,7 @@ package io.github.mike10004.containment.lifecycle;
  */
 public class SimpleLifecycleStackBuilder {
 
-    private ProgressiveLifecycleStack.Stacker stacker;
+    private LifecycleStack.Stacker stacker;
 
     protected SimpleLifecycleStackBuilder() {
     }
@@ -42,7 +42,7 @@ public class SimpleLifecycleStackBuilder {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> ProgressiveLifecycleStack.Stacker<T> append(Lifecycle<T> stage) {
+    private <T> LifecycleStack.Stacker<T> append(Lifecycle<T> stage) {
         return stacker = stacker.andThen(LifecycleStage.requirementless(stage));
     }
 
@@ -53,7 +53,7 @@ public class SimpleLifecycleStackBuilder {
      */
     public synchronized SimpleLifecycleStackBuilder addStage(Lifecycle<?> stage) {
         if (stacker == null) {
-            stacker = ProgressiveLifecycleStack.startingAt(stage);
+            stacker = LifecycleStack.startingAt(stage);
         } else {
             stacker = append(stage);
         }

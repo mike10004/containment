@@ -1,5 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
+import io.github.mike10004.containment.ActionableContainer;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.containment.ContainmentException;
@@ -32,17 +33,22 @@ public class ContainerResourceBuilderTest {
                 .build();
         File preStartActionFile = File.createTempFile("ContainerDependencyBuilderTest", ".tmp", temporaryFolder.getRoot());
         String expectedFile1Pathname = "/tmp/" + preStartActionFile.getName();
-        ContainerResource dependency = ContainerResource.builder(parametry)
-                .addPreStartAction(container -> {
-                    try {
-                        container.copier().copyToContainer(preStartActionFile, "/tmp/");
-                    } catch (IOException e) {
-                        throw new ContainmentException(e);
+        Lifecycle<StartedContainer> stack = ContainerLifecycles.buildLocal()
+                .startedWith(parametry)
+                .pre(container -> {
+                    container.copier().copyToContainer(preStartActionFile, "/tmp/");
+                    return (Void) null;
+                }).post(new ProgressivePostStartContainerAction<Void, StartedContainer>() {
+                    @Override
+                    public StartedContainer perform(StartedContainer container, Void requirement) throws Exception {
+                        container.executor().execute("touch", "/tmp/file2.tmp");
+                        return container;
                     }
-                }).addPostStartAction(container -> {
-                    container.executor().execute("touch", "/tmp/file2.tmp");
-                }).eventListener(events::add)
-                .buildLocalResource();
+                })
+                .finish();
+        ProgressiveResource<StartedContainer> dependency = ProgressiveResource.builder()
+                .eventListener(events::add)
+                .buildLocalResource(stack);
         StartedContainer container = dependency.container();
         try {
             ContainerSubprocessResult<String> result1 = container.executor().execute("ls", "-l", expectedFile1Pathname);

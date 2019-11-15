@@ -4,7 +4,7 @@ package io.github.mike10004.containment.lifecycle;
  * Exception class for cases where the commission stage of a lifecycle stack failed
  * and one or more exceptions were thrown while unwinding the stack.
  */
-class ProgressiveLifecycleStackCommissionUnwindException extends ProgressiveLifecycleStackCommissionException {
+class LifecycleStackCommissionUnwindException extends LifecycleStackCommissionException {
 
     /**
      * Component lifecycle that threw the exception.
@@ -19,9 +19,9 @@ class ProgressiveLifecycleStackCommissionUnwindException extends ProgressiveLife
     /**
      * Exception thrown during decommission.
      */
-    public final ProgressiveLifecycleStackDecommissionException unwindException;
+    public final LifecycleStackDecommissionException unwindException;
 
-    public ProgressiveLifecycleStackCommissionUnwindException(LifecycleStage<?, ?> commissionExceptionThrower, Exception commissionException, ProgressiveLifecycleStackDecommissionException unwindException) {
+    public LifecycleStackCommissionUnwindException(LifecycleStage<?, ?> commissionExceptionThrower, Exception commissionException, LifecycleStackDecommissionException unwindException) {
         super(String.format("commission failed and %d exceptions were thrown while unwinding", unwindException.exceptionsThrown.size()));
         this.commissionExceptionThrower = commissionExceptionThrower;
         this.commissionException = commissionException;

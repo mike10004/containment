@@ -31,10 +31,3 @@ class CacheableProgressiveResource<T> implements ProgressiveResource<T> {
                 .toString();
     }
 }
-
-class CachableResource extends CacheableProgressiveResource<StartedContainer> implements ContainerResource {
-
-    public CachableResource(LifecyclingCachingProvider<StartedContainer> containerProvider) {
-        super(containerProvider);
-    }
-}
