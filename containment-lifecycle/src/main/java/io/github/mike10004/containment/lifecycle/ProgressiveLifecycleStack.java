@@ -22,7 +22,7 @@ import static java.util.Objects.requireNonNull;
  * in reverse order.
  *
  * @param <T> type of last commissioned element
- * @see ProgressiveContainerLifecycles
+ * @see ContainerLifecycles
  */
 public class ProgressiveLifecycleStack<T> implements Lifecycle<T> {
 

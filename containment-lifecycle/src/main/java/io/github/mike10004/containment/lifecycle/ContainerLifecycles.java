@@ -2,104 +2,105 @@ package io.github.mike10004.containment.lifecycle;
 
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.dockerjava.DjContainerCreator;
+import io.github.mike10004.containment.dockerjava.DjManualContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DjShutdownHookContainerMonitor;
+import io.github.mike10004.containment.dockerjava.DockerClientBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.StringJoiner;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
 /**
  * Class that contains utility methods for building container lifecycles.
- *
- * A container's lifecycle
- * includes the following stages:
- * <ul>
- *     <li><b>Commission</b>
- *       <ul>
- *         <li>create</li>
- *         <li>execute pre-start actions</li>
- *         <li>start</li>
- *         <li>execute post-start actions</li>
- *       </ul>
- *     </li>
- *     <li><b>Decommission</b>
- *       <ul>
- *         <li>stop</li>
- *         <li>remove</li>
- *       </ul>
- *     </li>
- * </ul>
  */
 public class ContainerLifecycles {
 
     private ContainerLifecycles() {}
 
-    private static class ContainerRunnerLifecycle extends DecoupledLifecycle<ContainerCreator> {
-        public ContainerRunnerLifecycle(Commissioner<ContainerCreator> commissioner) {
+    private static class ContainerCreatorStage extends DecoupledLifecycle<ContainerCreator> {
+        public ContainerCreatorStage(Commissioner<ContainerCreator> commissioner) {
             super(commissioner, new AutoCloseableDecommissioner<>());
         }
 
         @Override
         public String toString() {
-            return String.format("ContainerRunnerLifecycle@%08x", hashCode());
+            return String.format("ContainerCreatorStage@%08x", hashCode());
         }
     }
 
-    private static class RunnableContainerLifecycle extends DecoupledLifecycle<StartableContainer> {
+    private static class StartableContainerStage extends DecoupledLifecycleStage<ContainerCreator, StartableContainer> {
 
-        public RunnableContainerLifecycle(Commissioner<StartableContainer> commissioner) {
-            super(commissioner, new AutoCloseableDecommissioner<>());
+        public StartableContainerStage(ContainerParametry containerParametry) {
+            super(creator -> creator.create(containerParametry), new AutoCloseableDecommissioner<>());
         }
 
         @Override
         public String toString() {
-            return String.format("RunnableContainerLifecycle@%08x", hashCode());
+            return String.format("StartableContainerStage@%08x", hashCode());
         }
     }
 
-    private static class RunningContainerLifecycle extends DecoupledLifecycle<StartedContainer> {
+    private static class SimpleStartedContainerStage extends DecoupledLifecycleStage<StartableContainer, StartedContainer> {
 
-        public RunningContainerLifecycle(Commissioner<StartedContainer> commissioner) {
-            super(commissioner, new AutoCloseableDecommissioner<>());
+        public SimpleStartedContainerStage() {
+            super(StartableContainer::start, new AutoCloseableDecommissioner<>());
         }
 
         @Override
         public String toString() {
-            return String.format("RunningContainerLifecycle@%08x", hashCode());
+            return String.format("SimpleStartedContainerStage@%08x", hashCode());
         }
     }
 
-    private static class PreStartActionExecutor implements Lifecycle<Integer> {
+    private static class ActionStageResult<C, T> {
 
-        private final Supplier<? extends StartableContainer> containerSupplier;
-        private final List<? extends ContainerAction> preStartActions;
+        public final C container;
+        public final T content;
 
-        public PreStartActionExecutor(Supplier<? extends StartableContainer> containerSupplier, List<? extends ContainerAction> preStartActions) {
-            this.containerSupplier = containerSupplier;
-            this.preStartActions = preStartActions;
+        protected ActionStageResult(C container, T content) {
+            this.container = requireNonNull(container);
+            this.content = content;
+        }
+
+    }
+
+    private static final class PreStartResult<T> extends ActionStageResult<StartableContainer, T> {
+
+        public PreStartResult(StartableContainer container, T content) {
+            super(container, content);
+        }
+
+    }
+
+    private static final class PostStartResult<T> extends ActionStageResult<StartedContainer, T> {
+
+        public PostStartResult(StartedContainer container, T content) {
+            super(container, content);
+        }
+
+    }
+
+    private static class ContainerPreStartStage<U, V> implements LifecycleStage<PreStartResult<U>, PreStartResult<V>> {
+
+        private final ProgressivePreStartContainerAction<U, V> innerStage;
+
+        private ContainerPreStartStage(ProgressivePreStartContainerAction<U, V> innerStage) {
+            this.innerStage = requireNonNull(innerStage);
         }
 
         @Override
         public String toString() {
-            return new StringJoiner(", ", PreStartActionExecutor.class.getSimpleName() + "[", "]")
-                    .add("containerSupplier=" + containerSupplier)
-                    .add("preStartActions=" + preStartActions)
+            return new StringJoiner(", ", ContainerPreStartStage.class.getSimpleName() + "[", "]")
                     .toString();
         }
 
         @Override
-        public Integer commission() throws ContainmentException {
-            StartableContainer runnable = containerSupplier.get();
-            for (ContainerAction action : preStartActions) {
-                action.perform(runnable);
-            }
-            return preStartActions.size();
+        public PreStartResult<V> commission(PreStartResult<U> requirement) throws Exception {
+            V content = innerStage.perform(requirement.container, requirement.content);
+            return new PreStartResult<>(requirement.container, content);
         }
 
         @Override
@@ -108,34 +109,18 @@ public class ContainerLifecycles {
         }
     }
 
-    private static class PostStartActionExecutor implements Lifecycle<StartedContainer> {
+    private static class ContainerPostStartStage<U, V> implements LifecycleStage<PostStartResult<U>, PostStartResult<V>> {
 
-        private final Supplier<? extends StartedContainer> containerSupplier;
-        private final List<? extends StartedContainerAction> postStartActions;
+        private final ProgressivePostStartContainerAction<U, V> action;
 
-        public PostStartActionExecutor(Supplier<? extends StartedContainer> containerSupplier, List<? extends StartedContainerAction> postStartActions) {
-            this.containerSupplier = containerSupplier;
-            this.postStartActions = postStartActions;
+        private ContainerPostStartStage(ProgressivePostStartContainerAction<U, V> action) {
+            this.action = action;
         }
 
         @Override
-        public String toString() {
-            return new StringJoiner(", ", PreStartActionExecutor.class.getSimpleName() + "[", "]")
-                    .add("containerSupplier=" + containerSupplier)
-                    .add("postStartActions=" + postStartActions)
-                    .toString();
-        }
-
-        @Override
-        public StartedContainer commission() throws Exception {
-            StartedContainer container = containerSupplier.get();
-            for (StartedContainerAction action : postStartActions) {
-                if (container == null) {
-                    container = containerSupplier.get();
-                }
-                action.perform(container);
-            }
-            return container;
+        public PostStartResult<V> commission(PostStartResult<U> requirement) throws Exception {
+            V content = action.perform(requirement.container, requirement.content);
+            return new PostStartResult<>(requirement.container, content);
         }
 
         @Override
@@ -150,104 +135,168 @@ public class ContainerLifecycles {
      * @param parametry container creation parameters
      * @return a new builder
      */
-    public static Builder builder(ContainerParametry parametry) {
-        return new Builder(parametry);
+    public static ProgressiveContainerLifecycleBuilder builder(ContainerCreatorConstructor ctor) {
+        return new ProgressiveContainerLifecycleBuilderImpl(ctor);
     }
 
-    /**
-     * Builder of container lifecycle instances.
-     */
-    public static class Builder {
-
-        private final ContainerParametry parametry;
-        private final List<ContainerAction> preStartActions;
-        private final List<StartedContainerAction> postStartActions;
-
-        private Builder(ContainerParametry parametry) {
-            this.parametry = requireNonNull(parametry);
-            preStartActions = new ArrayList<>();
-            postStartActions = new ArrayList<>();
-        }
-
-        /**
-         * Adds a pre-start action.
-         * @param action action
-         * @return this builder instance
-         */
-        @SuppressWarnings("UnusedReturnValue")
-        public Builder preStart(ContainerAction action) {
-            preStartActions.add(action);
-            return this;
-        }
-
-        /**
-         * Adds a post-start action.
-         * @param action action
-         * @return this builder instance
-         */
-        @SuppressWarnings("UnusedReturnValue")
-        public Builder postStart(StartedContainerAction action) {
-            postStartActions.add(action);
-            return this;
-        }
-
-        /**
-         * Creates a container lifecycle instance.
-         * @return a new lifecycle instance
-         */
-        public Lifecycle<StartedContainer> build(ContainerCreatorConstructor constructor) {
-            return create(constructor, parametry, preStartActions, postStartActions);
-        }
+    public static ProgressiveContainerLifecycleBuilder buildGlobal() {
+        ContainerCreatorConstructor ctor = new GlobalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
+        return new ProgressiveContainerLifecycleBuilderImpl(ctor);
     }
 
-    private static Lifecycle<StartedContainer> create(ContainerCreatorConstructor constructor, ContainerParametry parametry, List<? extends ContainerAction> preStartActions, List<? extends StartedContainerAction> postStartActions) {
-        AtomicReference<ContainerCreator> runnerRef = new AtomicReference<>();
-        Lifecycle<ContainerCreator> runnerLifecycle = new ContainerRunnerLifecycle(() -> {
-            ContainerCreator runner = constructor.instantiate();
-            runnerRef.set(runner);
-            return runner;
-        });
-        AtomicReference<StartableContainer> runnableRef = new AtomicReference<>();
-        Lifecycle<StartableContainer> runnableLifecycle = new RunnableContainerLifecycle(() -> {
-            ContainerCreator runner = runnerRef.get();
-            StartableContainer runnable = runner.create(parametry);
-            runnableRef.set(runnable);
-            return runnable;
-        });
-        Lifecycle<Integer> preStartActionLifecycle = new PreStartActionExecutor(runnableRef::get, preStartActions);
-        AtomicReference<StartedContainer> runningRef = new AtomicReference<>();
-        Lifecycle<StartedContainer> runningLifecycle = new RunningContainerLifecycle(() -> {
-            StartableContainer runnable = runnableRef.get();
-            StartedContainer container = runnable.start();
-            runningRef.set(container);
-            return container;
-        });
-        Lifecycle<StartedContainer> postStartActionsLifecycle = new PostStartActionExecutor(runningRef::get, postStartActions);
-        return SimpleLifecycleStackBuilder.create()
-                .addStage(runnerLifecycle)
-                .addStage(runnableLifecycle)
-                .addStage(preStartActionLifecycle)
-                .addStage(runningLifecycle)
-                .finish(postStartActionsLifecycle);
+    public static ProgressiveContainerLifecycleBuilder buildLocal() {
+        ContainerCreatorConstructor ctor = new LocalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(clientConfig).build()));
+        return new ProgressiveContainerLifecycleBuilderImpl(ctor);
     }
 
-    private static class AutoCloseableDecommissioner<T extends AutoCloseable> implements DecoupledLifecycle.Decommissioner<T> {
+    public interface FinishableLifecycleBuilder<P> {
+        Lifecycle<P> finish();
+    }
+
+    public interface ProgressiveContainerLifecycleBuilder {
+        IndependentContainerActionAccumulator startedWith(ContainerParametry containerParametry);
+    }
+
+    public interface IndependentContainerActionAccumulator extends FinishableLifecycleBuilder<StartedContainer> {
+        <P> ContainerActionAccumulator<P> pre(ProgressivePreStartContainerAction.IndependentPreStartAction<P> stage);
+        <P> PostStartActionAccumulator<P> post(ProgressivePostStartContainerAction.IndependentPostStartAction<P> stage);
+    }
+
+    public interface ContainerActionAccumulator<P> extends FinishableLifecycleBuilder<P>, PostStartActionAccumulator<P> {
+        <Q> ContainerActionAccumulator<Q> pre(ProgressivePreStartContainerAction<P, Q> stage);
+    }
+
+    public interface PostStartActionAccumulator<P> extends FinishableLifecycleBuilder<P> { // post
+        <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<P, Q> stage);
+    }
+
+    private static class ProgressiveContainerLifecycleBuilderImpl extends BuilderBase<ContainerCreator> implements ProgressiveContainerLifecycleBuilder {
+
+        public ProgressiveContainerLifecycleBuilderImpl(ContainerCreatorConstructor ctor) {
+            super(ProgressiveLifecycleStack.startingAt(new ContainerCreatorStage(ctor::instantiate)));
+        }
 
         @Override
-        public void decommission(T resource) {
-            try {
-                resource.close();
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new WrappedAutocloseException(e);
-            }
+        public IndependentContainerActionAccumulator startedWith(ContainerParametry containerParametry) {
+            return new Builder2Impl(stacker.andThen(new StartableContainerStage(containerParametry)));
+        }
+    }
+
+    private static abstract class BuilderBase<T> {
+
+        protected final ProgressiveLifecycleStack.Stacker<T> stacker;
+
+        protected BuilderBase(ProgressiveLifecycleStack.Stacker<T> stacker) {
+            this.stacker = requireNonNull(stacker);
         }
 
-        public static class WrappedAutocloseException extends RuntimeException {
-            public WrappedAutocloseException(Exception cause) {
-                super(cause);
-            }
+        protected static <T> LifecycleStage<PreStartResult<T>, PostStartResult<T>> transitionPreToPost() {
+            DecoupledLifecycleStage.Commissioner<PreStartResult<T>, PostStartResult<T>> tCommissioner = new DecoupledLifecycleStage.Commissioner<PreStartResult<T>, PostStartResult<T>>() {
+                @Override
+                public PostStartResult<T> commission(PreStartResult<T> requirement) throws Exception {
+                    StartedContainer startedContainer = requirement.container.start();
+                    return new PostStartResult<>(startedContainer, requirement.content);
+                }
+            };
+            DecoupledLifecycleStage.Decommissioner<PostStartResult<T>> tDecommissioner = AutoCloseableDecommissioner.byTransform(postStartResult -> postStartResult.container);
+            return new DecoupledLifecycleStage<>(tCommissioner, tDecommissioner);
+        }
+
+        protected static LifecycleStage<StartableContainer, PreStartResult<Void>> transitionStartableToPre() {
+            return new LifecycleStage<StartableContainer, PreStartResult<Void>>() {
+                @Override
+                public PreStartResult<Void> commission(StartableContainer requirement) {
+                    return new PreStartResult<>(requirement, null);
+                }
+
+                @Override
+                public void decommission() {
+                }
+            };
+        }
+
+        public static <U> LifecycleStage<PostStartResult<U>, U> transitionFinishing() {
+            return new LifecycleStage<PostStartResult<U>, U>() {
+                @Override
+                public U commission(PostStartResult<U> requirement) {
+                    return requirement.content;
+                }
+
+                @Override
+                public void decommission() {
+                }
+            };
+        }
+    }
+
+    private static class Builder2Impl extends BuilderBase<StartableContainer> implements IndependentContainerActionAccumulator {
+
+        public Builder2Impl(ProgressiveLifecycleStack.Stacker<StartableContainer> stacker) {
+            super(stacker);
+        }
+
+        @Override
+        public Lifecycle<StartedContainer> finish() {
+            return stacker.andThen(new SimpleStartedContainerStage()).toSequence();
+        }
+
+        @Override
+        public <P> ContainerActionAccumulator<P> pre(ProgressivePreStartContainerAction.IndependentPreStartAction<P> stage) {
+            ProgressiveLifecycleStack.Stacker<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
+            LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(stage);
+            ProgressiveLifecycleStack.Stacker<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
+            return new Builder3Impl<>(pStacker);
+        }
+
+        @Override
+        public <P> PostStartActionAccumulator<P> post(ProgressivePostStartContainerAction.IndependentPostStartAction<P> stage) {
+            return new Builder4Impl<>(stacker
+                .andThen(transitionStartableToPre())
+                .andThen(transitionPreToPost())
+                .andThen(new ContainerPostStartStage<>(stage))
+            );
+        }
+    }
+
+    private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements ContainerActionAccumulator<T> {
+
+        public Builder3Impl(ProgressiveLifecycleStack.Stacker<PreStartResult<T>> stacker) {
+            super(stacker);
+        }
+
+        @Override
+        public Lifecycle<T> finish() {
+            return stacker.andThen(transitionPreToPost())
+                          .andThen(transitionFinishing()).toSequence();
+        }
+
+        @Override
+        public <Q> ContainerActionAccumulator<Q> pre(ProgressivePreStartContainerAction<T, Q> stage) {
+            return new Builder3Impl<>(stacker.andThen(new ContainerPreStartStage<>(stage)));
+        }
+
+        @Override
+        public <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<T, Q> stage) {
+            return new Builder4Impl<>(stacker
+                    .andThen(transitionPreToPost())
+                    .andThen(new ContainerPostStartStage<>(stage)));
+        }
+    }
+
+    private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStartActionAccumulator<T> {
+
+        public Builder4Impl(ProgressiveLifecycleStack.Stacker<PostStartResult<T>> b) {
+            super(b);
+        }
+
+        @Override
+        public Lifecycle<T> finish() {
+            return stacker.andThen(BuilderBase.transitionFinishing()).toSequence();
+        }
+
+        @Override
+        public <Q> PostStartActionAccumulator<Q> post(ProgressivePostStartContainerAction<T, Q> stage) {
+            return new Builder4Impl<>(stacker.andThen(new ContainerPostStartStage<>(stage)));
         }
     }
 
