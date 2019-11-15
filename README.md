@@ -5,3 +5,12 @@
 
 Practical libraries that help you use Docker containers in Java.
 
+## Build
+
+Building these artifacts requires that Docker is installed and that these 
+images have already been pulled:
+
+* busybox:latest
+* alpine:3.10.3
+* httpd:2.4
+* mariadb:10.4
