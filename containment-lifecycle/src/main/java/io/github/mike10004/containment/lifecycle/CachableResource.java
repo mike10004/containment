@@ -6,11 +6,11 @@ import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
-class CacheableProgressiveDependency<T> implements ProgressiveDependency<T> {
+class CacheableProgressiveResource<T> implements ProgressiveResource<T> {
 
     private final LifecyclingCachingProvider<T> containerProvider;
 
-    public CacheableProgressiveDependency(LifecyclingCachingProvider<T> containerProvider) {
+    public CacheableProgressiveResource(LifecyclingCachingProvider<T> containerProvider) {
         this.containerProvider = requireNonNull(containerProvider, "containerProvider");
     }
 
@@ -32,9 +32,9 @@ class CacheableProgressiveDependency<T> implements ProgressiveDependency<T> {
     }
 }
 
-class CachableDependency extends CacheableProgressiveDependency<StartedContainer> implements ContainerDependency {
+class CachableResource extends CacheableProgressiveResource<StartedContainer> implements ContainerResource {
 
-    public CachableDependency(LifecyclingCachingProvider<StartedContainer> containerProvider) {
+    public CachableResource(LifecyclingCachingProvider<StartedContainer> containerProvider) {
         super(containerProvider);
     }
 }

@@ -2,7 +2,7 @@ package io.github.mike10004.containment.junit4;
 
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.lifecycle.ContainerDependency;
+import io.github.mike10004.containment.lifecycle.ContainerResource;
 import io.github.mike10004.containment.lifecycle.LifecycleEvent;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,7 +26,7 @@ public class LocalClassContainerRuleTest {
 
     static {
         listener = new EventCollector();
-        containerRule = new ContainerDependencyRule(ContainerDependency.builder(parametry())
+        containerRule = new ContainerDependencyRule(ContainerResource.builder(parametry())
                 .eventListener(listener).buildLocalDependency());
         TestRule eventCheckRule = new ExternalResource() {
 

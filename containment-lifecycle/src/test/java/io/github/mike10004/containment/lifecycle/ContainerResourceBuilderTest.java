@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
-public class ContainerDependencyBuilderTest {
+public class ContainerResourceBuilderTest {
 
     @ClassRule
     public static TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -32,7 +32,7 @@ public class ContainerDependencyBuilderTest {
                 .build();
         File preStartActionFile = File.createTempFile("ContainerDependencyBuilderTest", ".tmp", temporaryFolder.getRoot());
         String expectedFile1Pathname = "/tmp/" + preStartActionFile.getName();
-        ContainerDependency dependency = ContainerDependency.builder(parametry)
+        ContainerResource dependency = ContainerResource.builder(parametry)
                 .addPreStartAction(container -> {
                     try {
                         container.copier().copyToContainer(preStartActionFile, "/tmp/");

@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
-public interface ProgressiveDependency<T> {
+public interface ProgressiveResource<T> {
 
     /**
      * Returns an already-started container or starts and returns
@@ -20,8 +20,8 @@ public interface ProgressiveDependency<T> {
      * @param containerProvider the provider
      * @return a new instance
      */
-    static <T> ProgressiveDependency<T> fromProvider(LifecyclingCachingProvider<T> containerProvider) {
-        return new CacheableProgressiveDependency<>(containerProvider);
+    static <T> ProgressiveResource<T> fromProvider(LifecyclingCachingProvider<T> containerProvider) {
+        return new CacheableProgressiveResource<>(containerProvider);
     }
 
     static ProgressiveDependencyBuilder builder() {

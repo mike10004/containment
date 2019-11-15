@@ -1,7 +1,7 @@
 package io.github.mike10004.containment.junit4;
 
 import io.github.mike10004.containment.StartedContainer;
-import io.github.mike10004.containment.lifecycle.ContainerDependency;
+import io.github.mike10004.containment.lifecycle.ContainerResource;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -14,13 +14,13 @@ import static java.util.Objects.requireNonNull;
  */
 public class ContainerDependencyRule implements TestRule {
 
-    private final ContainerDependency containerDependency;
+    private final ContainerResource containerDependency;
 
     /**
      * Constructs an instance of the rule.
      * @param containerDependency the container dependency
      */
-    public ContainerDependencyRule(ContainerDependency containerDependency) {
+    public ContainerDependencyRule(ContainerResource containerDependency) {
         this.containerDependency = requireNonNull(containerDependency);
     }
 

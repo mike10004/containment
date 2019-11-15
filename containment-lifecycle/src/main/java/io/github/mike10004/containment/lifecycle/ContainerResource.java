@@ -6,15 +6,15 @@ import io.github.mike10004.containment.StartedContainer;
 /**
  * Interface of a service that lazily provides a running container.
  */
-public interface ContainerDependency extends ProgressiveDependency<StartedContainer> {
+public interface ContainerResource extends ProgressiveResource<StartedContainer> {
 
     /**
      * Creates an instance from a container provider.
      * @param containerProvider the provider
      * @return a new instance
      */
-    static ContainerDependency fromProvider(LifecyclingCachingProvider<StartedContainer> containerProvider) {
-        return new CachableDependency(containerProvider);
+    static ContainerResource fromProvider(LifecyclingCachingProvider<StartedContainer> containerProvider) {
+        return new CachableResource(containerProvider);
     }
 
     /**
@@ -22,8 +22,8 @@ public interface ContainerDependency extends ProgressiveDependency<StartedContai
      * @param parametry container parameters
      * @return a new builder instance
      */
-    static ContainerDependencyBuilder builder(ContainerParametry parametry) {
-        return new ContainerDependencyBuilder(parametry);
+    static ContainerResourceBuilder builder(ContainerParametry parametry) {
+        return new DjContainerResourceBuilder(parametry);
     }
 
 }

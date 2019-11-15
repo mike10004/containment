@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
-public class ProgressiveDependencyBuilderTest {
+public class ProgressiveResourceBuilderTest {
 
     private static class ContainerPlus<T> {
         public final StartedContainer container;
@@ -45,7 +45,7 @@ public class ProgressiveDependencyBuilderTest {
                 .post((container, input) -> input + "D")
                 .post(ContainerPlus::new)
                 .finish();
-        ProgressiveDependency<ContainerPlus<String>> dependency = new ProgressiveDependencyBuilder()
+        ProgressiveResource<ContainerPlus<String>> dependency = new ProgressiveDependencyBuilder()
                 .eventListener(events::add)
                 .buildLocalDependency(stack);
         ContainerPlus<String> containerPlus = dependency.container();
