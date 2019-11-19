@@ -13,7 +13,7 @@
 
     <profiles>
         <profile>
-            <id>tests-mysql-disabled</id>
+            <id>tests-skip-mysql</id>
             <build>
                 <pluginManagement>
                     <plugins>

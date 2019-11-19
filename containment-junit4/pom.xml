@@ -12,7 +12,7 @@
     <artifactId>containment-junit4</artifactId>
     <profiles>
         <profile>
-            <id>ctmt-plugin-already-installed</id>
+            <id>plugin-already-installed</id>
             <build>
                 <plugins>
                     <plugin>

@@ -46,9 +46,13 @@ public class Tests {
         };
     }
 
+    private static boolean isSkipDestructiveTests() {
+        return Settings.get("skipDestructiveTests", false);
+    }
+
     public static void assumeDestructiveModeEnabled() {
-        boolean enabled = Settings.get("destructiveMode.enabled", false);
-        Assume.assumeTrue(String.format("set sysprop %s.destructiveMode=true to enable", SYSPROP_PREFIX), enabled);
+        boolean skip = isSkipDestructiveTests();
+        Assume.assumeFalse(String.format("set sysprop %s.skipDestructiveTests=true to enable", SYSPROP_PREFIX), skip);
     }
 
     public static Supplier<DockerClient> mockDockerManager() {

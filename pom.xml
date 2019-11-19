@@ -25,7 +25,7 @@
     </properties>
     <profiles>
         <profile>
-            <id>skip-tests</id>
+            <id>tests-skip-all</id>
             <properties>
                 <surefire.configuration.skipTests>true</surefire.configuration.skipTests>
                 <failsafe.configuration.skipTests>true</failsafe.configuration.skipTests>

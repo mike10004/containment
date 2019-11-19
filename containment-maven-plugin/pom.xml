@@ -14,16 +14,16 @@
 
     <properties>
         <maven.version>3.6.2</maven.version>
-        <destructiveMode>false</destructiveMode>
+        <skipDestructiveTests>false</skipDestructiveTests>
         <test1.untaggedImageName>mike10004/containment-test-1</test1.untaggedImageName>
         <test1.imageTag>1.0-linux</test1.imageTag>
         <test1.taggedImageName>${test1.untaggedImageName}:${test1.imageTag}</test1.taggedImageName>
     </properties>
     <profiles>
         <profile>
-            <id>destructive-tests</id>
+            <id>tests-skip-destructive</id>
             <properties>
-                <tests.destructiveMode>true</tests.destructiveMode>
+                <skipDestructiveTests>true</skipDestructiveTests>
             </properties>
         </profile>
     </profiles>
@@ -36,7 +36,7 @@
                         <systemPropertyVariables>
                             <containment-maven-plugin.tests.test1.untaggedImageName>${test1.untaggedImageName}</containment-maven-plugin.tests.test1.untaggedImageName>
                             <containment-maven-plugin.tests.test1.imageTag>${test1.imageTag}</containment-maven-plugin.tests.test1.imageTag>
-                            <containment-maven-plugin.tests.destructiveMode.enabled>${tests.destructiveMode}</containment-maven-plugin.tests.destructiveMode.enabled>
+                            <containment-maven-plugin.tests.skipDestructiveTests>${skipDestructiveTests}</containment-maven-plugin.tests.skipDestructiveTests>
                         </systemPropertyVariables>
                     </configuration>
                 </plugin>
