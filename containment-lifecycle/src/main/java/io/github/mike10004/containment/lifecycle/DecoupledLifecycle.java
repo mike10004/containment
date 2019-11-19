@@ -2,7 +2,7 @@ package io.github.mike10004.containment.lifecycle;
 
 /**
  * Lifecycle implementation that employs delegates for commission and decommission.
- * @param <D> lifecycle
+ * @param <D> lifecycle resource type
  */
 public class DecoupledLifecycle<D> implements Lifecycle<D> {
 

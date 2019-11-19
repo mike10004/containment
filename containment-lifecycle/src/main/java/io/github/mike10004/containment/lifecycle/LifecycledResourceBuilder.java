@@ -19,18 +19,18 @@ public class LifecycledResourceBuilder {
     /**
      * Builds a new local resource instance. Local resource instances
      * must have their {@link ContainerResource#finishLifecycle()} invoked
-     * explicitly to stop and remove the container, if it has been started.
-     * @return a new instance
+     * explicitly to decommission the resource (if it has been commissioned).
+     * @return a new resource instance
      */
     public <T> LifecycledResource<T> buildLocalResource(Lifecycle<T> stack) {
         return buildResourceFromProvider(new LifecyclingCachingProvider<>(stack, eventListener));
     }
 
     /**
-     * Builds a global resource instance. The instance's {@link ContainerResource#finishLifecycle()}
-     * method will not actually cause the end of the container's lifecycle to be executed; that will
-     * only happen upon JVM termination.
-     * @return a new instance
+     * Builds a global resource instance. The instance's {@link LifecycledResource#finishLifecycle()}
+     * method does not actually decommission the resource; instead, decommissioning occurs
+     * at time of JVM termination.
+     * @return a new resource instance
      */
     public <T> LifecycledResource<T> buildGlobalResource(Lifecycle<T> stack) {
         return buildResourceFromProvider(new GlobalLifecyclingCachingProvider<>(stack, eventListener));

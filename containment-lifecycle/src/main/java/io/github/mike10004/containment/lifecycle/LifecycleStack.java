@@ -43,7 +43,7 @@ public class LifecycleStack<T> implements Lifecycle<T> {
      * @return new builder
      */
     public static <T> LifecycleStackLink<T> startingAt(Lifecycle<T> firstStage) {
-        return LifecycleStackLink.root(LifecycleStage.independent(firstStage));
+        return LifecycleStackLink.root(firstStage.asStage());
     }
 
     /**

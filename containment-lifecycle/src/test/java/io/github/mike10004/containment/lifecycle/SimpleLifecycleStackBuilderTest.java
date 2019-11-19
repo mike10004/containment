@@ -55,11 +55,11 @@ public class SimpleLifecycleStackBuilderTest {
             stack.commission();
             fail("should have excepted");
         } catch (LifecycleStackCommissionUnwindException e) {
-            assertTrue(e.commissionExceptionThrower.isEquivalent(third));
+            assertDelegatingTo(e.commissionExceptionThrower, third);
             assertSame(e.commissionException.getClass(), TestCommissionException.class);
             assertEquals(1, e.unwindException.exceptionsThrown.size());
             Map.Entry<LifecycleStage<?, ?>, RuntimeException> entry = e.unwindException.exceptionsThrown.entrySet().iterator().next();
-            assertTrue(entry.getKey().isEquivalent(second));
+            assertDelegatingTo(entry.getKey(), second);
             assertEquals(entry.getValue().getClass(), TestRuntimeDecommissionException.class);
         }
         assertEquals(1, first.commissioned);
@@ -68,6 +68,14 @@ public class SimpleLifecycleStackBuilderTest {
         assertEquals(0, third.decommissioned);
         assertEquals(0, second.decommissioned);
         assertEquals(1, first.decommissioned);
+    }
+
+    private static void assertDelegatingTo(LifecycleStage<?, ?> stage, Lifecycle<?> lifecycle) {
+        if (stage instanceof RequirementlessLifecycleStage) {
+            assertTrue(String.format("expect that %s wraps %s", stage, lifecycle), ((RequirementlessLifecycleStage<?, ?>)stage).isDelegatingTo(lifecycle));
+        } else {
+            fail(String.format("not equal: %s and %s", stage, lifecycle));
+        }
     }
 
     @Test
@@ -123,7 +131,7 @@ public class SimpleLifecycleStackBuilderTest {
         } catch (LifecycleStackDecommissionException e) {
             assertEquals(1, e.exceptionsThrown.size());
             Map.Entry<LifecycleStage<?, ?>, RuntimeException> entry = e.exceptionsThrown.entrySet().iterator().next();
-            assertTrue(entry.getKey().isEquivalent(third));
+            assertDelegatingTo(entry.getKey(), third);
             assertSame(TestRuntimeDecommissionException.class, entry.getValue().getClass());
         }
         assertEquals(1, first.commissioned);

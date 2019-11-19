@@ -8,13 +8,13 @@ package io.github.mike10004.containment.lifecycle;
  * instances do, in that the {@link #addStage(Lifecycle)} method
  * returns the same builder instance. The difference between
  * lifecycle stacks built by this builder and those built with
- * stackers is that the component lifecycles here cannot depend
+ * stack links is that the component lifecycles here cannot depend
  * on resources commissioned by previous component lifecycles
  * in the sequence.
  */
 public class SimpleLifecycleStackBuilder {
 
-    private LifecycleStackLink stacker;
+    private LifecycleStackLink stackLink;
 
     protected SimpleLifecycleStackBuilder() {
     }
@@ -34,7 +34,7 @@ public class SimpleLifecycleStackBuilder {
      * @return a new lifecycle stack instance
      */
     public synchronized <T> Lifecycle<T> finish(Lifecycle<T> finalStage) {
-        if (stacker == null) {
+        if (stackLink == null) {
             return finalStage;
         } else {
             return append(finalStage).toSequence();
@@ -43,7 +43,7 @@ public class SimpleLifecycleStackBuilder {
 
     @SuppressWarnings("unchecked")
     private <T> LifecycleStackLink<T> append(Lifecycle<T> stage) {
-        return stacker = stacker.andThen(LifecycleStage.requirementless(stage));
+        return stackLink = stackLink.andThen(stage.asStage());
     }
 
     /**
@@ -52,10 +52,10 @@ public class SimpleLifecycleStackBuilder {
      * @return this builder
      */
     public synchronized SimpleLifecycleStackBuilder addStage(Lifecycle<?> stage) {
-        if (stacker == null) {
-            stacker = LifecycleStack.startingAt(stage);
+        if (stackLink == null) {
+            stackLink = LifecycleStack.startingAt(stage);
         } else {
-            stacker = append(stage);
+            stackLink = append(stage);
         }
         return this;
     }

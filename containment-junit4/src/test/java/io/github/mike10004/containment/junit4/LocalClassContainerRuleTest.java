@@ -2,8 +2,11 @@ package io.github.mike10004.containment.junit4;
 
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.lifecycle.ContainerResource;
+import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.lifecycle.ContainerLifecycles;
+import io.github.mike10004.containment.lifecycle.Lifecycle;
 import io.github.mike10004.containment.lifecycle.LifecycleEvent;
+import io.github.mike10004.containment.lifecycle.LifecycledResource;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -26,8 +29,14 @@ public class LocalClassContainerRuleTest {
 
     static {
         listener = new EventCollector();
-        containerRule = new ContainerDependencyRule(ContainerResource.builder(parametry())
-                .eventListener(listener).buildLocalResource());
+        ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
+                .commandToWaitIndefinitely()
+                .build();
+        Lifecycle<StartedContainer> lifecycle = ContainerLifecycles.buildLocal().creating(parametry).finish();
+        LifecycledResource<StartedContainer> resource = LifecycledResource.builder()
+                .eventListener(listener)
+                .buildLocalResource(lifecycle);
+        containerRule = new ContainerDependencyRule(resource);
         TestRule eventCheckRule = new ExternalResource() {
 
             @Override
@@ -57,12 +66,6 @@ public class LocalClassContainerRuleTest {
             }
         };
         ruleChain = RuleChain.outerRule(eventCheckRule).around(containerRule);
-    }
-
-    private static ContainerParametry parametry() {
-        return ContainerParametry.builder("busybox:latest")
-                .commandToWaitIndefinitely()
-                .build();
     }
 
     @Test
