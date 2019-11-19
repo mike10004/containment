@@ -4,6 +4,8 @@ import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerExecutor;
 import io.github.mike10004.containment.ContainerInfo;
+import io.github.mike10004.containment.ContainerInspector;
+import io.github.mike10004.containment.ContainerLogFollower;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.ContainmentException;
@@ -87,19 +89,31 @@ public class UnitTestContainerCreator implements ContainerCreator {
         }
 
         @Override
-        public List<ContainerPort> fetchPorts() throws ContainmentException {
-            return Collections.emptyList();
+        public ContainerInspector inspector() {
+            return new ContainerInspector() {
+                @Override
+                public List<ContainerPort> fetchPorts() throws ContainmentException {
+                    return Collections.emptyList();
+                }
+
+            };
         }
 
         @Override
-        public <C extends Consumer<? super byte[]>> C followStdout(C consumer) throws ContainmentException {
-            return consumer;
+        public ContainerLogFollower logs() {
+            return new ContainerLogFollower() {
+                @Override
+                public <C extends Consumer<? super byte[]>> C followStdout(C consumer) throws ContainmentException {
+                    return consumer;
+                }
+
+                @Override
+                public <C extends Consumer<? super byte[]>> C followStderr(C consumer) throws ContainmentException {
+                    return consumer;
+                }
+            };
         }
 
-        @Override
-        public <C extends Consumer<? super byte[]>> C followStderr(C consumer) throws ContainmentException {
-            return consumer;
-        }
         @Override
         public ContainerCopier copier() {
             throw new UnsupportedOperationException("not implemented in this unit test");

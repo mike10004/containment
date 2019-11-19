@@ -3,6 +3,7 @@ package io.github.mike10004.containment.lifecycle;
 import io.github.mike10004.containment.ActionableContainer;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
+import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.StartedContainer;
 import org.junit.Test;
 
@@ -18,10 +19,10 @@ import static org.junit.Assert.assertEquals;
 public class LifecycledResourceBuilderTest {
 
     private static class ContainerPlus<T> {
-        public final StartedContainer container;
+        public final RunningContainer container;
         public final T annotation;
 
-        public ContainerPlus(StartedContainer container, T annotation) {
+        public ContainerPlus(RunningContainer container, T annotation) {
             this.container = container;
             this.annotation = annotation;
         }
@@ -50,7 +51,7 @@ public class LifecycledResourceBuilderTest {
                 .buildLocalResource(stack);
         ContainerPlus<String> containerPlus = dependency.request().require();
         try {
-            StartedContainer container = containerPlus.container;
+            RunningContainer container = containerPlus.container;
             ContainerSubprocessResult<String> result1 = container.executor().execute("echo", "hello, world");
             System.out.println(result1);
             assertEquals("exit", 0, result1.exitCode());

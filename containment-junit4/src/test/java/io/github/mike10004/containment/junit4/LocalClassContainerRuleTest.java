@@ -2,7 +2,7 @@ package io.github.mike10004.containment.junit4;
 
 import io.github.mike10004.containment.ContainerInfo;
 import io.github.mike10004.containment.ContainerParametry;
-import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.lifecycle.ContainerLifecycles;
 import io.github.mike10004.containment.lifecycle.Lifecycle;
 import io.github.mike10004.containment.lifecycle.LifecycleEvent;
@@ -32,8 +32,8 @@ public class LocalClassContainerRuleTest {
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()
                 .build();
-        Lifecycle<StartedContainer> lifecycle = ContainerLifecycles.buildLocal().creating(parametry).finish();
-        LifecycledResource<StartedContainer> resource = LifecycledResource.builder()
+        Lifecycle<RunningContainer> lifecycle = ContainerLifecycles.buildLocal().creating(parametry).finish();
+        LifecycledResource<RunningContainer> resource = LifecycledResource.builder()
                 .eventListener(listener)
                 .buildLocalResource(lifecycle);
         containerRule = new ContainerDependencyRule(resource);

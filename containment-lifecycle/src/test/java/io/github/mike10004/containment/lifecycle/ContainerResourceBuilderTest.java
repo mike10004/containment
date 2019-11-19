@@ -2,6 +2,7 @@ package io.github.mike10004.containment.lifecycle;
 
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
+import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.StartedContainer;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,15 +31,15 @@ public class ContainerResourceBuilderTest {
                 .build();
         File preStartActionFile = File.createTempFile("ContainerDependencyBuilderTest", ".tmp", temporaryFolder.getRoot());
         String expectedFile1Pathname = "/tmp/" + preStartActionFile.getName();
-        Lifecycle<StartedContainer> stack = ContainerLifecycles.buildLocal()
+        Lifecycle<RunningContainer> stack = ContainerLifecycles.buildLocal()
                 .creating(parametry)
                 .runPre(container -> container.copier().copyToContainer(preStartActionFile, "/tmp/"))
                 .runPost(container -> container.executor().execute("touch", "/tmp/file2.tmp"))
                 .finishWithContainer();
-        LifecycledResource<StartedContainer> dependency = LifecycledResource.builder()
+        LifecycledResource<RunningContainer> dependency = LifecycledResource.builder()
                 .eventListener(events::add)
                 .buildLocalResource(stack);
-        StartedContainer container = dependency.request().require();
+        RunningContainer container = dependency.request().require();
         try {
             ContainerSubprocessResult<String> result1 = container.executor().execute("ls", "-l", expectedFile1Pathname);
             ContainerSubprocessResult<String> result2 = container.executor().execute("ls", "-l", "/tmp/file2.tmp");

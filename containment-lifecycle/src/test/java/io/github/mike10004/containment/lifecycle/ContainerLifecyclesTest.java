@@ -6,7 +6,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
-import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.Uuids;
 import io.github.mike10004.containment.dockerjava.DefaultDjDockerManager;
 import io.github.mike10004.containment.dockerjava.DjContainerCreator;
@@ -99,10 +99,10 @@ public class ContainerLifecyclesTest {
         }
     }
 
-    private void checkStack(Lifecycle<StartedContainer> stack, UnitTestContainerMonitor monitor) throws Exception {
-        checkStack(stack, new CheckValidate<StartedContainer>(){
+    private void checkStack(Lifecycle<RunningContainer> stack, UnitTestContainerMonitor monitor) throws Exception {
+        checkStack(stack, new CheckValidate<RunningContainer>(){
             @Override
-            public void assertValid(StartedContainer thing) {
+            public void assertValid(RunningContainer thing) {
                 assertNotNull(thing);
             }
         }, monitor);
@@ -209,7 +209,7 @@ public class ContainerLifecyclesTest {
     @Test
     public void example_5() throws Exception {
         UnitTestContainerMonitor m = new UnitTestContainerMonitor();
-        Lifecycle<StartedContainer> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
+        Lifecycle<RunningContainer> stack = ContainerLifecycles.builder(() -> new UnitTestContainerCreator(m, r))
                 .creating(EXAMPLE_PARAMETRY)
                 .finish();
         checkStack(stack, m);
@@ -225,10 +225,10 @@ public class ContainerLifecyclesTest {
                 .commandToWaitIndefinitely()
                 .build();
         ContainerCreatorFactory ctor = () -> new DjContainerCreator(dockerManager);
-        Lifecycle<StartedContainer> lifecycle = ContainerLifecycles.builder(ctor)
+        Lifecycle<RunningContainer> lifecycle = ContainerLifecycles.builder(ctor)
                 .creating(parametry)
                 .finish();
-        StartedContainer container = lifecycle.commission();
+        RunningContainer container = lifecycle.commission();
         ContainerSubprocessResult<String> result;
         try {
             String text = Uuids.randomUuidString(random);

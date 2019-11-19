@@ -1,6 +1,6 @@
 package io.github.mike10004.containment.lifecycle;
 
-import io.github.mike10004.containment.StartedContainer;
+import io.github.mike10004.containment.RunningContainer;
 
 /**
  * Interface that provides a method to execute an action targeting a started container.
@@ -12,6 +12,6 @@ public interface ContainerPostStartAction<R, P> {
      * @param container the container
      * @throws Exception on error
      */
-    P perform(StartedContainer container, R requirement) throws Exception;
+    P perform(RunningContainer container, R requirement) throws Exception;
 
 }

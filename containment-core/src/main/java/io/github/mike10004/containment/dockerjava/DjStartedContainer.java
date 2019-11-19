@@ -13,6 +13,8 @@ import com.google.common.cache.LoadingCache;
 import io.github.mike10004.containment.ContainerCopier;
 import io.github.mike10004.containment.ContainerExecutor;
 import io.github.mike10004.containment.ContainerInfo;
+import io.github.mike10004.containment.ContainerInspector;
+import io.github.mike10004.containment.ContainerLogFollower;
 import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.ContainmentException;
 import io.github.mike10004.containment.StartedContainer;
@@ -68,15 +70,28 @@ public class DjStartedContainer implements StartedContainer {
     }
 
     @Override
-    public List<ContainerPort> fetchPorts() throws ContainmentException {
-        try {
-            String json = cache.get(Datum.PS);
-            return DockerPsContent.of(json).parsePortMappings();
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof ContainmentException) {
-                throw (ContainmentException) e.getCause();
+    public ContainerInspector inspector() {
+        return new Inspector();
+    }
+
+    @Override
+    public ContainerLogFollower logs() {
+        return new LogFollower();
+    }
+
+    private class Inspector implements ContainerInspector {
+
+        @Override
+        public List<ContainerPort> fetchPorts() throws ContainmentException {
+            try {
+                String json = cache.get(Datum.PS);
+                return DockerPsContent.of(json).parsePortMappings();
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof ContainmentException) {
+                    throw (ContainmentException) e.getCause();
+                }
+                throw new ContainmentException(e);
             }
-            throw new ContainmentException(e);
         }
     }
 
@@ -120,16 +135,18 @@ public class DjStartedContainer implements StartedContainer {
         }
     }
 
-    @Override
-    public <C extends Consumer<? super byte[]>> C followStdout(C consumer) throws ContainmentException {
-        return followStream(ProcessOutputStreamType.stdout, consumer);
-    }
+    private class LogFollower implements ContainerLogFollower {
 
-    @Override
-    public <C extends Consumer<? super byte[]>> C followStderr(C consumer) throws ContainmentException {
-        return followStream(ProcessOutputStreamType.stderr, consumer);
-    }
+        @Override
+        public <C extends Consumer<? super byte[]>> C followStdout(C consumer) throws ContainmentException {
+            return followStream(ProcessOutputStreamType.stdout, consumer);
+        }
 
+        @Override
+        public <C extends Consumer<? super byte[]>> C followStderr(C consumer) throws ContainmentException {
+            return followStream(ProcessOutputStreamType.stderr, consumer);
+        }
+    }
     private <C extends Consumer<? super byte[]>> C followStream(ProcessOutputStreamType stream, C consumer) throws ContainmentException {
         LogContainerCmd logStdoutCmd = client.logContainerCmd(info().id())
                 .withFollowStream(true)

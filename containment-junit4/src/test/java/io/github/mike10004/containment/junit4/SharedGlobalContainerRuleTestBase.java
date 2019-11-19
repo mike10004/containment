@@ -1,7 +1,8 @@
 package io.github.mike10004.containment.junit4;
 
 import io.github.mike10004.containment.ContainerInfo;
-import io.github.mike10004.containment.lifecycle.ContainerResource;
+import io.github.mike10004.containment.RunningContainer;
+import io.github.mike10004.containment.lifecycle.LifecycledResource;
 import io.github.mike10004.containment.lifecycle.LifecycleEvent;
 import org.junit.Test;
 
@@ -13,17 +14,17 @@ public abstract class SharedGlobalContainerRuleTestBase {
 
     @Test
     public void test1() throws Exception {
-        ContainerInfo info = getContainerDependency().container().info();
+        ContainerInfo info = getContainerDependency().request().require().info();
         Common.assertContainerAlive(info);
     }
 
     @Test
     public void test2() throws Exception {
-        ContainerInfo info = getContainerDependency().container().info();
+        ContainerInfo info = getContainerDependency().request().require().info();
         Common.assertContainerAlive(info);
     }
 
-    protected final ContainerResource getContainerDependency() {
+    protected final LifecycledResource<RunningContainer> getContainerDependency() {
         return Globals.GLOBAL_BUSYBOX_RULE;
     }
 

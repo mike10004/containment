@@ -2,6 +2,7 @@ package io.github.mike10004.containment.lifecycle;
 
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
+import io.github.mike10004.containment.RunningContainer;
 import io.github.mike10004.containment.StartableContainer;
 import io.github.mike10004.containment.StartedContainer;
 import io.github.mike10004.containment.dockerjava.DjContainerCreator;
@@ -43,10 +44,10 @@ public class ContainerLifecycles {
         }
     }
 
-    private static class SimpleStartedContainerStage extends DecoupledLifecycleStage<StartableContainer, StartedContainer> {
+    private static class SimpleStartedContainerStage extends DecoupledLifecycleStage<StartableContainer, RunningContainer> {
 
         public SimpleStartedContainerStage() {
-            super(StartableContainer::start, new AutoCloseableDecommissioner<>());
+            super(StartableContainer::start, AutoCloseableDecommissioner.byTransform(StartedContainer.class::cast));
         }
 
         @Override
@@ -162,7 +163,7 @@ public class ContainerLifecycles {
      */
     public interface LifecycleFinisher<P> {
         Lifecycle<P> finish();
-        Lifecycle<StartedContainer> finishWithContainer();
+        Lifecycle<RunningContainer> finishWithContainer();
     }
 
     /**
@@ -177,7 +178,7 @@ public class ContainerLifecycles {
      * Interface of a service that supports defining actions that can be defined
      * in the pre-start stage before any other actions have been defined.
      */
-    public interface PreStartInitial extends LifecycleFinisher<StartedContainer> {
+    public interface PreStartInitial extends LifecycleFinisher<RunningContainer> {
         <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> action);
         PreStartSubsequent<Void> runPre(ContainerPreStartRunnable runnable);
         <P> PostStart<P> post(ContainerInitialPostStartAction<P> action);
@@ -271,7 +272,7 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public Lifecycle<StartedContainer> finish() {
+        public Lifecycle<RunningContainer> finish() {
             return finishWithContainer();
         }
 
@@ -303,7 +304,7 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public Lifecycle<StartedContainer> finishWithContainer() {
+        public Lifecycle<RunningContainer> finishWithContainer() {
             return stacker.andThen(new SimpleStartedContainerStage()).toSequence();
         }
     }
@@ -321,7 +322,7 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public Lifecycle<StartedContainer> finishWithContainer() {
+        public Lifecycle<RunningContainer> finishWithContainer() {
             return post((container, x) -> container).finish();
         }
 
@@ -370,7 +371,7 @@ public class ContainerLifecycles {
         }
 
         @Override
-        public Lifecycle<StartedContainer> finishWithContainer() {
+        public Lifecycle<RunningContainer> finishWithContainer() {
             return post((container, requirement) -> container).finish();
         }
     }

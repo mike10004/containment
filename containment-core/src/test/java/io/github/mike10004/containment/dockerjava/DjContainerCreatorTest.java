@@ -98,7 +98,7 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
         try (ContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
-                List<ContainerPort> ports = container.fetchPorts();
+                List<ContainerPort> ports = container.inspector().fetchPorts();
                 ContainerPort httpdExposedPortMapping = ports.stream().filter(p -> p.number() == httpdPort).findFirst().orElseThrow(() -> new IllegalStateException("no mapping for port 80 found"));
                 assertTrue("exposed", httpdExposedPortMapping.isBound());
                 FullSocketAddress hostBinding = httpdExposedPortMapping.hostBinding();
@@ -130,7 +130,7 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
                 // TODO maybe wait for httpd output line ending in something like "[core:notice] [pid 1:tid 140486139090048] AH00094: Command line: 'httpd -D FOREGROUND'"
                 Thread.sleep(500);
                 result = fetchPageContent(hostPort);
-                List<ContainerPort> ports = container.fetchPorts();
+                List<ContainerPort> ports = container.inspector().fetchPorts();
                 assertEquals("num ports", 1, ports.size());
                 FullSocketAddress hostBinding = ports.get(0).hostBinding();
                 assertNotNull(hostBinding);
@@ -183,11 +183,7 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
         try (DjContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
-                int hostPort = container.fetchPorts().stream()
-                        .map(ContainerPort::hostBinding)
-                        .filter(Objects::nonNull)
-                        .mapToInt(FullSocketAddress::getPort)
-                        .findFirst().orElseThrow(() -> new AssertionError("port not bound"));
+                int hostPort = Objects.requireNonNull(container.inspector().fetchHostPortBinding(mysqlPort), "expect port bound to 3306").getPort();
                 String jdbcUrl = "jdbc:mysql://127.0.0.1:" + hostPort + "/";
                 System.out.println("connecting on " + jdbcUrl);
                 String dbName = "widget_factory";
@@ -198,7 +194,7 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
                 if (verboseWait) {
                     Tests.startTimer(Duration.ofSeconds(1), elapsed -> System.out.format("waited %s seconds for mysql up-ness%n", elapsed.getSeconds()), doneWaiting::get);
                 }
-                boolean logMessageAppeared = container.followStderr(BlockableLogFollower.untilLine(line -> line.contains(requiredLineSubstring), UTF_8, System.err))
+                boolean logMessageAppeared = container.logs().followStderr(BlockableLogFollower.untilLine(line -> line.contains(requiredLineSubstring), UTF_8, System.err))
                         .await(mysqlStartupTimeout);
                 doneWaiting.set(true);
                 System.out.format("saw line containing %s: %s%n", requiredLineSubstring, logMessageAppeared);
