@@ -277,12 +277,12 @@ public class ContainerLifecycles {
 
         @Override
         public PreStartSubsequent<Void> runPre(ContainerPreStartRunnable runnable) {
-            return pre(runnable.asInitialAction());
+            return pre(ContainerRunnables.asInitialAction(runnable));
         }
 
         @Override
         public PostStart<Void> runPost(ContainerPostStartRunnable runnable) {
-            return post(runnable.asInitialAction());
+            return post(ContainerRunnables.asInitialAction(runnable));
         }
 
         @Override
@@ -327,12 +327,12 @@ public class ContainerLifecycles {
 
         @Override
         public PostStart<T> runPost(ContainerPostStartRunnable runnable) {
-            return post(runnable.asPassThru());
+            return post(ContainerRunnables.asPassThru(runnable));
         }
 
         @Override
         public PreStartSubsequent<T> runPre(ContainerPreStartRunnable runnable) {
-            return pre(runnable.asPassThru());
+            return pre(ContainerRunnables.asPassThru(runnable));
         }
 
         @Override
@@ -366,7 +366,7 @@ public class ContainerLifecycles {
 
         @Override
         public PostStart<T> runPost(ContainerPostStartRunnable runnable) {
-            return post(runnable.asPassThru());
+            return post(ContainerRunnables.asPassThru(runnable));
         }
 
         @Override
