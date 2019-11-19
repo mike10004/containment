@@ -224,7 +224,7 @@ public class ContainerLifecyclesTest {
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()
                 .build();
-        ContainerCreatorConstructor ctor = () -> new DjContainerCreator(dockerManager);
+        ContainerCreatorFactory ctor = () -> new DjContainerCreator(dockerManager);
         Lifecycle<StartedContainer> lifecycle = ContainerLifecycles.builder(ctor)
                 .creating(parametry)
                 .finish();

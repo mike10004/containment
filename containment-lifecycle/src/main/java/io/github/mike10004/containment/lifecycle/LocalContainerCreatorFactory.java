@@ -14,12 +14,12 @@ import java.util.function.Function;
  * Constructor of creators for local containers. Cleanup of these containers is managed
  * by the caller, but a global monitor adds a shutdown hook to clean up ones the caller forgot.
  */
-class LocalContainerCreatorConstructor implements ContainerCreatorConstructor {
+class LocalContainerCreatorFactory implements ContainerCreatorFactory {
 
     private final Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor;
     private final Function<? super DockerClientConfig, DjContainerMonitor> shutdownHookMonitorFactory;
 
-    public LocalContainerCreatorConstructor(Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor, Function<? super DockerClientConfig, DjContainerMonitor> shutdownHookMonitorFactory) {
+    public LocalContainerCreatorFactory(Function<? super DjDockerManager, ? extends ContainerCreator> djConstructor, Function<? super DockerClientConfig, DjContainerMonitor> shutdownHookMonitorFactory) {
         this.djConstructor = djConstructor;
         this.shutdownHookMonitorFactory = shutdownHookMonitorFactory;
     }

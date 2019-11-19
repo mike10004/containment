@@ -1,11 +1,14 @@
 package io.github.mike10004.containment.lifecycle;
 
+import java.util.Optional;
 import java.util.StringJoiner;
 
 class Computation<D> implements Provision<D> {
 
     private final D provisioned;
     private final Throwable exception;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private transient final Optional<D> optional;
 
     protected Computation(D provisioned, Throwable exception) {
         if (provisioned != null && exception != null) {
@@ -16,6 +19,12 @@ class Computation<D> implements Provision<D> {
         }
         this.provisioned = provisioned;
         this.exception = exception;
+        optional = Optional.ofNullable(provisioned);
+    }
+
+    @Override
+    public Optional<D> asOptional() {
+        return optional;
     }
 
     public static <D> Computation<D> succeeded(D value) {

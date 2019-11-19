@@ -1,6 +1,5 @@
 package io.github.mike10004.containment.lifecycle;
 
-import io.github.mike10004.containment.ActionableContainer;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.StartableContainer;
@@ -143,17 +142,17 @@ public class ContainerLifecycles {
      * @param ctor constructor of the {@link ContainerCreator} instance
      * @return a new builder
      */
-    public static PreCreate builder(ContainerCreatorConstructor ctor) {
+    public static PreCreate builder(ContainerCreatorFactory ctor) {
         return new PreCreateImpl(ctor);
     }
 
     public static PreCreate buildGlobal() {
-        ContainerCreatorConstructor ctor = new GlobalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
+        ContainerCreatorFactory ctor = new GlobalContainerCreatorFactory(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
         return new PreCreateImpl(ctor);
     }
 
     public static PreCreate buildLocal() {
-        ContainerCreatorConstructor ctor = new LocalContainerCreatorConstructor(DjContainerCreator::new, clientConfig -> new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(clientConfig).build()));
+        ContainerCreatorFactory ctor = new LocalContainerCreatorFactory(DjContainerCreator::new, clientConfig -> new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(clientConfig).build()));
         return new PreCreateImpl(ctor);
     }
 
@@ -208,7 +207,7 @@ public class ContainerLifecycles {
 
     private static class PreCreateImpl extends BuilderBase<ContainerCreator> implements PreCreate {
 
-        public PreCreateImpl(ContainerCreatorConstructor ctor) {
+        public PreCreateImpl(ContainerCreatorFactory ctor) {
             super(LifecycleStack.startingAt(new ContainerCreatorStage(ctor::instantiate)));
         }
 
