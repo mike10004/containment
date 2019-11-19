@@ -70,4 +70,22 @@ public class Tests {
             }
         }
     }
+
+    public static String getTest1BareImageName() {
+        return requireSetting("test1.untaggedImageName");
+    }
+
+    private static String requireSetting(String identifier) {
+        com.google.common.collect.Maps.fromProperties(System.getProperties()).entrySet().stream().sorted(java.util.Map.Entry.comparingByKey()).forEach(entry -> System.out.format("%s=%s%n", entry.getKey(), entry.getValue()));
+        return Settings.getOpt(identifier).orElseThrow(throwOnSettingUndefined(identifier));
+    }
+
+    private static Supplier<IllegalStateException> throwOnSettingUndefined(String identifier) {
+        return () -> new IllegalStateException(String.format("setting must be defined: %s.%s", SYSPROP_PREFIX, identifier));
+    }
+
+    public static String getTest1ImageTag() {
+        return requireSetting("test1.imageTag");
+    }
+
 }

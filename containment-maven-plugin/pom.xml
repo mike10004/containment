@@ -14,7 +14,10 @@
 
     <properties>
         <maven.version>3.6.2</maven.version>
-        <tests.destructiveMode>false</tests.destructiveMode>
+        <destructiveMode>false</destructiveMode>
+        <test1.untaggedImageName>mike10004/containment-test-1</test1.untaggedImageName>
+        <test1.imageTag>1.0-linux</test1.imageTag>
+        <test1.taggedImageName>${test1.untaggedImageName}:${test1.imageTag}</test1.taggedImageName>
     </properties>
     <profiles>
         <profile>
@@ -31,6 +34,8 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <systemPropertyVariables>
+                            <containment-maven-plugin.tests.test1.untaggedImageName>${test1.untaggedImageName}</containment-maven-plugin.tests.test1.untaggedImageName>
+                            <containment-maven-plugin.tests.test1.imageTag>${test1.imageTag}</containment-maven-plugin.tests.test1.imageTag>
                             <containment-maven-plugin.tests.destructiveMode.enabled>${tests.destructiveMode}</containment-maven-plugin.tests.destructiveMode.enabled>
                         </systemPropertyVariables>
                     </configuration>

@@ -22,7 +22,7 @@ public class PullImageActorTest {
 
     @Test
     public void perform_pullHelloWorld_untagged() throws Exception {
-        Random random = new Random("PullImageActorTest_perform_pullHelloWorld_untagged".hashCode());
+        Random random = new Random("perform_pullHelloWorld_untagged".hashCode());
         String name = ImageSpecifier.fromNameOnly(Uuids.randomUuidString(random))
                 .withRepository(TestCleanupRule.INCLUDE_REPOSITORY_VALUE)
                 .toString();
@@ -30,17 +30,17 @@ public class PullImageActorTest {
     }
 
     @Test
-    public void perform_pullHelloWorld_tag_linux() throws Exception {
-        Random random = new Random("PullImageActorTest_perform_pullHelloWorld_tag_linux".hashCode());
+    public void perform_pullHelloWorld_tag_tagged() throws Exception {
+        Random random = new Random("perform_pullHelloWorld_tag_tagged".hashCode());
         String name = ImageSpecifier.fromNameOnly(Uuids.randomUuidString(random))
                 .withRepository(TestCleanupRule.INCLUDE_REPOSITORY_VALUE)
                 .toString();
-        test_perform_pullHelloWorld(name, "linux");
+        test_perform_pullHelloWorld(name, Tests.getTest1ImageTag());
     }
 
     private void test_perform_pullHelloWorld(String name, String tag) throws Exception {
         Tests.assumeDestructiveModeEnabled();
-        String bareImageName = Tests.getSetting("helloWorldImageName", "hello-world");
+        String bareImageName = Tests.getTest1BareImageName();
         ImageSpecifier remoteImageSpec = ImageSpecifier.fromNameAndTag(bareImageName, tag);
         String remoteImageName = remoteImageSpec.toString();
         Supplier<DockerClient> dockerManager = Tests.realDockerManager();
