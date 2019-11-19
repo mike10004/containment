@@ -57,7 +57,7 @@ public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
         AtomicBoolean computed = new AtomicBoolean(false);
         Provision<D> invocation = concurrentCache.compute(new Supplier<Provision<D>>(){
             @Override
-            public Computation<D> get() {
+            public Provision<D> get() {
                 computed.set(true);
                 return computeOnce();
             }
@@ -73,7 +73,7 @@ public class LifecyclingCachingProvider<D> implements CachingProvider<D> {
         return commissioned;
     }
 
-    protected Computation<D> computeOnce() {
+    protected Provision<D> computeOnce() {
         try {
             D val = doCommission();
             notify(LifecycleEvent.Category.COMMISSION_SUCCEEDED);

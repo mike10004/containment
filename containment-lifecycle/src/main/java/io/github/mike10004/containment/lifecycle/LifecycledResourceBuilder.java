@@ -4,6 +4,9 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Builder of lifecycled resources.
+ */
 public class LifecycledResourceBuilder {
 
     private Consumer<? super LifecycleEvent> eventListener = LifecycleEvent.inactiveConsumer();
@@ -11,6 +14,11 @@ public class LifecycledResourceBuilder {
     protected LifecycledResourceBuilder() {
     }
 
+    /**
+     * Sets the lifecycle event listener.
+     * @param eventListener listener
+     * @return this builder instance
+     */
     public LifecycledResourceBuilder eventListener(Consumer<? super LifecycleEvent> eventListener) {
         this.eventListener = requireNonNull(eventListener);
         return this;

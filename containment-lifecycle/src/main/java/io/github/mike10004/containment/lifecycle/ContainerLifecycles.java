@@ -147,12 +147,28 @@ public class ContainerLifecycles {
         return new PreCreateImpl(ctor);
     }
 
+    /**
+     * @deprecated use {@link #builderOfLifecyclesOfUnmonitoredContainers()}
+     */
+    @Deprecated
     public static PreCreate buildGlobal() {
+        return builderOfLifecyclesOfUnmonitoredContainers();
+    }
+
+    public static PreCreate builderOfLifecyclesOfUnmonitoredContainers() {
         ContainerCreatorFactory ctor = new GlobalContainerCreatorFactory(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
         return new PreCreateImpl(ctor);
     }
 
+    /**
+     * @deprecated use {@link #builderOfLifecyclesOfContainersMonitoredGlobally()}
+     */
+    @Deprecated
     public static PreCreate buildLocal() {
+        return builderOfLifecyclesOfContainersMonitoredGlobally();
+    }
+
+    public static PreCreate builderOfLifecyclesOfContainersMonitoredGlobally() {
         ContainerCreatorFactory ctor = new LocalContainerCreatorFactory(DjContainerCreator::new, clientConfig -> new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(clientConfig).build()));
         return new PreCreateImpl(ctor);
     }

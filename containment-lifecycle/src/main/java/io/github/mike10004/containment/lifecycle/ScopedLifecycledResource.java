@@ -7,11 +7,15 @@ class ScopedLifecycledResource<T> implements ScopedResource<T> {
     private final Runnable closer;
     private final T required;
 
-    public ScopedLifecycledResource(LifecycledResource<T> resource) throws FirstProvisionFailedException {
-        this.required = requireNonNull(resource.request().require());
-        closer = resource::finishLifecycle;
+    public ScopedLifecycledResource(T resource, Runnable closer) throws FirstProvisionFailedException {
+        this.required = requireNonNull(resource);
+        this.closer = requireNonNull(closer);
     }
 
+    /**
+     * Gets the resource. This does not throw an exception; the resource has already been required.
+     * @return the resource
+     */
     @Override
     public T acquire() {
         return required;
@@ -21,4 +25,5 @@ class ScopedLifecycledResource<T> implements ScopedResource<T> {
     public void close() throws RuntimeException {
         closer.run();
     }
+
 }

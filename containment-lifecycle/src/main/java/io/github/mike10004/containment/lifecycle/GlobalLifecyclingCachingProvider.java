@@ -58,7 +58,8 @@ public final class GlobalLifecyclingCachingProvider<D> extends LifecyclingCachin
         }
     }
 
-    protected Computation<D> computeOnce() {
+    @Override
+    protected Provision<D> computeOnce() {
         try {
             D val = doCommission();
             Thread thread = new Thread(this::finishLifecycleNow);

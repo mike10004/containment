@@ -1,5 +1,9 @@
 package io.github.mike10004.containment.lifecycle;
 
+/**
+ * Interface of a service that provides a resource with a lifecycle.
+ * @param <T> resource type
+ */
 public interface LifecycledResource<T> {
 
     /**
@@ -14,8 +18,16 @@ public interface LifecycledResource<T> {
      */
     void finishLifecycle();
 
-    default ScopedResource<T> inScope() {
-        return new ScopedLifecycledResource<>(this);
+    /**
+     * Returns a view of this resources as a scoped object, meaning
+     * it can be used in a try-with-resources block.
+     * Exiting the block will invoke {@link #finishLifecycle()}.
+     * Calling this method will request  the resource.
+     * @return a view of this resource as a scoped resource
+     * @throws FirstProvisionFailedException if provisioning the resource fails
+     */
+    default ScopedResource<T> inScope() throws FirstProvisionFailedException {
+        return new ScopedLifecycledResource<>(request().require(), this::finishLifecycle);
     }
 
     /**
