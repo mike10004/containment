@@ -4,7 +4,6 @@ import io.github.mike10004.containment.ActionableContainer;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.containment.RunningContainer;
-import io.github.mike10004.containment.StartedContainer;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ public class LifecycledResourceBuilderTest {
                 .finish();
         LifecycledResource<ContainerPlus<String>> dependency = new LifecycledResourceBuilder()
                 .eventListener(events::add)
-                .buildLocalResource(stack);
+                .buildResource(stack);
         ContainerPlus<String> containerPlus = dependency.request().require();
         try {
             RunningContainer container = containerPlus.container;

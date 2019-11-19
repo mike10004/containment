@@ -25,23 +25,37 @@ public class LifecycledResourceBuilder {
     }
 
     /**
-     * Builds a new local resource instance. Local resource instances
-     * must have their {@link ContainerResource#finishLifecycle()} invoked
+     * Builds a new resource instance. Resource instances
+     * must have their {@link LifecycledResource#finishLifecycle()} invoked
      * explicitly to decommission the resource (if it has been commissioned).
      * @return a new resource instance
      */
-    public <T> LifecycledResource<T> buildLocalResource(Lifecycle<T> stack) {
+    public <T> LifecycledResource<T> buildResource(Lifecycle<T> stack) {
         return buildResourceFromProvider(new LifecyclingCachingProvider<>(stack, eventListener));
     }
 
     /**
-     * Builds a global resource instance. The instance's {@link LifecycledResource#finishLifecycle()}
-     * method does not actually decommission the resource; instead, decommissioning occurs
-     * at time of JVM termination.
+     * Builds a resource instance that is decommissioned on JVM termination.
+     * The resource is decommissioned <i>only</i> on JVM termination.
+     * The resources's {@link LifecycledResource#finishLifecycle()}
+     * method is effectively disabled and does not actually decommission the resource.
+     * (If you want to decommission explicitly, you could retain a reference
+     * to the argument lifecycle and invoke its {@link Lifecycle#decommission()} method,
+     * but this is not recommended, because decommissioning will then occur <i>again</i>
+     * on JVM termination. So, only do so if you know that double-decommissioning
+     * does not have any nasty side effects.)
      * @return a new resource instance
      */
-    public <T> LifecycledResource<T> buildGlobalResource(Lifecycle<T> stack) {
+    public <T> LifecycledResource<T> buildResourceDecommissionedOnJvmTermination(Lifecycle<T> stack) {
         return buildResourceFromProvider(new GlobalLifecyclingCachingProvider<>(stack, eventListener));
+    }
+
+    /**
+     * @deprecated use {@link #buildResourceDecommissionedOnJvmTermination(Lifecycle)} for clarity
+     */
+    @Deprecated
+    public <T> LifecycledResource<T> buildGlobalResource(Lifecycle<T> stack) {
+        return buildResourceDecommissionedOnJvmTermination(stack);
     }
 
     private <T> LifecycledResource<T> buildResourceFromProvider(LifecyclingCachingProvider<T> provider) {

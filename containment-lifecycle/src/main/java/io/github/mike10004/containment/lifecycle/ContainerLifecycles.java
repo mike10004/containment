@@ -148,27 +148,40 @@ public class ContainerLifecycles {
     }
 
     /**
-     * @deprecated use {@link #builderOfLifecyclesOfUnmonitoredContainers()}
+     * @deprecated use {@link #builderOfLifecyclesOfUnmanagedContainers()}, which has a more meaningful name
      */
     @Deprecated
     public static PreCreate buildGlobal() {
-        return builderOfLifecyclesOfUnmonitoredContainers();
+        return builderOfLifecyclesOfUnmanagedContainers();
     }
 
-    public static PreCreate builderOfLifecyclesOfUnmonitoredContainers() {
+    /**
+     * Returns a service that can be used to build lifecycles of containers that are not managed.
+     * Creating and starting unmanaged containers has system-wide effects that persist after JVM
+     * termination. (The "system" in this context is the computer on which the JVM is running.)
+     * @return a pre-create service
+     */
+    public static PreCreate builderOfLifecyclesOfUnmanagedContainers() {
         ContainerCreatorFactory ctor = new GlobalContainerCreatorFactory(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
         return new PreCreateImpl(ctor);
     }
 
     /**
-     * @deprecated use {@link #builderOfLifecyclesOfContainersMonitoredGlobally()}
+     * @deprecated use {@link #builderOfLifecyclesOfGloballyManagedContainers()}, which has a more meaningful name
      */
     @Deprecated
     public static PreCreate buildLocal() {
-        return builderOfLifecyclesOfContainersMonitoredGlobally();
+        return builderOfLifecyclesOfGloballyManagedContainers();
     }
 
-    public static PreCreate builderOfLifecyclesOfContainersMonitoredGlobally() {
+    /**
+     * Returns a service that can be used to build lifecycles of containers that are managed globally.
+     * The creation and starting of a globally-managed container causes a JVM shutdown hook to be
+     * registered to clean up the container on JVM termination. Cleanup means stopping a started
+     * container and removing a created container.
+     * @return a pre-create service
+     */
+    public static PreCreate builderOfLifecyclesOfGloballyManagedContainers() {
         ContainerCreatorFactory ctor = new LocalContainerCreatorFactory(DjContainerCreator::new, clientConfig -> new DjShutdownHookContainerMonitor(() -> DockerClientBuilder.getInstance(clientConfig).build()));
         return new PreCreateImpl(ctor);
     }

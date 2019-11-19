@@ -46,7 +46,8 @@ public class LifecycleStack<T> implements Lifecycle<T> {
         return startingAt(new RequirementlessLifecycleStage<>(firstStage));
     }
 
-    private static <T> LifecycleStackElement<T> startingAt(LifecycleStage<Void, T> firstStage) {
+    @VisibleForTesting
+    static <T> LifecycleStackElement<T> startingAt(LifecycleStage<Void, T> firstStage) {
         return  LifecycleStackElement.root(firstStage);
     }
 

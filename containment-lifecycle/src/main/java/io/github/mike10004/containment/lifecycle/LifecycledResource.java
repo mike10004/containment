@@ -31,12 +31,12 @@ public interface LifecycledResource<T> {
     }
 
     /**
-     * Creates an instance from a container provider.
-     * @param containerProvider the provider
+     * Creates an instance from a resource provider.
+     * @param resourceProvider the provider
      * @return a new instance
      */
-    static <T> LifecycledResource<T> fromProvider(LifecyclingCachingProvider<T> containerProvider) {
-        return new CacheableLifecycledResource<>(containerProvider);
+    static <T> LifecycledResource<T> fromProvider(LifecyclingCachingProvider<T> resourceProvider) {
+        return new CacheableLifecycledResource<>(resourceProvider);
     }
 
     static LifecycledResourceBuilder builder() {

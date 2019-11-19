@@ -33,8 +33,11 @@ public class LocalSingleMethodContainerRuleTest {
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()
                 .build();
-        Lifecycle<RunningContainer> lifecycle = ContainerLifecycles.buildLocal().creating(parametry).finish();
-        LifecycledResource<RunningContainer> resource = LifecycledResource.builder().eventListener(this.listener).buildLocalResource(lifecycle);
+        Lifecycle<RunningContainer> lifecycle = ContainerLifecycles.builderOfLifecyclesOfGloballyManagedContainers()
+                .creating(parametry).finish();
+        LifecycledResource<RunningContainer> resource = LifecycledResource.builder()
+                .eventListener(this.listener)
+                .buildResource(lifecycle);
         containerRule = new ContainerDependencyRule(resource);
         TestRule eventCheckRule = new ExternalResource() {
 

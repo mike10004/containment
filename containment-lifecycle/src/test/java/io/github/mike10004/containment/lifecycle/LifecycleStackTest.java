@@ -19,7 +19,7 @@ public class LifecycleStackTest {
         LifecycleStage<Void, TypeA> stage1 = stage(x -> new TypeA());
         LifecycleStage<TypeA, TypeB> stage2 = stage(x -> new TypeB());
         LifecycleStage<TypeB, TypeC> stage3 = stage(x -> new TypeC());
-        Lifecycle<TypeC> lifecycle = LifecycleStack.<TypeA>startingAt(stage1)
+        Lifecycle<TypeC> lifecycle = LifecycleStack.startingAt(stage1)
                 .andThen(stage2)
                 .andThen(stage3)
                 .toSequence();

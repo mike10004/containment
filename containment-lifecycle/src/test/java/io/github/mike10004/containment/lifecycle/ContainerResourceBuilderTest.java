@@ -3,7 +3,6 @@ package io.github.mike10004.containment.lifecycle;
 import io.github.mike10004.containment.ContainerParametry;
 import io.github.mike10004.containment.ContainerSubprocessResult;
 import io.github.mike10004.containment.RunningContainer;
-import io.github.mike10004.containment.StartedContainer;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -38,7 +37,7 @@ public class ContainerResourceBuilderTest {
                 .finishWithContainer();
         LifecycledResource<RunningContainer> dependency = LifecycledResource.builder()
                 .eventListener(events::add)
-                .buildLocalResource(stack);
+                .buildResource(stack);
         RunningContainer container = dependency.request().require();
         try {
             ContainerSubprocessResult<String> result1 = container.executor().execute("ls", "-l", expectedFile1Pathname);

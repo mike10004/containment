@@ -12,7 +12,7 @@ import static java.util.Objects.requireNonNull;
  * retrieval and ends on JVM termination.
  * @param <D> resource type
  */
-public final class GlobalLifecyclingCachingProvider<D> extends LifecyclingCachingProvider<D> {
+final class GlobalLifecyclingCachingProvider<D> extends LifecyclingCachingProvider<D> {
 
     private final RuntimeShutdownHookManager addShutdownHookMethod;
 
