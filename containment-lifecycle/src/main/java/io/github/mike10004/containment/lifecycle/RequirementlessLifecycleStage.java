@@ -2,7 +2,7 @@ package io.github.mike10004.containment.lifecycle;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class RequirementlessLifecycleStage<R, D> implements LifecycleStage<R, D> {
+class RequirementlessLifecycleStage<R, D> implements LifecycleStage<R, D> {
 
     private final Lifecycle<D> self;
 
@@ -29,4 +29,5 @@ public class RequirementlessLifecycleStage<R, D> implements LifecycleStage<R, D>
     public String toString() {
         return String.format("LifecycleStage{%s}", self);
     }
+
 }

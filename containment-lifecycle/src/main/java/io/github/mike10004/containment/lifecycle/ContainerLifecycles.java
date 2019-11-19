@@ -214,15 +214,15 @@ public class ContainerLifecycles {
 
         @Override
         public PreStartInitial creating(ContainerParametry containerParametry) {
-            return new Builder2Impl(stacker.andThen(new StartableContainerStage(containerParametry)));
+            return new PreStartInitialImpl(stacker.andThen(new StartableContainerStage(containerParametry)));
         }
     }
 
     private static abstract class BuilderBase<T> {
 
-        protected final LifecycleStackLink<T> stacker;
+        protected final LifecycleStackElement<T> stacker;
 
-        protected BuilderBase(LifecycleStackLink<T> stacker) {
+        protected BuilderBase(LifecycleStackElement<T> stacker) {
             this.stacker = requireNonNull(stacker);
         }
 
@@ -265,10 +265,10 @@ public class ContainerLifecycles {
         }
     }
 
-    private static class Builder2Impl extends BuilderBase<StartableContainer> implements PreStartInitial {
+    private static class PreStartInitialImpl extends BuilderBase<StartableContainer> implements PreStartInitial {
 
-        public Builder2Impl(LifecycleStackLink<StartableContainer> stacker) {
-            super(stacker);
+        public PreStartInitialImpl(LifecycleStackElement<StartableContainer> stackElement) {
+            super(stackElement);
         }
 
         @Override
@@ -288,9 +288,9 @@ public class ContainerLifecycles {
 
         @Override
         public <P> PreStartSubsequent<P> pre(ContainerInitialPreStartAction<P> action) {
-            LifecycleStackLink<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
+            LifecycleStackElement<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
             LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(action);
-            LifecycleStackLink<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
+            LifecycleStackElement<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
             return new Builder3Impl<>(pStacker);
         }
 
@@ -311,7 +311,7 @@ public class ContainerLifecycles {
 
     private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements PreStartSubsequent<T> {
 
-        public Builder3Impl(LifecycleStackLink<PreStartResult<T>> stacker) {
+        public Builder3Impl(LifecycleStackElement<PreStartResult<T>> stacker) {
             super(stacker);
         }
 
@@ -351,7 +351,7 @@ public class ContainerLifecycles {
 
     private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStart<T> {
 
-        public Builder4Impl(LifecycleStackLink<PostStartResult<T>> b) {
+        public Builder4Impl(LifecycleStackElement<PostStartResult<T>> b) {
             super(b);
         }
 

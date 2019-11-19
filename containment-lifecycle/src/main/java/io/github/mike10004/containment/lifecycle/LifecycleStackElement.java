@@ -9,23 +9,23 @@ import static java.util.Objects.requireNonNull;
  * Element of a lifestyle stack. The stack is built as a
  * linked list rooted at the first stage.
  */
-public class LifecycleStackLink<U> {
+public class LifecycleStackElement<U> {
 
-    private final LifecycleStackLink<?> parent;
-    private final LifecycleStage<?, U> content;
+    private final LifecycleStackElement<?> parent;
+    private final LifecycleStage<?, U> stage;
 
-    private <T> LifecycleStackLink(LifecycleStackLink<T> parent, LifecycleStage<T, U> content) {
+    private <T> LifecycleStackElement(LifecycleStackElement<T> parent, LifecycleStage<T, U> stage) {
         this.parent = parent;
-        this.content = requireNonNull(content);
+        this.stage = requireNonNull(stage);
     }
 
-    static <T> LifecycleStackLink<T> root(LifecycleStage<?, T> content) {
-        return new LifecycleStackLink<>(null, content);
+    static <T> LifecycleStackElement<T> root(LifecycleStage<?, T> content) {
+        return new LifecycleStackElement<>(null, content);
     }
 
     /**
-     * Builds a progressive lifecycle stack.
-     * @return a new progressive lifecycle stack instance
+     * Builds a lifecycle that is the sequence of stages starting at the root and finishing with this element's stage.
+     * @return a new lifecycle instance
      */
     public Lifecycle<U> toSequence() {
         return new LifecycleStack<>(toSequence(new ArrayList<>()));
@@ -36,15 +36,15 @@ public class LifecycleStackLink<U> {
      * @param stage stage
      * @return a new stacker containing argument stage and all previously-added stage
      */
-    public <V> LifecycleStackLink<V> andThen(LifecycleStage<U, V> stage) {
-        return new LifecycleStackLink<>(this, stage);
+    public <V> LifecycleStackElement<V> andThen(LifecycleStage<U, V> stage) {
+        return new LifecycleStackElement<>(this, stage);
     }
 
     private List<LifecycleStage<?, ?>> toSequence(List<LifecycleStage<?, ?>> list) {
         if (parent != null) {
             parent.toSequence(list);
         }
-        list.add(content);
+        list.add(stage);
         return list;
     }
 }

@@ -39,19 +39,15 @@ public class LifecycleStack<T> implements Lifecycle<T> {
     }
 
     /**
-     * Creates a new lifecycle stacker.
-     * @return new builder
+     * Creates a new lifecycle stack root.
+     * @return a new stack root
      */
-    public static <T> LifecycleStackLink<T> startingAt(Lifecycle<T> firstStage) {
-        return LifecycleStackLink.root(firstStage.asStage());
+    public static <T> LifecycleStackElement<T> startingAt(Lifecycle<T> firstStage) {
+        return startingAt(new RequirementlessLifecycleStage<>(firstStage));
     }
 
-    /**
-     * Creates a new lifecycle stack builder.
-     * @return new builder
-     */
-    public static <T> LifecycleStackLink<T> startingAt(LifecycleStage<Void, T> firstStage) {
-        return  LifecycleStackLink.root(firstStage);
+    private static <T> LifecycleStackElement<T> startingAt(LifecycleStage<Void, T> firstStage) {
+        return  LifecycleStackElement.root(firstStage);
     }
 
     @Override

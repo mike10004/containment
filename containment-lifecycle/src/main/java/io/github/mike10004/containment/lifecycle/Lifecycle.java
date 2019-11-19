@@ -2,7 +2,7 @@ package io.github.mike10004.containment.lifecycle;
 
 /**
  * Interface of a service that provides methods to execute the full lifecycle of a resource.
- * A lifecycle includes the commission and decommission stages.
+ * A lifecycle includes the commission and decommission actions.
  * @param <D> provided resource type
  */
 public interface Lifecycle<D> {
@@ -18,10 +18,5 @@ public interface Lifecycle<D> {
      * Decommissions the resource.
      */
     void decommission();
-
-    default <R> LifecycleStage<R, D> asStage() {
-        Lifecycle<D> self = this;
-        return new RequirementlessLifecycleStage<>(self);
-    }
 
 }

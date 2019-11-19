@@ -1,10 +1,12 @@
 package io.github.mike10004.containment.lifecycle;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * Builder of simple lifecycle stacks. A simple lifecycle stack
  * is a sequence of independent lifecycles.
  * This acts more like a traditional builder than the
- * {@link LifecycleStackLink}
+ * {@link LifecycleStackElement}
  * instances do, in that the {@link #addStage(Lifecycle)} method
  * returns the same builder instance. The difference between
  * lifecycle stacks built by this builder and those built with
@@ -14,7 +16,7 @@ package io.github.mike10004.containment.lifecycle;
  */
 public class SimpleLifecycleStackBuilder {
 
-    private LifecycleStackLink stackLink;
+    private LifecycleStackElement stackElement;
 
     protected SimpleLifecycleStackBuilder() {
     }
@@ -34,7 +36,7 @@ public class SimpleLifecycleStackBuilder {
      * @return a new lifecycle stack instance
      */
     public synchronized <T> Lifecycle<T> finish(Lifecycle<T> finalStage) {
-        if (stackLink == null) {
+        if (stackElement == null) {
             return finalStage;
         } else {
             return append(finalStage).toSequence();
@@ -42,8 +44,9 @@ public class SimpleLifecycleStackBuilder {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> LifecycleStackLink<T> append(Lifecycle<T> stage) {
-        return stackLink = stackLink.andThen(stage.asStage());
+    private <T> LifecycleStackElement<T> append(Lifecycle<T> stage) {
+        checkState(stackElement != null, "BUG: stack root must be created before this method is invoked");
+        return stackElement = stackElement.andThen(new RequirementlessLifecycleStage(stage));
     }
 
     /**
@@ -52,10 +55,10 @@ public class SimpleLifecycleStackBuilder {
      * @return this builder
      */
     public synchronized SimpleLifecycleStackBuilder addStage(Lifecycle<?> stage) {
-        if (stackLink == null) {
-            stackLink = LifecycleStack.startingAt(stage);
+        if (stackElement == null) {
+            stackElement = LifecycleStack.startingAt(stage);
         } else {
-            stackLink = append(stage);
+            stackElement = append(stage);
         }
         return this;
     }
