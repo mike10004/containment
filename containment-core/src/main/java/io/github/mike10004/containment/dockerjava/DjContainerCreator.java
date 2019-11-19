@@ -84,6 +84,7 @@ public class DjContainerCreator implements ContainerCreator {
         List<String> envDefinitions = parametry.environment().entrySet().stream()
                 .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue())).collect(Collectors.toList());
         createCmd.withEnv(envDefinitions);
+        createCmd.withLabels(parametry.labels());
         return createCmd;
     }
 

@@ -25,7 +25,7 @@ public interface ContainerParametry {
     /**
      * Returns the command to execute. An empty list is interpreted to mean the container's default
      * command is to be executed.
-     * @return the command to execute
+     * @return the command to execute (as an unmodifiable list)
      */
     List<String> command();
 
@@ -36,21 +36,51 @@ public interface ContainerParametry {
     CommandType commandType();
 
     /**
-     * Returns a list of ports within the container that are to be binded to ports on the container host.
+     * Returns an unmodifiable list of ports within the container that are to be binded to ports on the container host.
      * @return list of ports
      */
     List<PortBinding> bindablePorts();
 
+    /**
+     * Returns an unmodifiable list of bind mounts.
+     * @return list of bind mounts
+     */
     List<BindMount> bindMounts();
 
+    /**
+     * Returns an unmodifiable map containing container label definitions.
+     * @return a map of labels
+     */
+    Map<String, String> labels();
+
+    /**
+     * Interface of a value class that represents a container port binding.
+     */
     interface PortBinding {
 
+        /**
+         * Returns a representation of this binding in serializable form.
+         * @return this binding as a string
+         */
         String toSerialForm();
 
+        /**
+         * Returns an implementation of a port binding that represents a binding between a
+         * container port and a predefined host port.
+         * @param hostPort host port
+         * @param containerPort container port
+         * @return a new binding
+         */
         static PortBinding toHostFromContainer(int hostPort, int containerPort) {
             return () -> String.format("%d:%d", hostPort, containerPort);
         }
 
+        /**
+         * Returns an implementation of a port binding that represents a binding between
+         * a container port and a to-be-determined host port.
+         * @param containerPort container port
+         * @return a new binding
+         */
         static PortBinding containerOnly(int containerPort) {
             return () -> String.valueOf(containerPort);
         }
@@ -124,6 +154,8 @@ public interface ContainerParametry {
         private List<BindMount> bindMounts = new ArrayList<>();
 
         private Map<String, String> env = new LinkedHashMap<>();
+
+        private Map<String, String> labels = new LinkedHashMap<>();
 
         private Builder(String image) {
             this(ImageSpecifier.parseSpecifier(requireNonNull(image, "image")));
@@ -295,6 +327,12 @@ public interface ContainerParametry {
             return this;
         }
 
+        public Builder label(String name, String value) {
+            requireNonNull(name, "name must be defined"); // should we check nonempty too?
+            labels.put(name, value);
+            return this;
+        }
+
         private static class FrozenContainerParametry implements ContainerParametry {
 
             private final ImageSpecifier image;
@@ -303,6 +341,7 @@ public interface ContainerParametry {
             private final List<PortBinding> exposedPorts;
             private final List<BindMount> bindMounts;
             private final Map<String, String> env;
+            private final Map<String, String> labels;
 
             private FrozenContainerParametry(Builder builder) {
                 image = builder.image;
@@ -311,6 +350,12 @@ public interface ContainerParametry {
                 env = Collections.unmodifiableMap(new LinkedHashMap<>(builder.env));
                 this.commandType = requireNonNull(builder.commandType);
                 bindMounts = Collections.unmodifiableList(new ArrayList<>(requireNonNull(builder.bindMounts)));
+                labels = Collections.unmodifiableMap(new LinkedHashMap<>(builder.labels));
+            }
+
+            @Override
+            public Map<String, String> labels() {
+                return labels;
             }
 
             @Override
@@ -350,6 +395,7 @@ public interface ContainerParametry {
                         .add("command=" + command)
                         .add("exposedPorts=" + exposedPorts)
                         .add("env=" + env)
+                        .add("labels=" + labels)
                         .add("bindMounts=" + bindMounts)
                         .toString();
             }

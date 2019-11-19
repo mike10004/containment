@@ -18,7 +18,7 @@ public class TestDockerManager extends DefaultDjDockerManager {
         super(EasyMock.createMock(DockerClient.class), EasyMock.createMock(DjContainerMonitor.class));
     }
 
-    private static DockerClientConfig createClientConfig() {
+    static DockerClientConfig createClientConfig() {
         return DefaultDockerClientConfig.createDefaultConfigBuilder().build();
     }
 

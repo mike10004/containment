@@ -1,5 +1,8 @@
 package io.github.mike10004.containment.dockerjava;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
 import io.github.mike10004.containment.ContainerCreator;
 import io.github.mike10004.containment.ContainerExecutor;
@@ -31,6 +34,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -259,4 +263,26 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
 
     }
 
+    @Test
+    public void labels() throws Exception {
+        String k1 = "foo", v1 = "bar", k2 = "baz", v2 = "gaw";
+        Map<String, String> expected = ImmutableMap.of(k1, v1, k2, v2);
+        ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForLabelTest())
+                .commandToWaitIndefinitely()
+                .label(k1, v1)
+                .label(k2, v2)
+                .build();
+        InspectContainerResponse rsp;
+        try (DjContainerCreator runner = new DjContainerCreator(dockerManager);
+             StartableContainer runnable = runner.create(parametry)) {
+            try (StartedContainer container = runnable.start()) {
+                String id = container.info().id();
+                try (DockerClient client = dockerManager.openClient()) {
+                    rsp = client.inspectContainerCmd(id).exec();
+                }
+            }
+        }
+        Map<String, String> actual = rsp.getConfig().getLabels();
+        assertEquals("labels", expected, actual);
+    }
 }

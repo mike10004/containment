@@ -2,7 +2,7 @@ package io.github.mike10004.containment;
 
 import static java.util.Objects.requireNonNull;
 
-public class ContainerInfoImpl implements ContainerInfo {
+class ContainerInfoImpl implements ContainerInfo {
 
     private final String containerId;
     private final Stickiness stickiness;

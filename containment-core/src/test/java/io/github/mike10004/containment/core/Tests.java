@@ -26,6 +26,10 @@ public class Tests {
         return getImageForTest("echoTest.image", "busybox:latest");
     }
 
+    public static ImageSpecifier getImageForLabelTest() {
+        return getImageForTest("labelTest.image", "busybox:latest");
+    }
+
     public static ImageSpecifier getImageForHttpdTest() {
         return getImageForTest("httpdTest.image", "httpd:2.4");
     }
