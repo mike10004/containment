@@ -159,6 +159,17 @@ public class ContainerLifecycles {
      * Returns a service that can be used to build lifecycles of containers that are not managed.
      * Creating and starting unmanaged containers has system-wide effects that persist after JVM
      * termination. (The "system" in this context is the computer on which the JVM is running.)
+     * Therefore, to be a good citizen of the system, you must explicitly clean up any unmanaged
+     * containers that you create and/or start.
+     *
+     * <p>If you are building a lifecycled resource and you will execute the stages of the lifecycle,
+     * either explicitly with
+     * {@link LifecycledResourceBuilder#buildResource(Lifecycle)}
+     * or implicitly with
+     * {@link LifecycledResourceBuilder#buildResourceDecommissionedOnJvmTermination(Lifecycle)} decommission-on-shutdown},
+     * then it is fine to leave your containers unmanaged (because execution of the lifecycle effectively
+     * cleans up the container).
+     * </p>
      * @return a pre-create service
      */
     public static PreCreate builderOfLifecyclesOfUnmanagedContainers() {
@@ -320,12 +331,12 @@ public class ContainerLifecycles {
             LifecycleStackElement<PreStartResult<Void>> transition = stacker.andThen(transitionStartableToPre());
             LifecycleStage<PreStartResult<Void>, PreStartResult<P>> stageWrapper = new ContainerPreStartStage<>(action);
             LifecycleStackElement<PreStartResult<P>> pStacker = transition.andThen(stageWrapper);
-            return new Builder3Impl<>(pStacker);
+            return new PreStartSubsequentImpl<>(pStacker);
         }
 
         @Override
         public <P> PostStart<P> post(ContainerInitialPostStartAction<P> action) {
-            return new Builder4Impl<>(stacker
+            return new PostStartImpl<>(stacker
                 .andThen(transitionStartableToPre())
                 .andThen(transitionPreToPost())
                 .andThen(new ContainerPostStartStage<>(action))
@@ -338,9 +349,9 @@ public class ContainerLifecycles {
         }
     }
 
-    private static class Builder3Impl<T> extends BuilderBase<PreStartResult<T>> implements PreStartSubsequent<T> {
+    private static class PreStartSubsequentImpl<T> extends BuilderBase<PreStartResult<T>> implements PreStartSubsequent<T> {
 
-        public Builder3Impl(LifecycleStackElement<PreStartResult<T>> stacker) {
+        public PreStartSubsequentImpl(LifecycleStackElement<PreStartResult<T>> stacker) {
             super(stacker);
         }
 
@@ -367,20 +378,20 @@ public class ContainerLifecycles {
 
         @Override
         public <Q> PreStartSubsequent<Q> pre(ContainerPreStartAction<T, Q> action) {
-            return new Builder3Impl<>(stacker.andThen(new ContainerPreStartStage<>(action)));
+            return new PreStartSubsequentImpl<>(stacker.andThen(new ContainerPreStartStage<>(action)));
         }
 
         @Override
         public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> action) {
-            return new Builder4Impl<>(stacker
+            return new PostStartImpl<>(stacker
                     .andThen(transitionPreToPost())
                     .andThen(new ContainerPostStartStage<>(action)));
         }
     }
 
-    private static class Builder4Impl<T> extends BuilderBase<PostStartResult<T>> implements PostStart<T> {
+    private static class PostStartImpl<T> extends BuilderBase<PostStartResult<T>> implements PostStart<T> {
 
-        public Builder4Impl(LifecycleStackElement<PostStartResult<T>> b) {
+        public PostStartImpl(LifecycleStackElement<PostStartResult<T>> b) {
             super(b);
         }
 
@@ -391,7 +402,7 @@ public class ContainerLifecycles {
 
         @Override
         public <Q> PostStart<Q> post(ContainerPostStartAction<T, Q> action) {
-            return new Builder4Impl<>(stacker.andThen(new ContainerPostStartStage<>(action)));
+            return new PostStartImpl<>(stacker.andThen(new ContainerPostStartStage<>(action)));
         }
 
         @Override
