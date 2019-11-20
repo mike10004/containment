@@ -6,8 +6,14 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Element of a lifestyle stack. The stack is built as a
- * linked list rooted at the first stage.
+ * Element of a lifestyle stack. A stack element has a corresponding lifecycle
+ * stage and a link to stack element corresponding to the previous stage in the
+ * lifecycle. The first lifecycle stack element is the root and has no previous stage.
+ * The root stack element is created by {@link LifecycleStack#startingAt(Lifecycle)}.
+ * Add stages with {@link #andThen(LifecycleStage)}.
+ * When all stages have been added, build the multi-stage lifecycle
+ * with {@link #toSequence()}.
+ * @param <U> type of resource produced by the stage corresponding to this element
  */
 public class LifecycleStackElement<U> {
 
@@ -32,9 +38,10 @@ public class LifecycleStackElement<U> {
     }
 
     /**
-     * Adds a stage, creating a new stacker object..
+     * Adds a stage, creating a new stack element.
      * @param stage stage
-     * @return a new stacker containing argument stage and all previously-added stage
+     * @param <V> type of resource produced by the next stage
+     * @return a new stack element containing argument stage and all previously-added stage
      */
     public <V> LifecycleStackElement<V> andThen(LifecycleStage<U, V> stage) {
         return new LifecycleStackElement<>(this, stage);

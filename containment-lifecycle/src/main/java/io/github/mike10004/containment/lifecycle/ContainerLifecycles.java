@@ -16,6 +16,15 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Class that contains utility methods for building container lifecycles.
+ *
+ * <p>We define management of a container to mean cleaning up containers created and/or started
+ * by this library. Global management means to add a shutdown hook that performs cleanup.
+ * There are two ways to globally manage a container: one is to construct the container
+ * with a {@link io.github.mike10004.containment.dockerjava.DjContainerMonitor monitor}
+ * that adds the shutdown hook, and the other is to manage the lifecycle of the container
+ * as a resource created by
+ * {@link LifecycledResourceBuilder#buildResourceDecommissionedOnJvmTermination(Lifecycle)}.
+ * </p>
  */
 public class ContainerLifecycles {
 
@@ -148,14 +157,6 @@ public class ContainerLifecycles {
     }
 
     /**
-     * @deprecated use {@link #builderOfLifecyclesOfUnmanagedContainers()}, which has a more meaningful name
-     */
-    @Deprecated
-    public static PreCreate buildGlobal() {
-        return builderOfLifecyclesOfUnmanagedContainers();
-    }
-
-    /**
      * Returns a service that can be used to build lifecycles of containers that are not managed.
      * Creating and starting unmanaged containers has system-wide effects that persist after JVM
      * termination. (The "system" in this context is the computer on which the JVM is running.)
@@ -175,14 +176,6 @@ public class ContainerLifecycles {
     public static PreCreate builderOfLifecyclesOfUnmanagedContainers() {
         ContainerCreatorFactory ctor = new GlobalContainerCreatorFactory(DjContainerCreator::new, clientConfig -> new DjManualContainerMonitor());
         return new PreCreateImpl(ctor);
-    }
-
-    /**
-     * @deprecated use {@link #builderOfLifecyclesOfGloballyManagedContainers()}, which has a more meaningful name
-     */
-    @Deprecated
-    public static PreCreate buildLocal() {
-        return builderOfLifecyclesOfGloballyManagedContainers();
     }
 
     /**

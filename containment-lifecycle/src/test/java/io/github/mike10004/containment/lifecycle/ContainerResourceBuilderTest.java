@@ -30,7 +30,9 @@ public class ContainerResourceBuilderTest {
                 .build();
         File preStartActionFile = File.createTempFile("ContainerDependencyBuilderTest", ".tmp", temporaryFolder.getRoot());
         String expectedFile1Pathname = "/tmp/" + preStartActionFile.getName();
-        Lifecycle<RunningContainer> stack = ContainerLifecycles.buildLocal()
+        // TODO consider revising to avoid creating a globally-managed container;
+        //      we we explicitly finish the lifecycle, so we're probably fine with an unmanaged container
+        Lifecycle<RunningContainer> stack = ContainerLifecycles.builderOfLifecyclesOfGloballyManagedContainers()
                 .creating(parametry)
                 .runPre(container -> container.copier().copyToContainer(preStartActionFile, "/tmp/"))
                 .runPost(container -> container.executor().execute("touch", "/tmp/file2.tmp"))

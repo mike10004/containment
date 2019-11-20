@@ -1,7 +1,10 @@
 package io.github.mike10004.containment.lifecycle;
 
 /**
- * Interface of a service that defines one stage of a lifecycle stack.
+ * Interface of a service that defines one stage of a lifecycle stack. A lifecycle stage
+ * differs from a {@link Lifecycle lifecycle} in that a stage requires a resource
+ * produced by a previous stage.
+ *
  * @param <R> required resource type
  * @param <P> produced resource type
  */

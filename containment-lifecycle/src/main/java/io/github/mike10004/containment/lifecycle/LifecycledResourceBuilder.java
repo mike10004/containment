@@ -28,10 +28,12 @@ public class LifecycledResourceBuilder {
      * Builds a new resource instance. Resource instances
      * must have their {@link LifecycledResource#finishLifecycle()} invoked
      * explicitly to decommission the resource (if it has been commissioned).
+     * @param lifecycle lifecycle to manage
      * @return a new resource instance
+     * @param <T> type of resource the lifecycle produces
      */
-    public <T> LifecycledResource<T> buildResource(Lifecycle<T> stack) {
-        return buildResourceFromProvider(new LifecyclingCachingProvider<>(stack, eventListener));
+    public <T> LifecycledResource<T> buildResource(Lifecycle<T> lifecycle) {
+        return buildResourceFromProvider(new LifecyclingCachingProvider<>(lifecycle, eventListener));
     }
 
     /**
@@ -44,18 +46,12 @@ public class LifecycledResourceBuilder {
      * but this is not recommended, because decommissioning will then occur <i>again</i>
      * on JVM termination. So, only do so if you know that double-decommissioning
      * does not have any nasty side effects.)
+     * @param lifecycle lifecycle to manage
      * @return a new resource instance
+     * @param <T> type of resource the lifecycle produces
      */
-    public <T> LifecycledResource<T> buildResourceDecommissionedOnJvmTermination(Lifecycle<T> stack) {
-        return buildResourceFromProvider(new GlobalLifecyclingCachingProvider<>(stack, eventListener));
-    }
-
-    /**
-     * @deprecated use {@link #buildResourceDecommissionedOnJvmTermination(Lifecycle)} for clarity
-     */
-    @Deprecated
-    public <T> LifecycledResource<T> buildGlobalResource(Lifecycle<T> stack) {
-        return buildResourceDecommissionedOnJvmTermination(stack);
+    public <T> LifecycledResource<T> buildResourceDecommissionedOnJvmTermination(Lifecycle<T> lifecycle) {
+        return buildResourceFromProvider(new GlobalLifecyclingCachingProvider<>(lifecycle, eventListener));
     }
 
     private <T> LifecycledResource<T> buildResourceFromProvider(LifecyclingCachingProvider<T> provider) {

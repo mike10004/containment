@@ -33,7 +33,9 @@ public class LifecycledResourceBuilderTest {
         ContainerParametry parametry = ContainerParametry.builder(Tests.getAlpineImage())
                 .commandToWaitIndefinitely()
                 .build();
-        Lifecycle<ContainerPlus<String>> stack = ContainerLifecycles.buildLocal()
+        // TODO consider revising to avoid creating a globally-managed container;
+        //      we we explicitly finish the lifecycle, so we're probably fine with an unmanaged container
+        Lifecycle<ContainerPlus<String>> stack = ContainerLifecycles.builderOfLifecyclesOfGloballyManagedContainers()
                 .creating(parametry)
                 .pre(new ContainerInitialPreStartAction<String>() {
                     @Override

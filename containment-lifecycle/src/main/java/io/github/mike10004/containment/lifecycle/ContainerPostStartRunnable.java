@@ -3,12 +3,14 @@ package io.github.mike10004.containment.lifecycle;
 import io.github.mike10004.containment.RunningContainer;
 
 /**
- * Interface that provides a method to execute an action against a running container.
+ * Interface of an action that targets a started container.
+ * Implementations of this interface do not require anything but the container instance
+ * and do not produce anything.
  */
 public interface ContainerPostStartRunnable {
 
     /**
-     * Executes the action.
+     * Performs the action.
      * @param container container
      * @throws Exception on error
      */

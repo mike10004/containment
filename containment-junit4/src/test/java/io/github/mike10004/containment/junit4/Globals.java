@@ -19,10 +19,11 @@ class Globals {
         ContainerParametry parametry = ContainerParametry.builder("busybox:latest")
                 .commandToWaitIndefinitely()
                 .build();
-        Lifecycle<RunningContainer> lifecycle = ContainerLifecycles.buildGlobal().creating(parametry).finish();
+        Lifecycle<RunningContainer> lifecycle = ContainerLifecycles.builderOfLifecyclesOfUnmanagedContainers()
+                .creating(parametry).finish();
         GLOBAL_BUSYBOX_RULE = LifecycledResource
                 .builder()
                 .eventListener(GLOBAL_BUSYBOX_RULE_COLLECTOR)
-                .buildGlobalResource(lifecycle);
+                .buildResourceDecommissionedOnJvmTermination(lifecycle);
     }
 }

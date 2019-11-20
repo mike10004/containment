@@ -3,8 +3,9 @@ package io.github.mike10004.containment.lifecycle;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Lifecycle implementation that employs delegates for commission and decommission.
- * @param <D> lifecycle
+ * Lifecycle stage implementation that employs delegates for commission and decommission.
+ * @param <R> required resource type
+ * @param <P> produced resource type
  */
 public class DecoupledLifecycleStage<R, P> implements LifecycleStage<R, P> {
 
@@ -13,6 +14,11 @@ public class DecoupledLifecycleStage<R, P> implements LifecycleStage<R, P> {
     private final Commissioner<R, P> commissioner;
     private volatile P commissioned;
 
+    /**
+     * Constructs an instance.
+     * @param commissioner commissioner
+     * @param decommissioner decommissioner
+     */
     public DecoupledLifecycleStage(Commissioner<R, P> commissioner, Decommissioner<P> decommissioner) {
         this.decommissioner = requireNonNull(decommissioner);
         this.commissioner = requireNonNull(commissioner);
@@ -22,7 +28,7 @@ public class DecoupledLifecycleStage<R, P> implements LifecycleStage<R, P> {
      * Invokes the commissioner.
      * Stores the result for subquent decommissing.
      * @return commissioned resource
-     * @throws Exception
+     * @throws Exception on error
      */
     @Override
     public P commission(R requirement) throws Exception {

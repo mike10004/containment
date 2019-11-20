@@ -11,6 +11,11 @@ public class DecoupledLifecycle<D> implements Lifecycle<D> {
     private final Commissioner<D> commissioner;
     private volatile D commissioned;
 
+    /**
+     * Constructs an instance.
+     * @param commissioner commissioner
+     * @param decommissioner decommissioner
+     */
     public DecoupledLifecycle(Commissioner<D> commissioner, Decommissioner<D> decommissioner) {
         this.decommissioner = decommissioner;
         this.commissioner = commissioner;
@@ -45,26 +50,26 @@ public class DecoupledLifecycle<D> implements Lifecycle<D> {
 
     /**
      * Interface of a service that commissions a resource.
-     * @param <D> resource type
+     * @param <R> resource type
      */
-    public interface Commissioner<D> {
+    public interface Commissioner<R> {
         /**
          * Commissions the resource.
          * @return resource
          * @throws Exception on error
          */
-        D commission() throws Exception;
+        R commission() throws Exception;
     }
 
     /**
      * Interface of a service that decommissions a resource.
-     * @param <D> resource type
+     * @param <R> resource type
      */
-    public interface Decommissioner<D> {
+    public interface Decommissioner<R> {
         /**
          * Decommissions the resource.
          * @param resource resource
          */
-        void decommission(D resource);
+        void decommission(R resource);
     }
 }

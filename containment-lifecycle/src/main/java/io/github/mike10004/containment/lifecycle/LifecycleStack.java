@@ -39,8 +39,10 @@ public class LifecycleStack<T> implements Lifecycle<T> {
     }
 
     /**
-     * Creates a new lifecycle stack root.
-     * @return a new stack root
+     * Creates a new lifecycle stack root element.
+     * @param firstStage first stage of the lifecycle
+     * @param <T> type of resource produced by the first stage
+     * @return a new stack root element
      */
     public static <T> LifecycleStackElement<T> startingAt(Lifecycle<T> firstStage) {
         return startingAt(new RequirementlessLifecycleStage<>(firstStage));
