@@ -5,6 +5,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.google.common.annotations.VisibleForTesting;
 import io.github.mike10004.nitsick.Durations;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -101,8 +102,55 @@ public class RequireImageMojo extends AbstractMojo {
     @Parameter
     private String pullTimeout;
 
-    public RequireImageMojo() {
+    /**
+     * Set of flags where if any flag evaluates to true, no action will be executed by this mojo.
+     * A flags evaluates to true if its value is truthy, where truthy means it case-insensitively
+     * equals {@code true}, {@code yes}, or {@code 1}.
+     * If this parameter is undefined or the set of conditions is empty, mojo
+     * execution is not skipped.
+     * Example:
+     * <pre>    <skipIfAny>
+     *         <condition>${foo}</condition>
+     *         <condition>${bar}</condition>
+     *     </skipIfAny>
+     * </pre>
+     *
+     * If either of the {@code skipIfAll} or {@code skipIfAny} condition sets are satisfied,
+     * mojo execution is skipped.
+     */
+    @Parameter
+    @Nullable
+    private String[] skipIfAny;
 
+    /**
+     * Set of flags where if all evaluate to true, no action will be executed by this mojo.
+     * A flags evaluates to true if its value is truthy, where truthy means it case-insensitively
+     * equals {@code true}, {@code yes}, or {@code 1}.
+     * If this parameter is undefined or the set of conditions is empty, mojo
+     * execution is not skipped.
+     * Example:
+     * <pre>    <skipIfAll>
+     *         <condition>${foo}</condition>
+     *         <condition>${bar}</condition>
+     *     </skipIfAll>
+     * </pre>
+     *
+     * If either of the {@code skipIfAll} or {@code skipIfAny} condition sets are satisfied,
+     * mojo execution is skipped.
+     */
+    @Parameter
+    @Nullable
+    private String[] skipIfAll;
+
+    public RequireImageMojo() {
+    }
+
+    void setSkipIfAll(@Nullable String[] skipIfAll) {
+        this.skipIfAll = skipIfAll;
+    }
+
+    void setSkipIfAny(@Nullable String[] skipIfAny) {
+        this.skipIfAny = skipIfAny;
     }
 
     public String getImageName() {
@@ -141,6 +189,7 @@ public class RequireImageMojo extends AbstractMojo {
         return DefaultDockerClientConfig.createDefaultConfigBuilder().build();
     }
 
+    @Override
     public void execute() throws MojoExecutionException {
         requireNonNull(absentImageAction, "absentImageAction");
         AbsentImageDirective directive = AbsentImageDirective.parse(absentImageAction);
@@ -174,7 +223,16 @@ public class RequireImageMojo extends AbstractMojo {
                 .build();
     }
 
-    protected AbsentImageActor constructActor(Supplier<DockerClient> clientFactory, AbsentImageDirective directive) {
+    ConditionSetEvaluator createConditionSetEvaluator() {
+        return new ConditionSetEvaluator();
+    }
+
+    boolean isSkipMojoExecution() {
+        ConditionSetEvaluator evaluator = createConditionSetEvaluator();
+        return evaluator.isAnyTrue(skipIfAny) || evaluator.isAllTrue(skipIfAll);
+    }
+
+    private AbsentImageActor constructActor(Supplier<DockerClient> clientFactory, AbsentImageDirective directive) {
         switch (directive.action) {
             case pull:
                 return new PullImageActor(getLog(), clientFactory);
@@ -195,5 +253,17 @@ public class RequireImageMojo extends AbstractMojo {
 
     private static <T> T supplyIfNull(@Nullable T item, Supplier<? extends T> constructor) {
         return item == null ? constructor.get() : item;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    String[] getSkipIfAny() {
+        return skipIfAny;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    String[] getSkipIfAll() {
+        return skipIfAll;
     }
 }

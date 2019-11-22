@@ -1,6 +1,5 @@
 package io.github.mike10004.containment.mavenplugin;
 
-
 import org.apache.maven.plugin.testing.MojoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,10 +9,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class RequireImageMojoTest {
 
@@ -46,6 +42,45 @@ public class RequireImageMojoTest {
         assertEquals(action, directive.action);
         System.out.format("getAbsentImageAction: %s%n", mojo.getAbsentImageAction());
         assertEquals(absentImageActionValue, mojo.getAbsentImageAction());
+    }
+
+    @Test
+    public void test_skipIfAny_oneTrue() throws Exception {
+        RequireImageMojo mojo = test_skipIf("skip-if-any-1", true);
+        assertNull(mojo.getSkipIfAll());
+        assertNotNull(mojo.getSkipIfAny());
+    }
+
+    @Test
+    public void test_skipIfAny_zeroTrue() throws Exception {
+        RequireImageMojo mojo = test_skipIf("skip-if-any-2", false);
+        assertNull(mojo.getSkipIfAll());
+        assertNotNull(mojo.getSkipIfAny());
+    }
+
+    @Test
+    public void test_skipIfAll_allTrue() throws Exception {
+        RequireImageMojo mojo = test_skipIf("skip-if-all-1", true);
+        assertNotNull(mojo.getSkipIfAll());
+        assertNull(mojo.getSkipIfAny());
+    }
+
+    @Test
+    public void test_skipIfAll_oneFalse() throws Exception {
+        RequireImageMojo mojo = test_skipIf("skip-if-all-2", false);
+        assertNotNull(mojo.getSkipIfAll());
+        assertNull(mojo.getSkipIfAny());
+    }
+
+    private RequireImageMojo test_skipIf(String artifactId, boolean expected) throws Exception {
+        String resourcePath = String.format("/test-projects/%s/pom.xml", artifactId);
+        File pom = new File( getClass().getResource(resourcePath).toURI()).getParentFile();
+        assertTrue(pom.isDirectory());
+        RequireImageMojo mojo = (RequireImageMojo) rule.lookupConfiguredMojo(pom, RequireImageMojo.GOAL);
+        assertNotNull(mojo);
+        assertNotNull("project", mojo.getProject());
+        assertEquals("skip", expected, mojo.isSkipMojoExecution());
+        return mojo;
     }
 
     @Test
