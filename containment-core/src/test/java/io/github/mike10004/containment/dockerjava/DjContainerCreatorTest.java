@@ -71,25 +71,30 @@ public class DjContainerCreatorTest extends DjManagedTestBase  {
     public void bindMounts()  throws Exception {
         File hostDir = tempdir.newFolder();
         File hostFile = File.createTempFile("hello", ".tmp", hostDir);
+        String tmpfsMountPathname = "/arbitrary";
         ContainerParametry parametry = ContainerParametry.builder(Tests.getImageForBindMountTest())
                 .commandToWaitIndefinitely()
                 .bindMountWriteAndRead(hostDir, "/mnt")
+                .tmpfsMount(tmpfsMountPathname)
                 .build();
-        ContainerSubprocessResult<String> touchResult, lsResult;
+        ContainerSubprocessResult<String> touchResult, lsResult, mountTmpfs;
         try (ContainerCreator runner = new DjContainerCreator(dockerManager);
              StartableContainer runnable = runner.create(parametry)) {
             try (StartedContainer container = runnable.start()) {
                 ContainerExecutor executor = container.executor();
                 touchResult = executor.execute(UTF_8, "touch", "/mnt/hello.tmp");
                 lsResult = executor.execute(UTF_8, "ls", "-l", "/mnt/" + hostFile.getName());
+                mountTmpfs = executor.execute(UTF_8, "mount", "-t", "tmpfs");
             }
         }
         System.out.format("touch result: %s%n", touchResult);
         System.out.format("ls result: %s%n", lsResult);
         assertEquals("process exit code", 0, touchResult.exitCode());
         assertEquals("process exit code", 0, lsResult.exitCode());
+        assertEquals("process exit code", 0, mountTmpfs.exitCode());
         File touchedFile = new File(hostDir, "hello.tmp");
         assertTrue("touched file exists", touchedFile.isFile());
+        assertTrue("contains " + tmpfsMountPathname + " mount", mountTmpfs.stdout().contains(tmpfsMountPathname));
     }
 
     @Test

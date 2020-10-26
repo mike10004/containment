@@ -7,6 +7,7 @@ import com.google.common.net.HostAndPort;
 import io.github.mike10004.containment.ContainerPort;
 import io.github.mike10004.containment.FullSocketAddress;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -40,7 +41,7 @@ class PsOutputParser implements DockerPsContent {
                     String hostPart = parts.stream().filter(s -> s.matches("^\\S+:\\d+$")).findFirst().orElse(null);
                     String containerPart = parts.stream().filter(s -> s.matches("^\\d+/\\w+$")).findFirst().orElse(null);
                     if (containerPart == null) {
-                        throw new IllegalArgumentException("unexpected syntax in " + StringUtils.abbreviate(token, 128));
+                        throw new IllegalArgumentException("unexpected syntax in output from querying ports: \"" + StringEscapeUtils.escapeJava(StringUtils.abbreviate(portsContent, 128)) + "\"");
                     }
                     String[] containerParts = containerPart.split("/");
                     int containerPort = Integer.parseInt(containerParts[0]);

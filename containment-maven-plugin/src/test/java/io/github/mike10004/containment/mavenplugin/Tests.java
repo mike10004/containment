@@ -5,6 +5,8 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 import com.google.common.base.Verify;
 import io.github.mike10004.nitsick.SettingSet;
 import org.junit.Assume;
@@ -37,12 +39,19 @@ public class Tests {
         return transform.apply(value);
     }
 
-    private static final DockerClientConfig DOCKER_CLIENT_CONFIG = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+    private static final DockerClientConfig DOCKER_CLIENT_CONFIG = DefaultDockerClientConfig.createDefaultConfigBuilder()
+            .build();
 
     public static Supplier<DockerClient> realDockerManager() {
         return () -> {
             anyClientsCreated.incrementAndGet();
-            return DockerClientBuilder.getInstance(DOCKER_CLIENT_CONFIG).build();
+            DockerHttpClient httpClient = new JerseyDockerHttpClient.Builder()
+                    .dockerHost(DOCKER_CLIENT_CONFIG.getDockerHost())
+                    .sslConfig(DOCKER_CLIENT_CONFIG.getSSLConfig())
+                    .build();
+            return DockerClientBuilder.getInstance(DOCKER_CLIENT_CONFIG)
+                    .withDockerHttpClient(httpClient)
+                    .build();
         };
     }
 

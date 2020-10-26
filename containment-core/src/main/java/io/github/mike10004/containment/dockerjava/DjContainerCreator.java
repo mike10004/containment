@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -53,10 +54,13 @@ public class DjContainerCreator implements ContainerCreator {
                 .map(ContainerParametry.PortBinding::toSerialForm)
                 .map(PortBinding::parse)
                 .collect(Collectors.toList());
-        List<Mount> mounts = parametry.bindMounts().stream().map(DjContainerCreator::transformMount).collect(Collectors.toList());
+        Stream<Mount> bmounts = parametry.bindMounts().stream().map(DjContainerCreator::transformMount);
+        Stream<Mount> tmounts = parametry.tmpfsMounts().stream().map(pathname -> {
+            return new Mount().withTarget(pathname).withType(MountType.TMPFS);
+        });
         return HostConfig.newHostConfig()
                 .withAutoRemove(!parametry.disableAutoRemoveOnStop())
-                .withMounts(mounts)
+                .withMounts(Stream.concat(bmounts, tmounts).collect(Collectors.toList()))
                 .withPortBindings(bindings);
     }
 

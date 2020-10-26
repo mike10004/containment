@@ -129,10 +129,10 @@ public class RequireImageMojo extends AbstractMojo {
      * If this parameter is undefined or the set of conditions is empty, mojo
      * execution is not skipped.
      * Example:
-     * <pre>    <skipIfAll>
-     *         <condition>${foo}</condition>
-     *         <condition>${bar}</condition>
-     *     </skipIfAll>
+     * <pre>    &lt;skipIfAll&gt;
+     *         &lt;condition&gt;${foo}&lt;/condition&gt;
+     *         &lt;condition&gt;${bar}&lt;/condition&gt;
+     *     &lt;/skipIfAll&gt;
      * </pre>
      *
      * If either of the {@code skipIfAll} or {@code skipIfAny} condition sets are satisfied,

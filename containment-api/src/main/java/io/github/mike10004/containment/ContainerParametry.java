@@ -48,6 +48,12 @@ public interface ContainerParametry {
     List<BindMount> bindMounts();
 
     /**
+     * Returns a list of tmpfs mounts.
+     * @return list of tmpfs mounts
+     */
+    List<String> tmpfsMounts();
+
+    /**
      * Returns an unmodifiable map containing container label definitions.
      * @return a map of labels
      */
@@ -143,19 +149,21 @@ public interface ContainerParametry {
      */
     final class Builder {
 
-        private ImageSpecifier image;
+        private final ImageSpecifier image;
 
         private CommandType commandType = CommandType.BLOCKING;
 
         private List<String> command = Collections.emptyList();
 
-        private List<PortBinding> bindablePorts = new ArrayList<>();
+        private final List<PortBinding> bindablePorts = new ArrayList<>();
 
-        private List<BindMount> bindMounts = new ArrayList<>();
+        private final List<BindMount> bindMounts = new ArrayList<>();
 
-        private Map<String, String> env = new LinkedHashMap<>();
+        private final List<String> tmpfsMounts = new ArrayList<>();
 
-        private Map<String, String> labels = new LinkedHashMap<>();
+        private final Map<String, String> env = new LinkedHashMap<>();
+
+        private final Map<String, String> labels = new LinkedHashMap<>();
 
         private Builder(String image) {
             this(ImageSpecifier.parseSpecifier(requireNonNull(image, "image")));
@@ -167,6 +175,11 @@ public interface ContainerParametry {
 
         public Builder mount(BindMount mount) {
             bindMounts.add(requireNonNull(mount));
+            return this;
+        }
+
+        public Builder tmpfsMount(String pathname) {
+            tmpfsMounts.add(requireNonNull(pathname, "pathname"));
             return this;
         }
 
@@ -340,6 +353,7 @@ public interface ContainerParametry {
             private final List<String> command;
             private final List<PortBinding> exposedPorts;
             private final List<BindMount> bindMounts;
+            private final List<String> tmpfsMounts;
             private final Map<String, String> env;
             private final Map<String, String> labels;
 
@@ -350,6 +364,7 @@ public interface ContainerParametry {
                 env = Collections.unmodifiableMap(new LinkedHashMap<>(builder.env));
                 this.commandType = requireNonNull(builder.commandType);
                 bindMounts = Collections.unmodifiableList(new ArrayList<>(requireNonNull(builder.bindMounts)));
+                tmpfsMounts = Collections.unmodifiableList(new ArrayList<>(requireNonNull(builder.tmpfsMounts)));
                 labels = Collections.unmodifiableMap(new LinkedHashMap<>(builder.labels));
             }
 
@@ -361,6 +376,11 @@ public interface ContainerParametry {
             @Override
             public List<BindMount> bindMounts() {
                 return bindMounts;
+            }
+
+            @Override
+            public List<String> tmpfsMounts() {
+                return tmpfsMounts;
             }
 
             @Override
