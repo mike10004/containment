@@ -175,7 +175,6 @@
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>${docker-java.transport.artifactId}</artifactId>
-            <scope>runtime</scope>
         </dependency>
     </dependencies>
 </project>

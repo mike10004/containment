@@ -3,8 +3,11 @@ package io.github.mike10004.containment.dockerjava;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.transport.DockerHttpClient;
 
 import java.util.List;
+
+import com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
 
 import static java.util.Objects.requireNonNull;
 
@@ -24,7 +27,13 @@ public class DefaultDjDockerManager implements DjDockerManager {
 
     @Override
     public final DockerClient openClient() {
-        return DockerClientBuilder.getInstance(clientConfig).build();
+        DockerHttpClient httpClient = new JerseyDockerHttpClient.Builder()
+                .dockerHost(clientConfig.getDockerHost())
+                .sslConfig(clientConfig.getSSLConfig())
+                .build();
+        return DockerClientBuilder.getInstance(clientConfig)
+                .withDockerHttpClient(httpClient)
+                .build();
     }
 
     @Override

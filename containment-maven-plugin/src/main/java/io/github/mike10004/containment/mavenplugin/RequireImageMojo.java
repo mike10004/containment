@@ -5,6 +5,8 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 import com.google.common.annotations.VisibleForTesting;
 import io.github.mike10004.nitsick.Durations;
 import org.apache.maven.plugin.AbstractMojo;
@@ -196,7 +198,13 @@ public class RequireImageMojo extends AbstractMojo {
         RequireImageParametry parametry = buildParametry();
         DockerClientConfig clientConfig = createConfig(getProject(), parametry);
         Supplier<DockerClient> clientFactory = () -> {
-            return DockerClientBuilder.getInstance(clientConfig).build();
+            DockerHttpClient httpClient = new JerseyDockerHttpClient.Builder()
+                    .dockerHost(clientConfig.getDockerHost())
+                    .sslConfig(clientConfig.getSSLConfig())
+                    .build();
+            return DockerClientBuilder.getInstance(clientConfig)
+                    .withDockerHttpClient(httpClient)
+                    .build();
         };
         boolean existsLocally;
         try (DockerClient client = clientFactory.get()) {

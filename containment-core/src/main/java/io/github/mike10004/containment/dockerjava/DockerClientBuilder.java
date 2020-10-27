@@ -7,57 +7,62 @@ package io.github.mike10004.containment.dockerjava;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.DockerCmdExecFactory;
-import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.jaxrs.JerseyDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DockerClientBuilder {
 
-    private DockerClientImpl dockerClient;
+    private final DockerClientConfig dockerClientConfig;
 
-    private DockerCmdExecFactory dockerCmdExecFactory = null;
+    private DockerHttpClient dockerHttpClient = null;
 
-    private DockerClientBuilder(DockerClientImpl dockerClient) {
-        this.dockerClient = dockerClient;
+    private DockerClientBuilder(DockerClientConfig dockerClientConfig) {
+        this.dockerClientConfig = dockerClientConfig;
     }
 
     public static DockerClientBuilder getInstance() {
-        return new DockerClientBuilder(DockerClientImpl.getInstance());
-    }
-
-    public static DockerClientBuilder getInstance(Builder dockerClientConfigBuilder) {
-        return getInstance(dockerClientConfigBuilder.build());
+        return new DockerClientBuilder(
+                DefaultDockerClientConfig.createDefaultConfigBuilder().build()
+        );
     }
 
     public static DockerClientBuilder getInstance(DockerClientConfig dockerClientConfig) {
-        return new DockerClientBuilder(DockerClientImpl.getInstance(dockerClientConfig));
+        return new DockerClientBuilder(dockerClientConfig);
     }
 
-    public static DockerClientBuilder getInstance(String serverUrl) {
-        return new DockerClientBuilder(DockerClientImpl.getInstance(serverUrl));
-    }
-
-    public static DockerCmdExecFactory getDefaultDockerCmdExecFactory() {
-        try {
-            return (DockerCmdExecFactory) Class.forName("com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory")
-                        .getConstructor().newInstance();
-        } catch (ReflectiveOperationException | ClassCastException e) {
-            throw new RuntimeException("BUG: classpath is misconfigured or an update to docker-java has invalidated this method of construction", e);
-        }
-    }
-
-    public DockerClientBuilder withDockerCmdExecFactory(DockerCmdExecFactory dockerCmdExecFactory) {
-        this.dockerCmdExecFactory = dockerCmdExecFactory;
+    /**
+     * Note that this method overrides {@link DockerCmdExecFactory} if it was previously set
+     */
+    public DockerClientBuilder withDockerHttpClient(DockerHttpClient dockerHttpClient) {
+        this.dockerHttpClient = dockerHttpClient;
         return this;
     }
 
     public DockerClient build() {
-        if (dockerCmdExecFactory != null) {
-            dockerClient.withDockerCmdExecFactory(dockerCmdExecFactory);
+        if (dockerHttpClient != null) {
+            return DockerClientImpl.getInstance(
+                    dockerClientConfig,
+                    dockerHttpClient
+            );
         } else {
-            dockerClient.withDockerCmdExecFactory(getDefaultDockerCmdExecFactory());
-        }
+            Logger log = LoggerFactory.getLogger(DockerClientBuilder.class);
+            log.warn(
+                    "'dockerHttpClient' should be set." +
+                            "Falling back to Jersey, will be an error in future releases."
+            );
 
-        return dockerClient;
+            return DockerClientImpl.getInstance(
+                    dockerClientConfig,
+                    new JerseyDockerHttpClient.Builder()
+                            .dockerHost(dockerClientConfig.getDockerHost())
+                            .sslConfig(dockerClientConfig.getSSLConfig())
+                            .build()
+            );
+        }
     }
 }
