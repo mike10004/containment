@@ -18,6 +18,7 @@ import org.apache.maven.project.MavenProject;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -193,6 +194,10 @@ public class RequireImageMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
+        if (isSkipMojoExecution()) {
+            getLog().info("skipping: skipIfAny=" + Arrays.toString(getSkipIfAny()) + "; skipIfAll=" + Arrays.toString(getSkipIfAll()));
+            return;
+        }
         requireNonNull(absentImageAction, "absentImageAction");
         AbsentImageDirective directive = AbsentImageDirective.parse(absentImageAction);
         RequireImageParametry parametry = buildParametry();
